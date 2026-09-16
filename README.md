@@ -54,7 +54,7 @@
 
 ## 下载与运行
 
-从 [Releases](../../releases) 下载 `ResearchBench-v2.4.2.exe`（约 10 MB，附件名为英文以便下载），双击运行，不用装 Python 或任何依赖。
+从 [Releases](../../releases) 下载 `ResearchBench-v2.4.2.exe`（约 10 MB），双击运行，不用装 Python 或任何依赖。
 
 第一次打开时会自动扫描本机已装的科研软件，加进「常用」。Windows 可能提示「未知发布者」，选「仍要运行」即可（程序没做商业签名）。杀毒软件若误报，加白名单。
 
