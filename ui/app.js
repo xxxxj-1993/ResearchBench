@@ -1,0 +1,3384 @@
+(function(){
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+var esc = function(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+
+/* ================= 图标 ================= */
+var I = {
+  today:'<path d="M3 5h18v16H3z"/><path d="M8 3v4"/><path d="M16 3v4"/><path d="M3 10h18"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4"/><path d="M16 3v4"/><path d="M3 10h18"/>',
+  paper:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7"/>',
+  proj:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  wall:'<path d="M12 2 4 7v10l8 5 8-5V7z"/><path d="m4 7 8 5 8-5"/><path d="M12 12v10"/>',
+  idea:'<path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6V16h5.4v-1.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 2z"/>',
+  diary:'<path d="M4 4a2 2 0 0 1 2-2h13v20H6a2 2 0 0 1-2-2z"/><path d="M8 7h7"/><path d="M8 11h7"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>',
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  app:'<rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 18v3"/>',
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
+  db:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+  bell:'<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  trash:'<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/>',
+  plus:'<path d="M12 5v14"/><path d="M5 12h14"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  chevl:'<path d="m15 18-6-6 6-6"/>',
+  chevr2:'<path d="m9 18 6-6-6-6"/>',
+  open:'<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/>',
+  down:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>',
+  up:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 8l5-5 5 5"/><path d="M12 3v12"/>',
+  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  coffee:'<path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v6a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M6 2v3"/><path d="M10 1v4"/>',
+  sprout:'<path d="M7 20h10"/><path d="M12 20v-6"/><path d="M12 14c-3.5 0-5-2-5-5 3.5 0 5 2 5 5z"/><path d="M12 14c3.5 0 5-2 5-5-3.5 0-5 2-5 5z"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/>',
+  refresh:'<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/>',
+  filter:'<path d="M3 5h18"/><path d="M6 12h12"/><path d="M10 19h4"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/>',
+  pin:'<path d="M12 17v5"/><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3z"/>',
+  flag:'<path d="M4 22V4"/><path d="M4 4h13l-2 4 2 4H4"/>',
+  bulb:'<path d="M9 18h6"/><path d="M12 2a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6V16h5.4v-1.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 2z"/>',
+  spark:'<path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m6 6 2.5 2.5"/><path d="m15.5 15.5 2.5 2.5"/>',
+  down2:'<path d="m6 9 6 6 6-6"/>',
+  grant:'<path d="M4 21V8"/><path d="M4 8h16v4H4z"/><path d="M8 21V8"/><path d="M8 12h12v9H8z"/>',
+  teach:'<path d="M22 9 12 4 2 9l10 5z"/><path d="M6 11.5V17c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.5"/>',
+  patent:'<circle cx="12" cy="9" r="5"/><path d="M12 14v7"/><path d="M9 21h6"/><path d="M12 4V2"/>',
+  medal:'<circle cx="12" cy="15" r="5"/><path d="m8.5 10.5-2-6h11l-2 6"/><path d="M12 10v5"/><path d="m10 13 2 2 2-2"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  scroll:'<path d="M5 4h14v16H5z"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/>',
+  plant:'<path d="M12 21V11"/><path d="M12 11c0-4 3-7 7-7 0 4-3 7-7 7z"/><path d="M12 15c0-3-2.5-5.5-5.5-5.5 0 3 2.5 5.5 5.5 5.5z"/>',
+  star:'<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>',
+  menu:'<circle cx="9" cy="6" r="1.3"/><circle cx="15" cy="6" r="1.3"/><circle cx="9" cy="12" r="1.3"/><circle cx="15" cy="12" r="1.3"/><circle cx="9" cy="18" r="1.3"/><circle cx="15" cy="18" r="1.3"/>',
+  grid:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M3 14.5h18"/><path d="M9 10v10"/><path d="M15 10v10"/>',
+  copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
+  quote:'<path d="M7 7c-2 0-3 1.6-3 3.6S5 14 6.6 14c-.3 2-1.7 3-3.6 3"/><path d="M18 7c-2 0-3 1.6-3 3.6s1 3.4 2.6 3.4c-.3 2-1.7 3-3.6 3"/>',
+  import:'<path d="M12 3v10"/><path d="m8 9 4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
+  lecture:'<path d="M4 5h16v11H4z"/><path d="M8 20h8"/><path d="M12 16v4"/><path d="M8 9h5"/>'
+};
+function ic(name,size,color,sw){
+  size=size||15; sw=sw||1.9;
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'
+    +(color||'currentColor')+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round">'
+    +(I[name]||'')+'</svg>';
+}
+
+/* ================= 文案 ================= */
+var TXT = {
+  zh:{ today:'今日', calendar:'日历', papers:'论文', projects:'课题', pubs:'已发表', grants:'已立项',
+    teaching:'教学成果', patents:'专利', ideas:'灵感', diary:'日记', common:'常用',
+    todaySub:'今天有什么安排，下一步推进什么',
+    search:'全局搜索', quick:'快速记录',
+    schedule:'今日安排', timetable:'课表', actions:'下一步行动', progress:'近期进展', remind:'提醒',
+    plan:'工作计划', planSub:'近期要推进的事情，勾选即完成', noPlan:'暂无工作计划',
+    dueSoon:'近期截止', waitReview:'等待审稿 / 等待回复',
+    noEvent:'今天没有排程', noAction:'没有待推进的下一步', noProgress:'暂无进展记录',
+    calendarSub:'月视图 / 周视图，可拖动事件改期',
+    papersSub:'研究阶段 · 工作状态 · 下一步行动',
+    projectsSub:'编号 · 角色 · 进度 · 下一步',
+    pubsSub:'学术成果墙 · 按年份归档 · 含分区与引用',
+    grantsSub:'已立项科研项目 · 经费 · 起止 · 主持或参与',
+    teachingSub:'竞赛获奖 · 荣誉 · 教材 · 教改论文 · 大创项目',
+    patentsSub:'已申请 / 已授权专利',
+    ideasSub:'研究想法，可一键转化为论文',
+    diarySub:'纸张感记录，支持本地 PIN 保护',
+    commonSub:'链接 · 本地文件 · 数据库 · 研究工具',
+    materials:'我的材料', materialsSub:'由你决定展示哪些材料', addFromZotero:'从 Zotero 添加',
+    otherProjects:'其他项目', compAward:'竞赛获奖', honor:'荣誉称号', textbook:'教材编写',
+    eduPaper:'教改论文', allYears:'全部', firstOnly:'第一 / 通讯', coOnly:'合作作者',
+    add:'新增', edit:'编辑', del:'删除', save:'保存', cancel:'取消', close:'关闭',
+    openDir:'打开目录', reveal:'定位', undo:'撤销', confirmDel:'确定删除',
+    pickZotero:'关联 Zotero 文献', toPaper:'转化为论文', importIdea:'从 Obsidian 导入',
+    focus:'专注', focusing:'专注中',
+    repWorks:'代表作', repSet:'设为代表作', repUnset:'取消代表作', repFull:'代表作最多可设置 5 篇',
+    repEmpty:'还没有设置代表作，点击论文卡片右上角的 ★ 即可设为代表作（最多 5 篇）',
+    dragTip:'可拖动调整同一分组内的顺序', dragSame:'请在同一分组内拖动排序'
+  },
+  en:{ today:'Today', calendar:'Calendar', papers:'Papers', projects:'Topics', pubs:'Published',
+    grants:'Grants', teaching:'Teaching', patents:'Patents',
+    ideas:'Ideas', diary:'Journal', common:'Toolbox',
+    todaySub:'What is on today and what to push next',
+    search:'Search everything', quick:'Quick add',
+    schedule:'Schedule', timetable:'Timetable', actions:'Next actions', progress:'Recent progress', remind:'Reminders',
+    plan:'Work plan', planSub:'Recent tasks, check to finish', noPlan:'No plan yet',
+    dueSoon:'Due soon', waitReview:'In review / awaiting',
+    noEvent:'Nothing scheduled', noAction:'No pending next action', noProgress:'No progress yet',
+    calendarSub:'Month / week view, drag to reschedule',
+    papersSub:'Stage · status · next action',
+    projectsSub:'Code · role · progress · next',
+    pubsSub:'Publication wall by year, with zone and citations',
+    grantsSub:'Funded projects · budget · period · role',
+    teachingSub:'Awards · honors · textbooks · papers · student projects',
+    patentsSub:'Filed / granted patents',
+    ideasSub:'Research ideas, one click to a paper',
+    diarySub:'Paper-like journal with local PIN',
+    commonSub:'Links · local files · databases · tools',
+    materials:'My documents', materialsSub:'You decide what to show', addFromZotero:'Add from Zotero',
+    otherProjects:'Other projects', compAward:'Awards', honor:'Honors', textbook:'Textbooks',
+    eduPaper:'Teaching papers', allYears:'All', firstOnly:'First / corresponding', coOnly:'Co-author',
+    add:'Add', edit:'Edit', del:'Delete', save:'Save', cancel:'Cancel', close:'Close',
+    openDir:'Open folder', reveal:'Reveal', undo:'Undo', confirmDel:'Delete',
+    pickZotero:'Link Zotero item', toPaper:'To paper', importIdea:'Import from Obsidian',
+    focus:'Focus', focusing:'Focusing',
+    repWorks:'Representative', repSet:'Mark as representative', repUnset:'Unmark representative', repFull:'Max 5 representative works',
+    repEmpty:'No representative works set yet. Click the ★ on a paper card to mark one (max 5).',
+    dragTip:'Drag to reorder within the same group', dragSame:'Drag only within the same group'
+  }
+};
+var LANG='zh';
+function tt(k){ var t=TXT[LANG]||TXT.zh; return (t[k]!=null)? t[k] : ((TXT.zh[k]!=null)?TXT.zh[k]:k); }
+
+/* ================= 状态 ================= */
+var S={ db:null, page:'today', lang:'zh',
+  zot:{ok:false,msg:'',total:0}, obs:{vaults:[],cur:''},
+  calYear:0, calMonth:0, calMode:'month',
+  selPaper:'', selVault:'', drawerPath:'', ideaFilter:'', pubFilter:'all',
+  diaryUnlocked:false, obsIdeas:[], dragId:'', dragShortcut:'' };
+var STAGES=['选题','理论','仿真','实验','写作','投稿','返修','接收'];
+var PSTATUS=['进行中','等待审稿','等待回复','等待决定','暂停','已完成'];
+var PRSTATUS=['进行中','等待回复','等待审稿','暂停','已完成'];
+var ETYPES=['会议','组会','课程','出差','其他'];
+var MOODS=['好','还可以','一般','累','低落'];
+var WD=['一','二','三','四','五','六','日'];
+var NAVDEF=[{k:'today',i:'today'},{k:'calendar',i:'cal'},{k:'schedule',i:'grid',lb:'timetable'},{k:'papers',i:'paper'},
+  {k:'projects',i:'proj'},{k:'pubs',i:'wall'},{k:'grants',i:'grant'},{k:'teaching',i:'teach'},
+  {k:'patents',i:'patent'},{k:'ideas',i:'idea'},{k:'diary',i:'diary'},{k:'common',i:'link'}];
+
+/* ================= 小工具 ================= */
+function todayStr(){ var d=new Date();
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function dayStr(v){ if(!v) return ''; var s=String(v); if(s.length>=10) s=s.slice(0,10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s)? s : ''; }
+function daysLeft(ds){ if(!ds) return null;
+  var a=new Date(ds+'T00:00:00'), b=new Date(todayStr()+'T00:00:00');
+  return Math.round((a-b)/86400000); }
+function fmtSize(n){ if(n<1024) return n+' B';
+  if(n<1048576) return (n/1024).toFixed(1)+' KB';
+  if(n<1073741824) return (n/1048576).toFixed(1)+' MB';
+  return (n/1073741824).toFixed(2)+' GB'; }
+function fmtTime(t){ var d=new Date(t*1000);
+  return (d.getMonth()+1)+'月'+d.getDate()+'日 '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+function uid(p){ return (p||'x')+Date.now().toString(36)+Math.floor(Math.random()*10000).toString(36); }
+function api(url,data){
+  if(data!==undefined){
+    return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data)}).then(function(r){ return r.json(); });
+  }
+  return fetch(url).then(function(r){ return r.json(); });
+}
+function toast(msg,kind,undoFn){
+  var host=$('toast'), d=document.createElement('div');
+  d.className='tst'+(kind?' '+kind:'');
+  var sp=document.createElement('span'); sp.textContent=msg; d.appendChild(sp);
+  if(undoFn){
+    var b=document.createElement('button'); b.type='button'; b.textContent=tt('undo');
+    b.onclick=function(){ undoFn(); if(d.parentNode) d.parentNode.removeChild(d); };
+    d.appendChild(b);
+  }
+  host.appendChild(d);
+  setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, undoFn?7000:2600);
+}
+
+/* ================= 数据层 ================= */
+function saveKey(key){
+  var v = (key==='settings')? S.db.settings : ((key==='focus')? S.db.focus : S.db[key]);
+  return api('/api/patch',{key:key,value:v});
+}
+function byId(arr,id){ if(!arr) return null; for(var i=0;i<arr.length;i++) if(arr[i].id===id) return arr[i]; return null; }
+function findPaper(id){ return byId(S.db.papers,id); }
+function findProject(id){ return byId(S.db.projects,id); }
+function projName(id){ var p=findProject(id); return p? p.name : ''; }
+function paperTitle(id){ var p=findPaper(id); return p? p.title : ''; }
+function logHistory(rec,text){
+  rec.history = rec.history || [];
+  rec.history.unshift({t:Date.now(), text:text});
+  if(rec.history.length>30) rec.history.length=30;
+}
+function removeWithUndo(key,id,label){
+  var arr=S.db[key], idx=-1, i;
+  for(i=0;i<arr.length;i++) if(arr[i].id===id){ idx=i; break; }
+  if(idx<0) return;
+  if(!confirm(tt('confirmDel')+'「'+label+'」？')) return;
+  var removed=arr.splice(idx,1)[0];
+  saveKey(key); refreshAll();
+  toast('已删除：'+label,null,function(){
+    arr.splice(idx,0,removed); saveKey(key); refreshAll(); toast('已恢复','ok');
+  });
+}
+function recentProgress(limit){
+  var out=[],i,j;
+  for(i=0;i<S.db.papers.length;i++){
+    var p=S.db.papers[i], h=p.history||[];
+    for(j=0;j<h.length;j++) out.push({t:h[j].t,text:h[j].text,who:p.title,type:'论文'});
+  }
+  for(i=0;i<S.db.projects.length;i++){
+    var q=S.db.projects[i], h2=q.history||[];
+    for(j=0;j<h2.length;j++) out.push({t:h2[j].t,text:h2[j].text,who:q.name,type:'课题'});
+  }
+  out.sort(function(a,b){ return b.t-a.t; });
+  return out.slice(0,limit||8);
+}
+
+/* ================= 计算层 ================= */
+function eventsOn(ds){
+  var o=[],i;
+  for(i=0;i<S.db.events.length;i++) if(S.db.events[i].date===ds) o.push(S.db.events[i]);
+  o.sort(function(a,b){ return String(a.start||'').localeCompare(String(b.start||'')); });
+  return o;
+}
+function deadlinesOn(ds){
+  var o=[],i;
+  for(i=0;i<S.db.papers.length;i++){ var p=S.db.papers[i];
+    if(dayStr(p.due)===ds) o.push({kind:'paper',id:p.id,title:p.title,over:daysLeft(ds)<0,done:p.status==='已完成'}); }
+  for(i=0;i<S.db.projects.length;i++){ var q=S.db.projects[i];
+    if(dayStr(q.due)===ds) o.push({kind:'proj',id:q.id,title:q.name,over:daysLeft(ds)<0,done:q.status==='已完成'}); }
+  return o;
+}
+function activePapers(){ var o=[],i; for(i=0;i<S.db.papers.length;i++){
+  if(S.db.papers[i].status!=='已完成'&&S.db.papers[i].status!=='暂停') o.push(S.db.papers[i]); } return o; }
+function activeProjects(){ var o=[],i; for(i=0;i<S.db.projects.length;i++){
+  if(S.db.projects[i].status!=='已完成'&&S.db.projects[i].status!=='暂停') o.push(S.db.projects[i]); } return o; }
+function dueList(days){
+  var o=[],i,n;
+  for(i=0;i<S.db.papers.length;i++){ var p=S.db.papers[i];
+    if(p.status==='已完成') continue;
+    n=daysLeft(dayStr(p.due));
+    if(n!==null&&n<=days) o.push({kind:'paper',id:p.id,title:p.title,due:dayStr(p.due),n:n,rec:p}); }
+  for(i=0;i<S.db.projects.length;i++){ var q=S.db.projects[i];
+    if(q.status==='已完成') continue;
+    n=daysLeft(dayStr(q.due));
+    if(n!==null&&n<=days) o.push({kind:'proj',id:q.id,title:q.name,due:dayStr(q.due),n:n,rec:q}); }
+  o.sort(function(a,b){ return a.n-b.n; });
+  return o;
+}
+function waitingPapers(){
+  var o=[],i,st;
+  for(i=0;i<S.db.papers.length;i++){ st=S.db.papers[i].status;
+    if(st==='等待审稿'||st==='等待回复'||st==='等待决定') o.push(S.db.papers[i]); }
+  return o;
+}
+function nextActions(){
+  var a=dueList(45), o=[], seen={}, i;
+  for(i=0;i<a.length;i++){
+    var r=a[i].rec;
+    if(!r.nextAction||seen[r.id]) continue;
+    seen[r.id]=1;
+    o.push({kind:a[i].kind,id:r.id,title:a[i].title,next:r.nextAction,n:a[i].n,due:a[i].due});
+  }
+  o.sort(function(x,y){ return x.n-y.n; });
+  return o;
+}
+function todaysFocus(){
+  var a=dueList(90), i;
+  for(i=0;i<a.length;i++) if(a[i].n<0&&a[i].rec.nextAction) return a[i];
+  for(i=0;i<a.length;i++) if(a[i].rec.nextAction) return a[i];
+  for(i=0;i<S.db.papers.length;i++) if(S.db.papers[i].nextAction)
+    return {kind:'paper',id:S.db.papers[i].id,title:S.db.papers[i].title,
+      due:dayStr(S.db.papers[i].due),n:daysLeft(dayStr(S.db.papers[i].due)),rec:S.db.papers[i]};
+  return null;
+}
+function searchAll(q){
+  q=String(q).toLowerCase();
+  var out=[],i;
+  function hit(s){ return s && String(s).toLowerCase().indexOf(q)>=0; }
+  for(i=0;i<S.db.papers.length;i++){ var p=S.db.papers[i];
+    if(hit(p.title)||hit(p.journal)||hit(p.nextAction)||hit(p.notes))
+      out.push({g:'论文',t:p.title,m:[p.journal,p.stage,p.status].filter(Boolean).join(' · '),
+        fn:(function(x){ return function(){ S.page='papers'; S.selPaper=x.id; go('papers'); }; })(p)}); }
+  for(i=0;i<S.db.projects.length;i++){ var r=S.db.projects[i];
+    if(hit(r.name)||hit(r.code)||hit(r.nextAction))
+      out.push({g:'课题',t:r.name,m:[r.code,r.status].filter(Boolean).join(' · '),
+        fn:(function(){ return function(){ go('projects'); }; })()}); }
+  for(i=0;i<S.db.pubs.length;i++){ var w=S.db.pubs[i];
+    if(hit(w.title)||hit(w.journal)||hit(w.doi))
+      out.push({g:'已发表',t:w.title,m:[w.year,w.journal].filter(Boolean).join(' · '),
+        fn:(function(){ return function(){ go('pubs'); }; })()}); }
+  var gl=S.db.grants||[];
+  for(i=0;i<gl.length;i++){ var g=gl[i];
+    if(hit(g.name)||hit(g.org)||hit(g.code)||hit(g.kind))
+      out.push({g:'已立项',t:g.name,m:[g.org,g.code,g.status].filter(Boolean).join(' · '),
+        fn:(function(){ return function(){ go('grants'); }; })()}); }
+  var tl=S.db.teaching||[];
+  for(i=0;i<tl.length;i++){ var tc=tl[i];
+    if(hit(tc.content)||hit(tc.cat)||hit(tc.level))
+      out.push({g:'教学成果',t:tc.content,m:[tc.cat,tc.date].filter(Boolean).join(' · '),
+        fn:(function(){ return function(){ go('teaching'); }; })()}); }
+  var tl2=S.db.teachProjects||[];
+  for(i=0;i<tl2.length;i++){ var tp2=tl2[i];
+    if(hit(tp2.name)||hit(tp2.code))
+      out.push({g:'其他项目',t:tp2.name,m:[tp2.level,tp2.period].filter(Boolean).join(' · '),
+        fn:(function(){ return function(){ go('teaching'); }; })()}); }
+  var ptl=S.db.patents||[];
+  for(i=0;i<ptl.length;i++){ var pt=ptl[i];
+    if(hit(pt.name)||hit(pt.no))
+      out.push({g:'专利',t:pt.name,m:pt.no||'',
+        fn:(function(){ return function(){ go('patents'); }; })()}); }
+  var pll=S.db.plans||[];
+  for(i=0;i<pll.length;i++){ var pl2=pll[i];
+    if(hit(pl2.title))
+      out.push({g:'工作计划',t:pl2.title,m:pl2.done?'已完成':'进行中',
+        fn:(function(){ return function(){ go('today'); }; })()}); }
+  for(i=0;i<S.db.ideas.length;i++){ var d=S.db.ideas[i];
+    if(hit(d.title)||hit(d.content)||hit((d.tags||[]).join(' ')))
+      out.push({g:'灵感',t:d.title,m:(d.tags||[]).join(' '),
+        fn:(function(){ return function(){ go('ideas'); }; })()}); }
+  for(i=0;i<S.db.diary.length;i++){ var y=S.db.diary[i];
+    if(hit(y.content)||hit((y.tags||[]).join(' ')))
+      out.push({g:'日记',t:y.date,m:String(y.content).slice(0,60),
+        fn:(function(){ return function(){ go('diary'); }; })()}); }
+  for(i=0;i<S.db.events.length;i++){ var e=S.db.events[i];
+    if(hit(e.title)||hit(e.notes))
+      out.push({g:'日程',t:e.title,m:e.date+' '+String(e.start||''),
+        fn:(function(){ return function(){ go('calendar'); }; })()}); }
+  for(i=0;i<S.db.shortcuts.length;i++){ var s=S.db.shortcuts[i];
+    if(hit(s.name)||hit(s.target))
+      out.push({g:'常用',t:s.name,m:s.target,
+        fn:(function(x){ return function(){ openShortcut(x.id); }; })(s)}); }
+  return out.slice(0,40);
+}
+
+/* ================= 渲染：框架 ================= */
+function navBadge(k){
+  if(k==='papers') return activePapers().length;
+  if(k==='projects') return activeProjects().length;
+  if(k==='pubs') return S.db.pubs.length;
+  if(k==='grants') return (S.db.grants||[]).length;
+  if(k==='teaching') return (S.db.teaching||[]).length+(S.db.teachProjects||[]).length;
+  if(k==='patents') return (S.db.patents||[]).length;
+  if(k==='ideas') return S.db.ideas.length;
+  if(k==='diary') return S.db.diary.length;
+  if(k==='common') return S.db.shortcuts.length;
+  if(k==='calendar') return S.db.events.length;
+  return '';
+}
+/* ---- 导航名：默认取文案，右键可改名，自定义名存在 settings.navLabels ---- */
+function navDef(k){
+  for(var i=0;i<NAVDEF.length;i++) if(NAVDEF[i].k===k) return NAVDEF[i];
+  return null;
+}
+function navDefault(k){ var d=navDef(k); return d? tt(d.lb||d.k) : k; }
+function navLabelsRaw(){
+  return (S.db&&S.db.settings&&S.db.settings.navLabels)||{};
+}
+function navCustom(k){ var v=navLabelsRaw()[k]; return (v==null?'':String(v)).trim(); }
+function navLabel(k){ return navCustom(k)||navDefault(k); }
+function setNavLabel(k,v){
+  if(!S.db.settings) S.db.settings={};
+  S.db.settings.navLabels=S.db.settings.navLabels||{};
+  S.db.settings.navLabels[k]=(v==null?'':String(v)).trim();
+  saveKey('settings');
+}
+function renderNav(){
+  var h='',m='',i,n,b,lb,tip;
+  for(i=0;i<NAVDEF.length;i++){
+    n=NAVDEF[i]; b=navBadge(n.k); lb=navLabel(n.k);
+    tip=lb+(LANG==='zh'?'（右键可重命名）':' (right-click to rename)');
+    h+='<a data-act="nav" data-nav="'+n.k+'" class="'+(S.page===n.k?'on':'')+'" title="'+esc(tip)+'">'
+      + ic(n.i,15)+'<span class="lb">'+esc(lb)+'</span>'+(b!==''?'<span class="badge">'+b+'</span>':'')+'</a>';
+    m+='<a data-act="nav" data-nav="'+n.k+'" class="'+(S.page===n.k?'on':'')+'" title="'+esc(tip)+'">'
+      + ic(n.i,17)+'<span class="lb">'+esc(lb)+'</span></a>';
+  }
+  $('nav').innerHTML=h; $('mnav').innerHTML=m;
+}
+
+/* ---- 导航：右键菜单 / 就地重命名 ---- */
+var CTXEL=null;
+function closeCtx(){
+  if(CTXEL&&CTXEL.parentNode) CTXEL.parentNode.removeChild(CTXEL);
+  CTXEL=null;
+}
+function ctxMenu(x,y,html){
+  closeCtx();
+  var d=document.createElement('div');
+  d.className='ctx'; d.innerHTML=html;
+  document.body.appendChild(d);
+  var w=d.offsetWidth, hh=d.offsetHeight;
+  if(x+w>window.innerWidth-8) x=Math.max(8,window.innerWidth-w-8);
+  if(y+hh>window.innerHeight-8) y=Math.max(8,y-hh);
+  d.style.left=Math.max(8,x)+'px'; d.style.top=Math.max(8,y)+'px';
+  CTXEL=d;
+}
+function navCtxMenu(k,x,y){
+  var h='<div class="hd">'+esc(navDefault(k))+'</div>'
+    +'<button type="button" data-act="navRename" data-nav="'+esc(k)+'">'
+    + ic('edit',13)+(LANG==='zh'?'重命名':'Rename')+'</button>';
+  if(navCustom(k))
+    h+='<button type="button" data-act="navReset" data-nav="'+esc(k)+'">'
+      + ic('refresh',13)+(LANG==='zh'?'恢复默认名称':'Use default name')+'</button>';
+  ctxMenu(x,y,h);
+}
+function startNavRename(k){
+  var a=document.querySelector('#nav a[data-nav="'+k+'"]')||document.querySelector('#mnav a[data-nav="'+k+'"]');
+  if(!a||a.querySelector('.lbin')) return;
+  var sp=a.querySelector('span.lb'); if(!sp) return;
+  var inp=document.createElement('input');
+  inp.className='lbin'; inp.type='text'; inp.maxLength=12;
+  inp.value=navCustom(k);
+  inp.setAttribute('placeholder',navDefault(k));
+  sp.parentNode.replaceChild(inp,sp);
+  a.className+=' editing';
+  inp.focus(); inp.select();
+  var done=false;
+  function finish(ok, msg){
+    if(done) return; done=true;
+    var v=ok? String(inp.value).replace(/\s+/g,' ').trim().slice(0,12) : navCustom(k);
+    if(!ok||v===navCustom(k)){ refreshAll(); if(msg) toast(msg); return; }
+    setNavLabel(k, v===navDefault(k)? '' : v);
+    refreshAll();
+    toast(msg||((LANG==='zh'?'已重命名为「':'Renamed to "')+navLabel(k)+(LANG==='zh'?'」':'"')),'ok',
+      function(){ setNavLabel(k,''); refreshAll(); });
+  }
+  inp.addEventListener('keydown',function(e){
+    e.stopPropagation();
+    if(e.key==='Enter'){ e.preventDefault(); finish(true); }
+    else if(e.key==='Escape'){ e.preventDefault(); finish(false); }
+  });
+  inp.addEventListener('blur',function(){ finish(true); });
+  inp.addEventListener('click',function(e){ e.stopPropagation(); });
+  inp.addEventListener('mousedown',function(e){ e.stopPropagation(); });
+  inp.addEventListener('contextmenu',function(e){ e.stopPropagation(); });
+}
+document.addEventListener('contextmenu',function(e){
+  var el=e.target,a=null;
+  while(el&&el!==document.body&&el.nodeType===1){
+    if(el.tagName==='A'&&el.hasAttribute&&el.hasAttribute('data-nav')){ a=el; break; }
+    el=el.parentNode;
+  }
+  if(!a){ if(CTXEL) closeCtx(); return; }
+  e.preventDefault();
+  navCtxMenu(a.getAttribute('data-nav'), e.clientX, e.clientY);
+});
+document.addEventListener('mousedown',function(e){
+  if(CTXEL&&!CTXEL.contains(e.target)) closeCtx();
+});
+document.addEventListener('scroll',function(){ if(CTXEL) closeCtx(); },true);
+window.addEventListener('resize',function(){ if(CTXEL) closeCtx(); });
+function renderTop(){
+  var hr=new Date().getHours();
+  var key = hr<6?'night':(hr<11?'morning':(hr<13?'noon':(hr<18?'afternoon':(hr<23?'evening':'night'))));
+  var greet={zh:{night:'夜深了',morning:'早上好',noon:'中午好',afternoon:'下午好',evening:'晚上好'},
+    en:{night:'Working late',morning:'Good morning',noon:'Good afternoon',afternoon:'Good afternoon',evening:'Good evening'}}[LANG];
+  var me=(S.db.settings&&S.db.settings.me)||'';
+  $('hello').innerHTML=esc(greet[key])+(me?'，'+esc(me):'')+'<span>'+todayStr().replace(/-/g,'/')+'</span>';
+  $('searchHint').textContent=tt('search');
+  $('quickHint').textContent=tt('quick');
+  $('langBtn').textContent=(LANG==='zh'?'EN':'中');
+  $('verTxt').textContent='本地版 v'+(S.version||S.db.version||'2.3');
+  $('txtZot').textContent=S.zot.ok? ('Zotero · '+S.zot.total+' 条')
+    : (S.zot.pending? 'Zotero 准备中…' : 'Zotero 未连接');
+  $('dotZot').className='dot'+(S.zot.ok?'':(S.zot.pending?' wait':' off'));
+  var nv=S.obs.vaults.length;
+  $('txtObs').textContent=nv? ('Obsidian · '+nv+' 个仓库') : 'Obsidian 未连接';
+  $('dotObs').className='dot'+(nv?'':' off');
+}
+var focusLeft=25*60, focusTimer=null, FOCUS_MIN=25;
+function renderFocus(){
+  var m=Math.floor(focusLeft/60), s=focusLeft%60;
+  $('focusTm').textContent=('0'+m).slice(-2)+':'+('0'+s).slice(-2);
+  $('focusBtn').textContent = focusTimer? (LANG==='zh'?'暂停':'Pause') : (LANG==='zh'?'开始':'Start');
+  $('focusBox').className='focus'+(focusTimer?' run':'');
+}
+function renderPage(){
+  var host=$('body');
+  if(S.page==='today') host.innerHTML=viewToday();
+  else if(S.page==='calendar') host.innerHTML=viewCalendar();
+  else if(S.page==='schedule') host.innerHTML=viewSchedule();
+  else if(S.page==='papers') host.innerHTML=viewPapers();
+  else if(S.page==='projects') host.innerHTML=viewProjects();
+  else if(S.page==='pubs') host.innerHTML=viewPubs();
+  else if(S.page==='grants') host.innerHTML=viewGrants();
+  else if(S.page==='teaching') host.innerHTML=viewTeaching();
+  else if(S.page==='patents') host.innerHTML=viewPatents();
+  else if(S.page==='ideas') host.innerHTML=viewIdeas();
+  else if(S.page==='diary') host.innerHTML=viewDiary();
+  else host.innerHTML=viewCommon();
+}
+function refreshAll(){ renderTop(); renderNav(); renderPage(); renderFocus(); afterRender(); }
+function afterRender(){
+  // 渲染完之后才挂异步内容，保证「渲染函数之间不互相调用」（铁律 9）
+  if(S.page==='papers'&&S.selPaper) loadObsMatch(S.selPaper);
+}
+function go(page){ S.page=page; refreshAll(); var b=$('body'); if(b) b.scrollTop=0; }
+
+/* ---------- 论文 ↔ Obsidian 笔记联动 ---------- */
+function loadObsMatch(pid){
+  var box=$('obsBox'); if(!box) return;
+  var p=findPaper(pid); if(!p) return;
+  if(!S.obs.vaults.length){ box.innerHTML='<div class="sub">'+(LANG==='zh'?'未检测到 Obsidian 仓库':'No Obsidian vault')+'</div>'; return; }
+  if(S._obsM&&S._obsM.pid===pid&&Date.now()-S._obsM.ts<60000){ renderObsMatch(pid); return; }
+  box.innerHTML='<div class="sub" style="padding:2px 0">'+(LANG==='zh'?'匹配中…':'Matching…')+'</div>';
+  api('/api/obsidian/match?vault='+encodeURIComponent(vaultArg())+'&title='+encodeURIComponent(p.title||''))
+    .then(function(r){
+      S._obsM={pid:pid,ts:Date.now(),items:(r&&r.items)||[]};
+      renderObsMatch(pid);
+    }).catch(function(){
+      var b=$('obsBox'); if(b) b.innerHTML='<div class="sub">'+(LANG==='zh'?'匹配失败':'Match failed')+'</div>';
+    });
+}
+function renderObsMatch(pid){
+  var box=$('obsBox'); if(!box) return;
+  var p=findPaper(pid); if(!p) return;
+  var m=(S._obsM&&S._obsM.pid===pid)?(S._obsM.items||[]):[], h='', i;
+  if(p.obsidianRel){
+    h+='<div class="fileline" style="background:var(--green-soft);border-radius:9px;padding:6px 9px">'
+      +'<span data-act="previewObs" data-rel="'+esc(p.obsidianRel)+'" data-vault="'+esc(p.obsidianVault||'')+'" style="display:flex;gap:8px;align-items:center;flex:1 1 auto;min-width:0;cursor:pointer">'
+      + ic('book',13,'var(--green-d)')+'<span class="fn">'+esc(p.obsidianName||p.obsidianRel)+'</span>'
+      +'<span class="chip g" style="flex:0 0 auto">'+(LANG==='zh'?'已关联':'Linked')+'</span></span>'
+      +'<button class="btn sm ghost" data-act="openObsApp" data-rel="'+esc(p.obsidianRel)+'" data-vault="'+esc(p.obsidianVaultName||vaultNameOf(p.obsidianVault)||'')+'" title="'+(LANG==='zh'?'用 Obsidian 打开':'Open in Obsidian')+'">'+ic('open',11)+'</button>'
+      +'<button class="btn sm ghost" data-act="unlinkObs" data-id="'+esc(pid)+'">'+ic('x',11)+'</button></div>';
+  }
+  if(m.length){
+    if(!p.obsidianRel) h+='<div class="sub" style="font-size:11px;margin:1px 0 4px">'
+      +(LANG==='zh'?'按标题自动匹配到：':'Auto-matched by title:')+'</div>';
+    for(i=0;i<m.length;i++){
+      if(p.obsidianRel===m[i].rel) continue;
+      var loc=[m[i].vaultName,m[i].folder].filter(Boolean).join(' / ');
+      h+='<div class="fileline">'
+        +'<span data-act="previewObs" data-rel="'+esc(m[i].rel)+'" data-vault="'+esc(m[i].vault||'')+'" style="display:flex;gap:8px;align-items:center;flex:1 1 auto;min-width:0;cursor:pointer">'
+        + ic('book',13,'var(--ink3)')+'<span class="fn">'+esc(m[i].name)+'</span>'
+        +'<span class="sub" style="font-size:10.5px;white-space:nowrap">'+esc(loc)+'</span></span>'
+        +'<button class="btn sm" data-act="linkObs" data-id="'+esc(pid)+'" data-rel="'+esc(m[i].rel)+'" data-name="'+esc(m[i].name)
+        +'" data-vault="'+esc(m[i].vault||'')+'" data-vname="'+esc(m[i].vaultName||'')+'" title="'
+        +(LANG==='zh'?'关联这条':'Link this one')+'">'+ic('plus',11)+'</button></div>';
+    }
+  } else if(!p.obsidianRel){
+    h+='<div class="sub">'+(LANG==='zh'?'没匹配到同名笔记，可去「灵感」页浏览仓库手动找':'No matching note')+'</div>';
+  }
+  h+='<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">'
+    +'<button class="btn sm" data-act="rematchObs" data-id="'+esc(pid)+'">'+ic('refresh',11)+(LANG==='zh'?'重新匹配':'Re-match')+'</button>'
+    +'<button class="btn sm" data-act="browseObsidian">'+ic('book',11)+(LANG==='zh'?'浏览仓库':'Browse vault')+'</button></div>';
+  box.innerHTML=h;
+}
+
+/* ================= 页面：今日 ================= */
+function statBox(lb,vl,unit,color,iconName){
+  return '<div class="stat"><div class="lb">'+ic(iconName,12,color)+esc(lb)+'</div>'
+    +'<div class="vl" style="color:'+color+'">'+vl+(unit?'<small>'+unit+'</small>':'')+'</div></div>';
+}
+function dueLabel(n){
+  if(n===null||n===undefined) return '';
+  if(n<0) return '<span style="color:var(--red);font-weight:700">已逾期 '+Math.abs(n)+' 天</span>';
+  if(n===0) return '今天到期';
+  return '还有 '+n+' 天';
+}
+function viewToday(){
+  var h='', i;
+  var ap=activePapers(), aj=activeProjects(), dl=dueList(7), over=0;
+  for(i=0;i<dl.length;i++) if(dl[i].n<0) over++;
+
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('today',18,'var(--green)')+esc(tt('today'))+'</h1>'
+    +'<span class="sub">'+esc(tt('todaySub'))+'</span></div>';
+
+  h+='<div class="grid4">'
+    + statBox('进行中论文',ap.length,'篇','var(--green)','paper')
+    + statBox('进行中课题',aj.length,'个','var(--blue)','proj')
+    + statBox('近 7 天截止',dl.length,'项',over?'var(--red)':'var(--orange)','clock')
+    + statBox('已发表',S.db.pubs.length,'篇','var(--purple)','wall')
+    +'</div>';
+
+  h+='<div class="grid2 mt"><div class="stack">';
+
+  h+='<div class="card"><div class="card-h">'+ic('cal',15,'var(--blue)')+'<h3>'+esc(tt('schedule'))+'</h3>'
+    +'<div class="right"><button class="btn sm" data-act="addEvent">'+ic('plus',12)+esc(tt('add'))+'</button></div></div>';
+  var evs=eventsOn(todayStr());
+  if(!evs.length) h+='<div class="empty">'+ic('coffee',26,'var(--sage)')+esc(tt('noEvent'))+'</div>';
+  else{
+    h+='<div class="tl">';
+    for(i=0;i<evs.length;i++){
+      var e=evs[i], rel='';
+      if(e.relatedType==='paper'&&e.relatedId) rel=paperTitle(e.relatedId);
+      if(e.relatedType==='project'&&e.relatedId) rel=projName(e.relatedId);
+      h+='<div class="tl-row"><div class="tl-time">'+esc(e.start||'--:--')+'</div><div class="tl-dot"></div>'
+        +'<div class="tl-body"><div class="t">'+esc(e.title)+' <span class="chip n">'+esc(e.type||'其他')+'</span></div>'
+        +'<div class="m">'+esc(e.end?(e.start+'-'+e.end):'')+(rel?' <span class="dotsep">·</span> '+esc(rel):'')+'</div></div>'
+        +'<div style="display:flex;gap:5px">'
+        +'<button class="btn sm ghost" data-act="editEvent" data-id="'+esc(e.id)+'">'+ic('edit',12)+'</button>'
+        +'<button class="btn sm ghost" data-act="delEvent" data-id="'+esc(e.id)+'">'+ic('trash',12)+'</button>'
+        +'</div></div>';
+    }
+    h+='</div>';
+  }
+  h+='</div>';
+
+  var na=nextActions();
+  h+='<div class="card"><div class="card-h">'+ic('flag',15,'var(--orange)')+'<h3>'+esc(tt('actions'))+'</h3>'
+    +'<div class="right"><span class="sub">'+na.length+' 项</span></div></div>';
+  if(!na.length) h+='<div class="empty">'+ic('sprout',26,'var(--sage)')+esc(tt('noAction'))+'</div>';
+  else{
+    h+='<div style="padding:12px 16px">';
+    for(i=0;i<Math.min(na.length,6);i++){
+      var a=na[i];
+      h+='<div class="act"><div class="n">'+(i+1)+'</div><div class="b">'
+        +'<div class="t">'+esc(a.next)+'</div>'
+        +'<div class="m">'+esc(a.title)+' <span class="dotsep">·</span> '+dueLabel(a.n)+
+        (a.due?'（'+esc(a.due)+'）':'')+'</div></div>'
+        +'<button class="btn sm" data-act="jump" data-id="'+esc(a.id)+'" data-kind="'+a.kind+'">'+ic('chevr2',12)+'</button></div>';
+    }
+    h+='</div>';
+  }
+  h+='</div>';
+
+  /* 工作计划 —— 勾选即完成 */
+  var plans=S.db.plans||[], pend=0, pi;
+  for(pi=0;pi<plans.length;pi++) if(!plans[pi].done) pend++;
+  h+='<div class="card"><div class="card-h">'+ic('check',15,'var(--green)')+'<h3>'+esc(tt('plan'))+'</h3>'
+    +'<span class="sub">'+pend+' / '+plans.length+'</span><div class="right">'
+    +'<button class="btn sm" data-act="addPlan">'+ic('plus',12)+esc(tt('add'))+'</button></div></div>';
+  if(!plans.length) h+='<div class="empty">'+ic('check',26,'var(--sage)')+esc(tt('noPlan'))+'</div>';
+  else{
+    var ord=plans.slice().sort(function(a,b){
+      if(!!a.done!==!!b.done) return a.done?1:-1;
+      var w={high:0,normal:1,low:2};
+      return (w[a.priority]==null?1:w[a.priority])-(w[b.priority]==null?1:w[b.priority]);
+    });
+    h+='<div style="padding:8px 16px 14px">';
+    for(pi=0;pi<ord.length;pi++){
+      var pl=ord[pi];
+      h+='<div class="rem"><button class="ck'+(pl.done?' on':'')+'" data-act="togglePlan" data-id="'+esc(pl.id)+'" '
+        +'title="'+(pl.done?(LANG==='zh'?'标为未完成':'Undo'):(LANG==='zh'?'标为完成':'Done'))+'">'+ic('check',11,'','3')+'</button>'
+        +'<div style="flex:1 1 auto;min-width:0"><div style="font-size:12.7px;'
+        +(pl.done?'text-decoration:line-through;color:var(--ink3)':'font-weight:600')+'">'+esc(pl.title)+'</div>'
+        +((pl.priority==='high'&&!pl.done)?'<span class="chip r" style="margin-top:3px">重要</span>':'')
+        +'</div>'
+        +'<button class="btn sm ghost" data-act="editPlan" data-id="'+esc(pl.id)+'">'+ic('edit',11)+'</button>'
+        +'<button class="btn sm ghost" data-act="delPlan" data-id="'+esc(pl.id)+'">'+ic('trash',11)+'</button></div>';
+    }
+    h+='</div>';
+  }
+  h+='</div>';
+
+  var pr=recentProgress(6);
+  h+='<div class="card"><div class="card-h">'+ic('spark',15,'var(--sage)')+'<h3>'+esc(tt('progress'))+'</h3></div>';
+  if(!pr.length) h+='<div class="empty">'+esc(tt('noProgress'))+'</div>';
+  else{
+    h+='<div style="padding:10px 16px 14px">';
+    for(i=0;i<pr.length;i++){
+      h+='<div class="rem"><div class="ic" style="background:var(--sage-soft);color:var(--green-d)">'+ic('chevr2',12)+'</div>'
+        +'<div style="flex:1 1 auto;min-width:0"><div style="font-size:12.8px">'+esc(pr[i].text)+'</div>'
+        +'<div class="sub" style="font-size:11px">'+esc(pr[i].type)+' · '+esc(pr[i].who)+' · '+fmtTime(pr[i].t/1000)+'</div></div></div>';
+    }
+    h+='</div>';
+  }
+  h+='</div></div>';
+
+  h+='<div class="stack">';
+  var f=todaysFocus();
+  h+='<div class="today-hero"><div class="k">'+esc(LANG==='zh'?'今日重点':'Today\'s focus')+'</div>';
+  if(!f){ h+='<div class="big muted">'+esc(LANG==='zh'?'还没有在推进的论文或课题':'Nothing in progress yet')+'</div>'; }
+  else{
+    h+='<div class="big">'+esc(f.title)+'</div>';
+    h+='<div class="sub">'+esc(f.kind==='paper'?'论文':'课题')+' · '+esc(f.rec.stage||f.rec.status||'')
+      +' · '+(f.due? esc(f.due)+' · '+dueLabel(f.n) : '未设截止')+'</div>';
+    if(f.rec.nextAction) h+='<div class="nx">'+ic('flag',14,'var(--green-d)')+'<span>'+esc(f.rec.nextAction)+'</span></div>';
+    h+='<div style="display:flex;gap:6px;margin-top:11px;flex-wrap:wrap">'
+      +'<button class="btn sm primary" data-act="jump" data-id="'+esc(f.id)+'" data-kind="'+f.kind+'">'+ic('chevr2',12)+esc(LANG==='zh'?'去处理':'Open')+'</button>'
+      +(f.rec.path?'<button class="btn sm" data-act="openPath" data-path="'+esc(f.rec.path)+'">'+ic('folder',12)+esc(tt('openDir'))+'</button>':'')
+      +'</div>';
+  }
+  h+='</div>';
+
+  h+=todayClassesHtml();
+
+  h+='<div class="card"><div class="card-h">'+ic('bell',15,'var(--red)')+'<h3>'+esc(tt('remind'))+'</h3></div>'
+    +'<div style="padding:8px 16px 14px">';
+  var any=false, dl7=[];
+  for(i=0;i<dl.length;i++) if(dl[i].n<=7) dl7.push(dl[i]);
+  if(dl7.length){
+    any=true;
+    h+='<div class="sect-h" style="margin-top:8px">'+esc(tt('dueSoon'))+'</div>';
+    for(i=0;i<Math.min(dl7.length,5);i++){
+      var r=dl7[i];
+      h+='<div class="rem"><div class="ic" style="background:'+(r.n<0?'var(--red-soft)':'var(--orange-soft)')
+        +';color:'+(r.n<0?'var(--red)':'var(--orange)')+'">'+ic('clock',13)+'</div>'
+        +'<div style="flex:1 1 auto;min-width:0"><div style="font-size:12.6px;font-weight:650">'+esc(r.title)+'</div>'
+        +'<div class="sub" style="font-size:11px">'+esc(r.due)+' · '+dueLabel(r.n)+'</div></div>'
+        +'<button class="btn sm ghost" data-act="jump" data-id="'+esc(r.id)+'" data-kind="'+r.kind+'">'+ic('chevr2',12)+'</button></div>';
+    }
+  }
+  var wt=waitingPapers();
+  if(wt.length){
+    any=true;
+    h+='<div class="sect-h">'+esc(tt('waitReview'))+'</div>';
+    for(i=0;i<Math.min(wt.length,4);i++){
+      h+='<div class="rem"><div class="ic" style="background:var(--purple-soft);color:var(--purple)">'+ic('paper',13)+'</div>'
+        +'<div style="flex:1 1 auto;min-width:0"><div style="font-size:12.6px;font-weight:650">'+esc(wt[i].title)+'</div>'
+        +'<div class="sub" style="font-size:11px">'+esc(wt[i].status)+(wt[i].round?' · '+esc(wt[i].round):'')+'</div></div></div>';
+    }
+  }
+  if(!any) h+='<div class="empty" style="padding:22px 8px">'+ic('sprout',24,'var(--sage)')+esc(LANG==='zh'?'暂无提醒':'All clear')+'</div>';
+  h+='</div></div></div></div></div>';
+  return h;
+}
+
+/* ================= 页面：日历 ================= */
+function weekStartOf(d){ var dow=(d.getDay()+6)%7;
+  return new Date(d.getFullYear(),d.getMonth(),d.getDate()-dow); }
+function evCls(type){ var i=ETYPES.indexOf(type); return 't-h'+((i<0?4:i)+1); }
+function viewCalendar(){
+  var h='', i, k;
+  var y=S.calYear, m=S.calMonth;
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('cal',18,'var(--blue)')+esc(tt('calendar'))+'</h1>'
+    +'<span class="sub">'+esc(tt('calendarSub'))+'</span><div class="right">'
+    +'<div class="seg">'
+    +'<button data-act="calMode" data-v="month" class="'+(S.calMode==='month'?'on':'')+'">'+(LANG==='zh'?'月视图':'Month')+'</button>'
+    +'<button data-act="calMode" data-v="week" class="'+(S.calMode==='week'?'on':'')+'">'+(LANG==='zh'?'周视图':'Week')+'</button>'
+    +'</div><button class="btn sm" data-act="addEvent">'+ic('plus',12)+esc(tt('add'))+'</button></div></div>';
+
+  h+='<div class="card"><div class="cal-bar">'
+    +'<button class="btn sm icon" data-act="calPrev">'+ic('chevl',13)+'</button>'
+    +'<span class="cal-title">'+y+' '+(LANG==='zh'?'年':'/')+' '+(m+1)+(LANG==='zh'?' 月':'')+'</span>'
+    +'<button class="btn sm icon" data-act="calNext">'+ic('chevr2',13)+'</button>'
+    +'<button class="btn sm" data-act="calToday">'+(LANG==='zh'?'今天':'Today')+'</button>'
+    +'<div class="spacer"></div>'
+    +'<span class="sub">'+(LANG==='zh'?'拖动事件到其他日期即可改期':'Drag an event to another day to reschedule')+'</span>'
+    +'</div>';
+
+  if(S.calMode==='month'){
+    h+='<div class="cal-dow">';
+    for(i=0;i<7;i++) h+='<div>'+(LANG==='zh'?'周'+WD[i]:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i])+'</div>';
+    h+='</div><div class="cal-grid">';
+    var first=new Date(y,m,1), startDow=(first.getDay()+6)%7;
+    var start=new Date(y,m,1-startDow);
+    for(i=0;i<42;i++){
+      var d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
+      var ds=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+      var outCell=(d.getMonth()!==m), isToday=(ds===todayStr());
+      var dls=deadlinesOn(ds), overDl=false;
+      for(k=0;k<dls.length;k++) if(dls[k].over&&!dls[k].done) overDl=true;
+      h+='<div class="cal-cell'+(outCell?' out':'')+(isToday?' today':'')+(overDl?' over':'')
+        +'" data-daycell="'+ds+'"><div class="dn"><span class="n">'+d.getDate()+'</span>'
+        +(isToday?'<span class="hol">'+(LANG==='zh'?'今天':'today')+'</span>':'')+'</div>';
+      var evs=eventsOn(ds);
+      for(k=0;k<Math.min(evs.length,3);k++){
+        var e=evs[k];
+        h+='<div class="ev '+evCls(e.type)+'" draggable="true" data-act="editEvent" data-id="'+esc(e.id)
+          +'" title="'+esc(e.title)+'">'+(e.start?esc(String(e.start).slice(0,5))+' ':'')+esc(e.title)+'</div>';
+      }
+      if(evs.length>3) h+='<div class="sub" style="font-size:10.5px;margin-top:2px">+'+(evs.length-3)+'</div>';
+      for(k=0;k<Math.min(dls.length,3);k++){
+        var x=dls[k];
+        h+='<div class="dl '+x.kind+(x.over&&!x.done?' over':'')+'" data-act="jump" data-kind="'+x.kind
+          +'" data-id="'+esc(x.id)+'" title="'+esc(x.title)+'">'
+          +(x.kind==='paper'?(LANG==='zh'?'论文 ':'Paper '):(LANG==='zh'?'课题 ':'Topic '))
+          +esc(String(x.title).slice(0,13))+'</div>';
+      }
+      h+='</div>';
+    }
+    h+='</div>';
+  } else {
+    var anchor=new Date(y,m,1);
+    if(anchor.getMonth()!==m) anchor=new Date(y,m,1);
+    var wk=weekStartOf(new Date(y,m,Math.min(28,new Date().getDate())));
+    if(S.calYear===new Date().getFullYear()&&S.calMonth===new Date().getMonth()) wk=weekStartOf(new Date());
+    h+='<div class="whead"><div></div>';
+    for(i=0;i<7;i++){
+      var dd=new Date(wk.getFullYear(),wk.getMonth(),wk.getDate()+i);
+      var dds=dd.getFullYear()+'-'+('0'+(dd.getMonth()+1)).slice(-2)+'-'+('0'+dd.getDate()).slice(-2);
+      h+='<div'+(dds===todayStr()?' style="color:var(--green-d)"':'')+'>'
+        +WD[i]+' '+dd.getDate()+'</div>';
+    }
+    h+='</div><div class="cal-week">';
+    for(var hh=8;hh<=22;hh++){
+      h+='<div class="hh">'+('0'+hh).slice(-2)+':00</div>';
+      for(i=0;i<7;i++){
+        var d2=new Date(wk.getFullYear(),wk.getMonth(),wk.getDate()+i);
+        var ds2=d2.getFullYear()+'-'+('0'+(d2.getMonth()+1)).slice(-2)+'-'+('0'+d2.getDate()).slice(-2);
+        var ev2=eventsOn(ds2), cell='';
+        for(k=0;k<ev2.length;k++){
+          if(parseInt(String(ev2[k].start||'00:00').slice(0,2),10)===hh)
+            cell+='<div class="ev '+evCls(ev2[k].type)+'" draggable="true" data-act="editEvent" data-id="'
+              +esc(ev2[k].id)+'" style="margin-top:1px">'+esc(ev2[k].title)+'</div>';
+        }
+        h+='<div class="wc" data-daycell="'+ds2+'">'+cell+'</div>';
+      }
+    }
+    h+='</div>';
+  }
+  h+='</div>';
+
+  var list=[];
+  for(i=0;i<S.db.events.length;i++) if(S.db.events[i].date>=todayStr()) list.push(S.db.events[i]);
+  list.sort(function(a,b){ return (a.date+String(a.start||'')).localeCompare(b.date+String(b.start||'')); });
+  h+='<div class="card mt"><div class="card-h">'+ic('clock',15,'var(--sage)')+'<h3>'
+    +(LANG==='zh'?'即将到来':'Upcoming')+'</h3></div>';
+  if(!list.length) h+='<div class="empty">'+(LANG==='zh'?'暂无日程':'Nothing scheduled')+'</div>';
+  else{
+    h+='<div style="padding:8px 10px">';
+    for(i=0;i<Math.min(list.length,8);i++){
+      var e3=list[i], rel='';
+      if(e3.relatedType==='paper'&&e3.relatedId) rel=paperTitle(e3.relatedId);
+      if(e3.relatedType==='project'&&e3.relatedId) rel=projName(e3.relatedId);
+      h+='<div class="rem" style="padding:9px 6px"><div class="ic" style="background:var(--sage-soft);color:var(--green-d)">'+ic('cal',13)+'</div>'
+        +'<div style="flex:1 1 auto;min-width:0"><div style="font-size:12.8px;font-weight:650">'+esc(e3.title)+'</div>'
+        +'<div class="sub" style="font-size:11px">'+esc(e3.date)+' '+esc(e3.start||'')
+        +(e3.end?'-'+esc(e3.end):'')+' · '+esc(e3.type||'其他')+(rel?' · '+esc(rel):'')+'</div></div>'
+        +'<button class="btn sm ghost" data-act="editEvent" data-id="'+esc(e3.id)+'">'+ic('edit',12)+'</button>'
+        +'<button class="btn sm ghost" data-act="delEvent" data-id="'+esc(e3.id)+'">'+ic('trash',12)+'</button></div>';
+    }
+    h+='</div>';
+  }
+  h+='</div></div>';
+  return h;
+}
+
+/* ================= 课表 ================= */
+var DOW=['','周一','周二','周三','周四','周五','周六','周日'];
+var DOWEN=['','Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+var CLSCOLORS=[['var(--green-soft)','var(--green-line)'],
+               ['var(--blue-soft)','var(--blue-line)'],
+               ['var(--purple-soft)','var(--purple-line)'],
+               ['var(--orange-soft)','var(--orange-line)'],
+               ['var(--gold-soft)','var(--gold-line)'],
+               ['var(--red-soft)','var(--red-line)']];
+function dowName(n){ return LANG==='zh'? DOW[n] : DOWEN[n]; }
+function dayOpts(cur){
+  var h='';
+  for(var i=1;i<=7;i++)
+    h+='<option value="'+i+'"'+(parseInt(cur,10)===i?' selected':'')+'>'+esc(dowName(i))+'</option>';
+  return h;
+}
+function todayDow(){ var d=new Date().getDay(); return d===0?7:d; }
+// 开学第一周周一 → 现在第几周（1 起）；没设开学日返回 0
+function semesterWeek(){
+  var st=(S.db.settings&&S.db.settings.semStart)||'';
+  if(!st) return 0;
+  var d0=new Date(st+'T00:00:00');
+  if(isNaN(d0.getTime())) return 0;
+  var wk=weekStartOf(new Date());
+  return Math.round((wk-d0)/604800000)+1;
+}
+function periodTime(n){
+  var t=(S.db.settings&&S.db.settings.periodTimes)||'';
+  if(!t) return '';
+  var arr=String(t).split(',');
+  return arr[n-1]? String(arr[n-1]).trim() : '';
+}
+// 某节课在「第 wkN 周」是否要显示（行课周次 + 单双周）
+function classVisible(c,wkN){
+  var w=String(c.weeks||'').trim();
+  if(w && wkN>0){                       // 行课周期，如 1-16 / 5-10
+    var m=w.match(/(\d{1,2})\s*[-–~]\s*(\d{1,2})/);
+    if(m){
+      var a=parseInt(m[1],10), b=parseInt(m[2],10);
+      if(wkN<a || wkN>b) return false;
+    }
+  }
+  var odd=c.odd||'all';
+  if(odd!=='odd'&&odd!=='even') return true;
+  if(!wkN||wkN<1) return true;
+  return ((wkN%2)===1) === (odd==='odd');
+}
+function classesOn(dow,wkN){
+  var out=[], arr=S.db.classes||[], i;
+  for(i=0;i<arr.length;i++){
+    var c=arr[i];
+    if((parseInt(c.day,10)||0)!==dow) continue;
+    if(wkN!=null&&!classVisible(c,wkN)) continue;
+    out.push(c);
+  }
+  out.sort(function(a,b){ return (parseInt(a.start,10)||0)-(parseInt(b.start,10)||0); });
+  return out;
+}
+function clsColor(c,n){
+  var i=Math.abs(parseInt(c.color,10)||String(c.name||'').length+n);
+  return CLSCOLORS[i%CLSCOLORS.length];
+}
+function classCardHtml(c,n){
+  var col=clsColor(c,n||0);
+  var sec=Math.max(1,parseInt(c.sections,10)||1);
+  var meta=[];
+  if(c.location) meta.push(c.location);
+  if(sec>1) meta.push((LANG==='zh'?('连上'+sec+'节'):(sec+' periods')));
+  if(c.odd==='odd') meta.push(LANG==='zh'?'单周':'odd wk');
+  if(c.odd==='even') meta.push(LANG==='zh'?'双周':'even wk');
+  var zn=(LANG==='zh'?'第':'')+(parseInt(c.start,10)||1)+(LANG==='zh'?'节':'');
+  return '<div class="clscard" style="background:'+col[0]+';border:1px solid '+col[1]+'" '
+    +'data-act="editClass" data-id="'+esc(c.id)+'" title="'+esc((c.name||'')+(c.teacher?(' · '+c.teacher):''))+'">'
+    +'<div class="nm">'+esc(c.name||'')+'</div>'
+    +(meta.length?'<div class="lo">'+esc(meta.join(' · '))+'</div>':'')
+    +'<div class="wk">'+esc(zn)+'</div></div>';
+}
+function formSchedule(id,presetDay,presetStart){
+  var c=id? byId(S.db.classes,id) : null;
+  var d=c||{};
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'课程名称':'Course')+'</label>'
+      +'<input id="cName" value="'+esc(d.name||'')+'" placeholder="'+(LANG==='zh'?'电磁场与电磁波':'Course name')+'"></div>'
+    +'<div class="fld"><div class="row">'
+      +'<div><label>'+(LANG==='zh'?'星期':'Day')+'</label><select id="cDay">'
+        +dayOpts(parseInt(d.day,10)||presetDay||1)+'</select></div>'
+      +'<div><label>'+(LANG==='zh'?'开始节次':'Start period')+'</label>'
+        +'<input id="cStart" type="number" min="1" max="14" value="'+esc(d.start||presetStart||1)+'"></div>'
+      +'<div><label>'+(LANG==='zh'?'连上几节':'Length')+'</label>'
+        +'<input id="cSec" type="number" min="1" max="8" value="'+esc(d.sections||2)+'"></div>'
+      +'</div></div>'
+    +'<div class="fld"><div class="row">'
+      +'<div><label>'+(LANG==='zh'?'地点':'Room')+'</label><input id="cLoc" value="'+esc(d.location||'')+'" placeholder="教三 302"></div>'
+      +'<div><label>'+(LANG==='zh'?'班级 / 备注':'Class / note')+'</label><input id="cNote" value="'+esc(d.cls||d.note||'')+'" placeholder="2023 级光电 1-2 班"></div>'
+      +'<div><label>'+(LANG==='zh'?'单双周':'Odd / even')+'</label><select id="cOdd">'
+        +'<option value="all"'+((d.odd||'all')==='all'?' selected':'')+'>'+(LANG==='zh'?'每周':'Every week')+'</option>'
+        +'<option value="odd"'+(d.odd==='odd'?' selected':'')+'>'+(LANG==='zh'?'单周':'Odd weeks')+'</option>'
+        +'<option value="even"'+(d.odd==='even'?' selected':'')+'>'+(LANG==='zh'?'双周':'Even weeks')+'</option>'
+        +'</select></div>'
+      +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'周次范围（可选，如 1-16）':'Weeks (optional, e.g. 1-16)')+'</label>'
+      +'<input id="cWeeks" value="'+esc(d.weeks||'')+'" placeholder="1-16"></div>';
+  modal(c?(LANG==='zh'?'编辑课程':'Edit class'):(LANG==='zh'?'新增课程':'New class'), body, footBtns('cSave'));
+  $('cSave').onclick=function(){
+    var nm=v('cName'); if(!nm){ alert(LANG==='zh'?'请填写课程名称':'Course name required'); return; }
+    var rec=c||{id:uid('c')};
+    rec.name=nm; rec.day=parseInt(v('cDay'),10)||1;
+    rec.start=parseInt(v('cStart'),10)||1; rec.sections=Math.max(1,parseInt(v('cSec'),10)||1);
+    rec.location=v('cLoc'); rec.cls=v('cNote'); rec.odd=v('cOdd')||'all'; rec.weeks=v('cWeeks');
+    if(!c){ S.db.classes=S.db.classes||[]; S.db.classes.push(rec); }
+    saveKey('classes'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+function formClassSettings(){
+  var st=S.db.settings||{};
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'本学期开学第一周的周一':'Monday of week 1')+'</label>'
+      +'<input id="sStart" type="date" value="'+esc(st.semStart||'')+'">'
+      +'<div class="hint" style="margin-top:6px">'+(LANG==='zh'?'填了才能自动判断当前第几周，单双周课程就会自动只对上应周次显示'
+        :'Needed to figure out odd/even weeks.')+'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'每节课开始时间（英文逗号分隔）':'Start time of each period (comma separated)')+'</label>'
+      +'<input id="sTimes" value="'+esc(st.periodTimes||'')+'" placeholder="08:00,08:55,10:00,10:55,14:00,14:55,16:00,16:55,19:00,19:55">'
+      +'<div class="hint" style="margin-top:6px">'+(LANG==='zh'?'不填就只显示「第几节」':'Leave empty to show period numbers only')+'</div></div>';
+  modal(LANG==='zh'?'课表设置':'Timetable settings', body, footBtns('ssSave'));
+  $('ssSave').onclick=function(){
+    S.db.settings.semStart=v('sStart'); S.db.settings.periodTimes=v('sTimes');
+    saveKey('settings'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+var IMP={items:[]};        // 课表导入：解析结果暂存，确认前不写库
+function schViewTabs(vw){
+  var Z=(LANG==='zh');
+  return '<button class="btn sm '+(vw==='week'?'primary':'ghost')+'" data-act="schView" data-v="week">'
+      +(Z?'周表':'Week')+'</button>'
+    +'<button class="btn sm '+(vw==='list'?'primary':'ghost')+'" data-act="schView" data-v="list" style="margin-left:4px">'
+      +(Z?'总表':'List')+'</button>';
+}
+function viewSchedule(){
+  if(S.schView==='list') return viewScheduleList();
+  var Z=(LANG==='zh'), h='', i, j, row, col;
+  var arr=S.db.classes||[];
+  var maxN=10;
+  for(i=0;i<arr.length;i++){
+    var e=Math.max(1,parseInt(arr[i].start,10)||1)+Math.max(1,parseInt(arr[i].sections,10)||1)-1;
+    if(e>maxN) maxN=e;
+  }
+  var off=S.schOff||0;
+  var wk=semesterWeek();
+  var shown=(wk? wk+off : 0);
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('grid',18,'var(--blue)')+esc(navLabel('schedule'))+'</h1>'
+    +'<span class="sub">'+(shown? (Z?('第 '+shown+' 周'):('Week '+shown)) : (Z?'未设开学日期':'Set the semester start to see week numbers'))+'</span>'
+    +'<div class="right">'
+    +schViewTabs('week')
+    +'<button class="btn sm" data-act="importSchedule" style="margin-left:6px">'+(Z?'导入课表':'Import')+'</button>'
+    +'<button class="btn sm" data-act="clsPrev" style="margin-left:6px">'+ic('chevl',13)+'</button>'
+    +'<button class="btn sm" data-act="clsToday">'+(Z?'本周':'This week')+'</button>'
+    +'<button class="btn sm" data-act="clsNext">'+ic('chevr2',13)+'</button>'
+    +'<button class="btn sm" data-act="clsSet" style="margin-left:6px">'+ic('coffee',12)+(Z?'设置':'Setup')+'</button>'
+    +'<button class="btn primary" data-act="addClass" style="margin-left:6px">'+ic('plus',13)+(Z?'新增':'Add')+'</button>'
+    +'</div></div>';
+  h+='<div class="card"><div style="padding:14px;overflow-x:auto">';
+  h+='<table class="sched"><thead><tr><th class="pd"></th>';
+  var td=todayDow();
+  for(j=1;j<=7;j++)
+    h+='<th'+(j===td?' class="today"':'')+'>'+esc(dowName(j))+((j===td&&!off)?'<span class="today-tag"></span>':'')+'</th>';
+  h+='</tr></thead><tbody>';
+  var occ={}, cell={};
+  var list=arr.slice().sort(function(a,b){ return (parseInt(a.start,10)||0)-(parseInt(b.start,10)||0); });
+  for(i=0;i<list.length;i++){
+    var c=list[i];
+    if(!classVisible(c,shown)) continue;
+    var st=Math.max(1,parseInt(c.start,10)||1);
+    var sec=Math.max(1,parseInt(c.sections,10)||1);
+    var dd=parseInt(c.day,10)||1;
+    if(occ[st+'_'+dd]) continue;
+    for(j=0;j<sec;j++) occ[(st+j)+'_'+dd]=1;
+    cell[st+'_'+dd]={c:c,sec:sec};
+  }
+  for(row=1;row<=maxN;row++){
+    h+='<tr><td class="pd"><b>'+row+'</b>'+(periodTime(row)?'<span>'+esc(periodTime(row))+'</span>':'')+'</td>';
+    for(col=1;col<=7;col++){
+      var k=row+'_'+col, it=cell[k];
+      if(it) h+='<td class="has-cls" rowspan="'+it.sec+'">'+classCardHtml(it.c,row)+'</td>';
+      else if(occ[k]){ /* 被上一节的连堂课占用 */ }
+      else h+='<td class="emptycell" data-act="addClass" data-day="'+col+'" data-start="'+row+'"></td>';
+    }
+    h+='</tr>';
+  }
+  h+='</tbody></table></div>';
+  if(!arr.length)
+    h+='<div class="empty" style="padding:4px 0 12px">'+ic('grid',26,'var(--sage)')
+      +(Z?'还没有课程。点右边「新增」手动录入，或者点表格里任意空格直接添加。'
+         :'No classes yet. Add one, or click any empty cell in the grid.')+'</div>';
+  h+='</div>';
+  h+='<div class="hint" style="padding:2px 2px 0">'
+    +(Z?'录成结构化数据才能按周次过滤、在「今日」页自动出现当天课程；'
+        +'直接插一张课表图片虽然省事，但看不清也没法参与搜索。如果需要对照，可以把原图放在「常用」里一键打开。'
+        :'Structured entries can be filtered by week and show up on the Today page automatically.')+'</div>';
+  h+='</div>';
+  return h;
+}
+/* ================= 课表：总表（本学期所有课程） ================= */
+function viewScheduleList(){
+  var Z=(LANG==='zh'), h='', i;
+  var arr=(S.db.classes||[]).slice();
+  arr.sort(function(a,b){
+    return ((parseInt(a.day,10)||0)-(parseInt(b.day,10)||0))
+        || ((parseInt(a.start,10)||0)-(parseInt(b.start,10)||0));
+  });
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('grid',18,'var(--blue)')+esc(navLabel('schedule'))+'</h1>'
+    +'<span class="sub">'+(Z?('本学期共 '+arr.length+' 门课'):(arr.length+' courses'))+'</span>'
+    +'<div class="right">'
+    +schViewTabs('list')
+    +'<button class="btn sm" data-act="importSchedule" style="margin-left:6px">'+(Z?'导入课表':'Import')+'</button>'
+    +'<button class="btn sm" data-act="clsSet" style="margin-left:6px">'+ic('coffee',12)+(Z?'设置':'Setup')+'</button>'
+    +'<button class="btn primary" data-act="addClass" style="margin-left:6px">'+ic('plus',13)+(Z?'新增':'Add')+'</button>'
+    +'</div></div>';
+  if(arr.length){
+    h+='<div class="card"><div class="lst-bar">'
+      +'<span class="lb">'+(Z?'行课周次批量设为':'Weeks for all')+'</span>'
+      +'<input id="bulkWeeks" placeholder="1-16" style="width:78px">'
+      +'<button class="btn sm" data-act="bulkWeeks">'+(Z?'应用到全部':'Apply')+'</button>'
+      +'<span class="hint">'+(Z?'表里没写周次的话在这里一次填好，单独改就点每行的周次格'
+                              :'Fill once here, or edit each row')+'</span>'
+      +'</div></div>';
+  }
+  h+='<div class="card"><div style="padding:10px;overflow-x:auto">';
+  if(!arr.length){
+    h+='<div class="empty">'+ic('grid',26,'var(--sage)')
+      +(Z?'还没有课程。点上面「导入课表」，从 Word / WPS / Excel 里复制的表格一键识别；也可以点「新增」手动录入。'
+         :'No courses yet. Use Import or Add.')+'</div>';
+  }else{
+    h+='<table class="lst"><thead><tr>'
+      +'<th>'+(Z?'课程':'Course')+'</th><th>'+(Z?'班级':'Class')+'</th>'
+      +'<th>'+(Z?'星期':'Day')+'</th><th>'+(Z?'节次':'Period')+'</th>'
+      +'<th>'+(Z?'行课周次':'Weeks')+'</th><th>'+(Z?'单双周':'Odd/even')+'</th>'
+      +'<th>'+(Z?'教室':'Room')+'</th><th>'+(Z?'教师':'Teacher')+'</th><th></th>'
+      +'</tr></thead><tbody>';
+    for(i=0;i<arr.length;i++){
+      var c=arr[i];
+      var st=Math.max(1,parseInt(c.start,10)||1);
+      var sec=Math.max(1,parseInt(c.sections,10)||1);
+      var oddTxt=(c.odd==='odd')?(Z?'单周':'Odd'):((c.odd==='even')?(Z?'双周':'Even'):(Z?'每周':'Weekly'));
+      h+='<tr>'
+        +'<td class="nm"><a href="javascript:;" data-act="editClass" data-id="'+esc(c.id)+'">'+esc(c.name||'')+'</a></td>'
+        +'<td>'+esc(c.cls||'')+'</td>'
+        +'<td>'+esc(dowName(parseInt(c.day,10)||1))+'</td>'
+        +'<td>'+st+(sec>1?('-'+ (st+sec-1)):'')+'</td>'
+        +'<td><input class="wk-in" data-wk="'+esc(c.id)+'" value="'+esc(c.weeks||'')+'" placeholder="1-16"></td>'
+        +'<td>'+oddTxt+'</td>'
+        +'<td>'+esc(c.location||'')+'</td>'
+        +'<td>'+esc(c.teacher||'')+'</td>'
+        +'<td class="op"><button class="btn sm ghost" data-act="editClass" data-id="'+esc(c.id)+'">'+(Z?'编辑':'Edit')+'</button> '
+        +'<button class="btn sm ghost" data-act="delClass" data-id="'+esc(c.id)+'">'+(Z?'删':'Del')+'</button></td>'
+        +'</tr>';
+    }
+    h+='</tbody></table>';
+  }
+  h+='</div></div>';
+  h+='<div class="hint" style="padding:2px 2px 0">'
+    +(Z?'填了行课周次之后，周表里只有对应周次才会显示这节课（1-8 周的课，第 10 周就不出现）。'
+        :'Once set, a course only shows in its weeks on the week view.')+'</div>';
+  h+='</div>';
+  return h;
+}
+
+/* ================= 课表：从粘贴的表格导入 ================= */
+function formImportSchedule(){
+  var Z=(LANG==='zh');
+  var body=''
+    +'<div class="fld"><label>'+(Z?'第 1 步：把课表复制进来':'Step 1: paste the timetable')+'</label>'
+    +'<div id="impPaste" class="pastebox" contenteditable="true"></div>'
+    +'<div class="hint" style="margin-top:6px">'
+    +(Z?'在 Word / WPS / Excel / 网页里框选整个课表复制，回到这里按 Ctrl+V。'
+        +'程序读的是剪贴板里的表格结构，所以「星期」和「节次」能对得上；'
+        +'从记事本复制的纯文本也能用，但准确率低一些。'
+        :'Select the whole table in Word/Excel and paste here with Ctrl+V.')+'</div></div>'
+    +'<div class="fld"><label>'+(Z?'第 2 步（可选）：只保留某个老师的课':'Step 2 (optional): only keep one teacher')+'</label>'
+    +'<input id="impTeacher" placeholder="'+(Z?'如：徐':'e.g. Xu')+'">'
+    +'<div class="hint" style="margin-top:6px">'
+    +(Z?'填了之后，只有原始单元格里含这个字的课会被自动勾选，方便从教研室合排的表里挑出自己的。'
+        :'Only rows containing this text get checked.')+'</div></div>'
+    +'<div id="impResult"></div>';
+  modal(Z?'导入课表':'Import timetable', body, footBtns('impGo'));
+  $('impGo').textContent=(Z?'解析':'Parse');
+  var box=$('impPaste');
+  box.addEventListener('paste', function(e){
+    e.preventDefault();
+    var dt=e.clipboardData||window.clipboardData;
+    var htm=dt? dt.getData('text/html') : '';
+    var txt=dt? dt.getData('text/plain') : '';
+    box.setAttribute('data-html', htm||'');
+    box.setAttribute('data-text', txt||'');
+    box.textContent=txt ? (txt.length>200? txt.slice(0,200)+'…' : txt) : '';
+  });
+  box.focus();
+  $('impGo').onclick=schedImportParse;
+}
+function schedImportParse(){
+  var Z=(LANG==='zh');
+  var box=$('impPaste');
+  var htm=box.getAttribute('data-html')||'';
+  var txt=box.getAttribute('data-text')||'';
+  var tea=($('impTeacher')&&$('impTeacher').value||'').trim();
+  if(!htm && !txt){ toast(Z?'先粘贴课表内容':'Paste the timetable first','err'); return; }
+  $('impGo').textContent=(Z?'解析中…':'Parsing…');
+  api('/api/schedule/parse',{html:htm,text:txt,teacher:tea}).then(function(r){
+    $('impGo').textContent=(Z?'重新解析':'Re-parse');
+    if(!r||!r.ok){
+      $('impResult').innerHTML='<div class="empty" style="padding:14px 2px">'
+        +(Z?'没能认出来':'Could not parse')+'：'+esc((r&&r.msg)||'')+'</div>';
+      return;
+    }
+    IMP.items=r.items||[];
+    schedImportRender();
+  });
+}
+function schedImportRender(){
+  var Z=(LANG==='zh'), items=IMP.items, h='', i;
+  h+='<div class="fld"><label>'+(Z?'第 3 步：确认（勾选要导入的，格子都能直接改）':'Step 3: confirm and edit')+'</label>'
+    +'<div class="lst-bar">'
+    +'<button class="btn sm" data-act="impAll">'+(Z?'全选':'All')+'</button> '
+    +'<button class="btn sm" data-act="impNone">'+(Z?'全不选':'None')+'</button> '
+    +'<span class="hint">'+esc(Z?('共 '+items.length+' 门'):(items.length+' found'))+'</span>'
+    +'</div>'
+    +'<div class="imp-wrap"><table class="lst"><thead><tr>'
+    +'<th class="ck"><input type="checkbox" id="impCkAll" checked></th>'
+    +'<th>'+(Z?'课程':'Course')+'</th><th>'+(Z?'班级':'Class')+'</th>'
+    +'<th>'+(Z?'星期':'Day')+'</th><th>'+(Z?'节次':'Period')+'</th>'
+    +'<th>'+(Z?'行课周次':'Weeks')+'</th><th>'+(Z?'教室':'Room')+'</th><th>'+(Z?'教师':'Teacher')+'</th>'
+    +'</tr></thead><tbody>';
+  for(i=0;i<items.length;i++){
+    var it=items[i];
+    h+='<tr>'
+      +'<td class="ck"><input type="checkbox" class="impck" data-i="'+i+'"'+(it.checked?' checked':'')+'></td>'
+      +'<td><input class="impf" data-i="'+i+'" data-k="name" value="'+esc(it.name||'')+'"></td>'
+      +'<td><input class="impf" data-i="'+i+'" data-k="cls" value="'+esc(it.cls||'')+'"></td>'
+      +'<td><select class="impf" data-i="'+i+'" data-k="day">'+dayOpts(it.day||1)+'</select></td>'
+      +'<td class="nowrap"><input class="impf pdn" data-i="'+i+'" data-k="start" type="number" min="1" max="14" value="'+esc(it.start||1)+'">'
+      +'<span class="dash">-</span><input class="impf pdn" data-i="'+i+'" data-k="end" type="number" min="1" max="14" value="'+esc(it.end||it.start||1)+'"></td>'
+      +'<td><input class="impf" data-i="'+i+'" data-k="weeks" value="'+esc(it.weeks||'')+'" placeholder="1-16"></td>'
+      +'<td><input class="impf" data-i="'+i+'" data-k="room" value="'+esc(it.room||'')+'"></td>'
+      +'<td><input class="impf" data-i="'+i+'" data-k="teacher" value="'+esc(it.teacher||'')+'"></td>'
+      +'</tr>';
+  }
+  h+='</tbody></table></div>'
+    +'<div class="hint" style="margin-top:6px">'
+    +(Z?'「行课周次」表里写了就自动带上，没写的在这里补（比如 1-16）。导入后还能在总表里随时改。'
+        :'Fill in weeks if the table did not have them.')+'</div>'
+    +'<div style="margin-top:12px"><button class="btn primary" data-act="impDo">'
+    +(Z?'导入勾选的课程':'Import selected')+'</button></div></div>';
+  $('impResult').innerHTML=h;
+  var fs=document.querySelectorAll('.impf');
+  for(i=0;i<fs.length;i++){
+    fs[i].onchange=function(){
+      var it=IMP.items[parseInt(this.getAttribute('data-i'),10)];
+      if(!it) return;
+      var k=this.getAttribute('data-k');
+      it[k]=(k==='day'||k==='start'||k==='end')? (parseInt(this.value,10)||1) : this.value;
+    };
+  }
+  $('impCkAll').onchange=function(){
+    var cks=document.querySelectorAll('.impck'), v=this.checked, k;
+    for(k=0;k<cks.length;k++) cks[k].checked=v;
+  };
+}
+function schedImportDo(){
+  var Z=(LANG==='zh');
+  var cks=document.querySelectorAll('.impck'), out=[], i;
+  for(i=0;i<cks.length;i++){
+    if(!cks[i].checked) continue;
+    var it=IMP.items[parseInt(cks[i].getAttribute('data-i'),10)];
+    if(it && (it.name||'').trim()) out.push(it);
+  }
+  if(!out.length){ toast(Z?'至少勾选一门课':'Select at least one course','err'); return; }
+  api('/api/schedule/import',{items:out}).then(function(r){
+    if(!r||!r.ok){ toast(Z?'导入失败':'Import failed','err'); return; }
+    closeModal();
+    return api('/api/state').then(function(st){       // 重新拉一次，避免覆盖服务端数据
+      if(st && st.db){ S.db=st.db; }
+      S.schView='list'; refreshAll();
+      toast(Z?('已导入 '+r.added+' 门课'):('Imported '+r.added),'ok');
+    });
+  });
+}
+
+// 今日页用：当天课程小卡片
+function todayClassesHtml(){
+  var Z=(LANG==='zh'), h='', i;
+  var dow=todayDow();
+  var wk=semesterWeek();
+  var list=classesOn(dow,wk);
+  h+='<div class="card"><div class="card-h">'+ic('grid',15,'var(--blue)')
+    +'<h3>'+(Z?'今日课程':'Today\'s classes')+'</h3>'
+    +'<div class="right"><button class="btn sm" data-act="nav" data-nav="schedule">'
+    +ic('chevr2',12)+(Z?'完整课表':'Timetable')+'</button></div></div>';
+  if(!list.length) h+='<div class="empty">'+(Z?'今天没课':'No classes today')+'</div>';
+  else{
+    h+='<div style="padding:8px 16px 14px">';
+    for(i=0;i<list.length;i++){
+      var c=list[i], sec=Math.max(1,parseInt(c.sections,10)||1);
+      var cols=clsColor(c,0);
+      var t1=periodTime(parseInt(c.start,10)||1);
+      var t2=periodTime((parseInt(c.start,10)||1)+sec-1);
+      var meta=[];
+      meta.push(Z?('第'+(parseInt(c.start,10)||1)+(sec>1?('-'+(parseInt(c.start,10)+sec-1)):'')+'节')
+                 :('P'+(parseInt(c.start,10)||1)+(sec>1?('-'+(parseInt(c.start,10)+sec-1)):'')));
+      if(t1) meta.push(t1+(t2?'–'+t2:''));
+      if(c.location) meta.push(c.location);
+      h+='<div class="rem"><div class="ic" style="background:'+cols[0]+';color:var(--ink2)">'+ic('lecture',12)+'</div>'
+        +'<div style="flex:1 1 auto;min-width:0"><div style="font-size:12.8px">'+esc(c.name||'')+'</div>'
+        +'<div class="sub" style="font-size:11px">'+esc(meta.join(' · '))+'</div></div>'
+        +'<button class="btn sm ghost" data-act="editClass" data-id="'+esc(c.id)+'">'+ic('edit',11)+'</button></div>';
+    }
+    h+='</div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function dcell(k,v,style){ return '<div class="dcell"'+(style?' style="'+style+'"':'')+'>'
+  +'<div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div></div>'; }
+/* ================= 页面：论文 ================= */
+function statusChip(s){
+  var c='b';
+  if(s==='已完成') c='g';
+  else if(s&&s.indexOf('等待')===0) c='p';
+  else if(s==='暂停') c='n';
+  return '<span class="chip '+c+'">'+esc(s||'进行中')+'</span>';
+}
+function viewPapers(){
+  var h='', i;
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('paper',18,'var(--green)')+esc(tt('papers'))+'</h1>'
+    +'<span class="sub">'+esc(tt('papersSub'))+'</span><div class="right">'
+    +'<button class="btn primary" data-act="addPaper">'+ic('plus',13)+esc(tt('add'))+'</button></div></div>';
+  var list=S.db.papers;
+  if(!list.length){ h+='<div class="card"><div class="empty">'+ic('book',28,'var(--sage)')
+    +(LANG==='zh'?'还没有论文条目，点右上角新增':'No papers yet')+'</div></div></div>'; return h; }
+  if(!S.selPaper||!findPaper(S.selPaper)) S.selPaper=list[0].id;
+
+  h+='<div class="md"><div class="card">'
+    +'<div class="card-h">'+ic('filter',14,'var(--sage)')+'<h3>'+(LANG==='zh'?'全部 ':'All ')+list.length+'</h3></div>'
+    +'<div class="mlist">';
+  for(i=0;i<list.length;i++){
+    var p=list[i], n=daysLeft(dayStr(p.due));
+    h+='<div class="mi'+(p.id===S.selPaper?' on':'')+'" data-act="selPaper" data-id="'+esc(p.id)+'">'
+      +'<span class="t">'+esc(p.title)+'</span>'
+      +'<span class="m">'+statusChip(p.status)+(p.stage?'<span class="chip n">'+esc(p.stage)+'</span>':'')
+      +(n===null?'':(n<0?'<span style="color:var(--red);font-weight:700">逾期 '+Math.abs(n)+' 天</span>':dueLabel(n)))+'</span></div>';
+  }
+  h+='</div></div>';
+  h+=viewPaperDetail(findPaper(S.selPaper));
+  h+='</div></div>';
+  return h;
+}
+function viewPaperDetail(p){
+  if(!p) return '<div class="card"><div class="empty">'+(LANG==='zh'?'选择一篇论文查看详情':'Select a paper')+'</div></div>';
+  var h='<div class="card"><div class="detail">', i;
+  h+='<div class="dh"><h2>'+esc(p.title)+'</h2><div style="display:flex;gap:6px;flex-wrap:wrap">'
+    +'<button class="btn sm" data-act="logProgress" data-id="'+esc(p.id)+'">'+ic('spark',12)+(LANG==='zh'?'记录进展':'Log progress')+'</button>'
+    +'<button class="btn sm" data-act="editPaper" data-id="'+esc(p.id)+'">'+ic('edit',12)+esc(tt('edit'))+'</button>'
+    +'<button class="btn sm danger" data-act="delPaper" data-id="'+esc(p.id)+'">'+ic('trash',12)+'</button>'
+    +'</div></div>';
+  var dn=daysLeft(dayStr(p.due));
+  h+='<div class="dgrid">'
+    + dcell('研究阶段',p.stage||'—')
+    + dcell('工作状态',p.status||'—')
+    + dcell('目标期刊',p.journal||'—')
+    + dcell('投稿轮次',p.round||'—')
+    + dcell('编辑决定',p.decision||'—')
+    + dcell('作者顺序',p.authorOrder||'—')
+    + dcell('本人角色',p.myRole||'—')
+    + dcell('截止日期', dayStr(p.due)? (dayStr(p.due)+' · '+dueLabel(dn)) : '—')
+    +'</div>';
+  if(p.nextAction)
+    h+='<div class="sect-h">'+(LANG==='zh'?'下一步行动':'Next action')+'</div>'
+     +'<div style="background:var(--green-soft);border-radius:10px;padding:10px 13px;font-size:13px;font-weight:650;'
+     +'color:var(--green-d);display:flex;gap:8px">'+ic('flag',14,'var(--green-d)')+'<span>'+esc(p.nextAction)+'</span></div>';
+
+  h+='<div class="sect-h">'+(LANG==='zh'?'关联课题':'Linked topic')+'</div>';
+  if(p.projectId&&findProject(p.projectId)){
+    var pr=findProject(p.projectId);
+    h+='<div class="dcell" style="display:flex;gap:8px;align-items:center"><div style="flex:1 1 auto">'
+      +'<div class="k">'+esc(pr.code||'')+'</div><div class="v">'+esc(pr.name)+'</div></div>'
+      +(pr.path?'<button class="btn sm" data-act="openPath" data-path="'+esc(pr.path)+'">'+ic('folder',12)+esc(tt('openDir'))+'</button>':'')
+      +'</div>';
+  } else h+='<div class="sub">'+(LANG==='zh'?'未关联课题':'Not linked')+'</div>';
+
+  h+='<div class="sect-h">'+esc(tt('pickZotero'))+'</div>';
+  var zk=p.zoteroKeys||[];
+  if(!zk.length){
+    h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="sub">'
+      +(LANG==='zh'?'未关联文献':'No linked references')+'</span>'
+      +'<button class="btn sm" data-act="pickZotero" data-id="'+esc(p.id)+'">'+ic('db',12)+esc(tt('pickZotero'))+'</button></div>';
+  } else {
+    h+='<div style="padding:4px 0">';
+    for(i=0;i<zk.length;i++){
+      var z=zk[i];
+      h+='<div class="fileline"><span data-act="openZoteroItem" data-id="'+esc(p.id)+'" data-idx="'+i+'" style="display:flex;gap:8px;align-items:center;flex:1 1 auto;min-width:0">'
+        + ic('db',13,'var(--blue)')+'<span class="fn">'+esc(z.title||('文献 '+(i+1)))+'</span>'
+        +'<span class="sub" style="font-size:10.5px;white-space:nowrap">'+esc(z.journal||'')+'</span></span>'
+        +'<button class="btn sm ghost" data-act="unlinkZotero" data-id="'+esc(p.id)+'" data-idx="'+i+'">'+ic('x',11)+'</button></div>';
+    }
+    h+='</div><button class="btn sm" data-act="pickZotero" data-id="'+esc(p.id)+'">'+ic('plus',12)
+      +(LANG==='zh'?'再关联一篇':'Link another')+'</button>';
+  }
+
+  h+='<div class="sect-h">Obsidian '+(LANG==='zh'?'文献笔记':'notes')+'</div>'
+    +'<div id="obsBox" data-pid="'+esc(p.id)+'"><div class="sub" style="padding:2px 0">'
+    +(LANG==='zh'?'匹配中…':'Matching…')+'</div></div>';
+
+  h+='<div class="sect-h">'+(LANG==='zh'?'文件':'Files')+'</div>';
+  var fl=p.files||[];
+  if(!fl.length) h+='<div class="sub">'+(LANG==='zh'?'暂无文件记录':'No files')+'</div>';
+  else{
+    h+='<div style="padding:4px 0">';
+    for(i=0;i<fl.length;i++){
+      h+='<div class="fileline"><span data-act="openPath" data-path="'+esc(fl[i].path)+'" style="display:flex;gap:8px;align-items:center;flex:1 1 auto;min-width:0">'
+        + ic('file',13,'var(--ink3)')+'<span class="fn">'+esc(fl[i].name||fl[i].path)+'</span></span>'
+        +'<button class="btn sm ghost" data-act="revealPath" data-path="'+esc(fl[i].path)+'" title="'+esc(tt('reveal'))+'">'+ic('open',11)+'</button>'
+        +'<button class="btn sm ghost" data-act="delFile" data-id="'+esc(p.id)+'" data-idx="'+i+'">'+ic('x',11)+'</button></div>';
+    }
+    h+='</div>';
+  }
+  h+='<div style="margin-top:8px"><button class="btn sm" data-act="addFile" data-id="'+esc(p.id)+'">'+ic('plus',12)
+    +(LANG==='zh'?'添加文件':'Add file')+'</button></div>';
+
+  if(p.notes) h+='<div class="sect-h">'+(LANG==='zh'?'备注':'Notes')+'</div>'
+    +'<div style="font-size:13px;color:var(--ink2);white-space:pre-wrap">'+esc(p.notes)+'</div>';
+
+  var hist=p.history||[];
+  if(hist.length){
+    h+='<div class="sect-h">'+(LANG==='zh'?'进展记录':'History')+'</div><div style="padding:2px 0">';
+    for(i=0;i<Math.min(hist.length,10);i++){
+      h+='<div class="rem"><div class="ic" style="background:var(--sage-soft);color:var(--green-d)">'+ic('chevr2',11)+'</div>'
+        +'<div style="flex:1 1 auto;min-width:0"><div style="font-size:12.5px">'+esc(hist[i].text)+'</div>'
+        +'<div class="sub" style="font-size:10.5px">'+fmtTime(hist[i].t/1000)+'</div></div></div>';
+    }
+    h+='</div>';
+  }
+  h+='</div></div>';
+  return h;
+}
+
+/* ================= 页面：课题 ================= */
+function viewProjects(){
+  var h='', i;
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('proj',18,'var(--blue)')+esc(tt('projects'))+'</h1>'
+    +'<span class="sub">'+esc(tt('projectsSub'))+'</span><div class="right">'
+    +'<button class="btn primary" data-act="addProject">'+ic('plus',13)+esc(tt('add'))+'</button></div></div>';
+  var list=S.db.projects;
+  if(!list.length){ h+='<div class="card"><div class="empty">'+ic('folder',28,'var(--sage)')
+    +(LANG==='zh'?'还没有课题':'No topics yet')+'</div></div></div>'; return h; }
+  h+='<div class="grid3">';
+  for(i=0;i<list.length;i++){
+    var p=list[i], n=daysLeft(dayStr(p.due)), pct=p.progress||0, bc='';
+    if(p.status==='已完成') bc='done'; else if(n!==null&&n<0) bc='over'; else if(n!==null&&n<=7) bc='warn';
+    var links=(p.paperIds||[]);
+    h+='<div class="card pad" style="display:flex;flex-direction:column;gap:8px">'
+      +'<div style="display:flex;gap:8px;align-items:flex-start"><div style="flex:1 1 auto;min-width:0">'
+      +'<div class="sub" style="font-size:11px;font-weight:700">'+esc(p.code||'')+'</div>'
+      +'<div style="font-size:14px;font-weight:700;line-height:1.45;margin-top:2px">'+esc(p.name)+'</div></div>'
+      + statusChip(p.status)+'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+      +(p.role?'<span class="chip n">'+esc(p.role)+'</span>':'')
+      +(n===null?'':'<span class="chip '+(n<0?'r':(n<=7?'o':'n'))+'">'+dueLabel(n)+'</span>')
+      +'</div>'
+      +'<div class="bar"><i class="'+bc+'" style="width:'+pct+'%"></i></div>'
+      +'<div class="sub" style="font-size:11px">'+(LANG==='zh'?'进度 ':'Progress ')+pct+'%'
+      +(p.due?' · '+(LANG==='zh'?'截止 ':'Due ')+esc(dayStr(p.due)):'')+'</div>';
+    if(p.nextAction) h+='<div class="act"><div class="n">'+ic('flag',11,'var(--green-d)')+'</div>'
+      +'<div class="b"><div class="t" style="font-size:12.3px">'+esc(p.nextAction)+'</div></div></div>';
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px">'
+      +(p.path?'<button class="btn sm" data-act="openPath" data-path="'+esc(p.path)+'">'+ic('folder',12)+esc(tt('openDir'))+'</button>':'')
+      +(links.length?'<span class="chip g">'+links.length+(LANG==='zh'?' 篇论文':' papers')+'</span>':'')
+      +'<div class="spacer"></div>'
+      +'<button class="btn sm ghost" data-act="editProject" data-id="'+esc(p.id)+'">'+ic('edit',12)+'</button>'
+      +'<button class="btn sm ghost" data-act="delProject" data-id="'+esc(p.id)+'">'+ic('trash',12)+'</button></div></div>';
+  }
+  h+='</div></div>';
+  return h;
+}
+
+/* ---------- 引用格式 / BibTeX / 剪贴板 ---------- */
+// 作者列表：两个及以上时，最后一个前补 and（Optica / ACS 风格）
+function citeAuthors(s){
+  s=String(s||'').replace(/\s+/g,' ').trim();
+  if(!s) return '';
+  var parts=s.split(','), arr=[], i;
+  for(i=0;i<parts.length;i++){ var x=parts[i].trim(); if(x) arr.push(x); }
+  if(arr.length>=2) return arr.slice(0,-1).join(', ')+', and '+arr[arr.length-1];
+  return s;
+}
+// J. Xu*, ..., and Q. Shen*, "Title," Adv. Opt. Mater. 13, e01115 (2025).
+function citeText(w){
+  var seg=[];
+  var au=citeAuthors(w.authors);
+  if(au) seg.push(au+', ');
+  seg.push('"'+String(w.title||'')+'", ');
+  if(w.journal) seg.push(w.journal+' ');
+  if(w.volume) seg.push(w.volume+', ');
+  if(w.pages) seg.push(w.pages+' ');
+  seg.push('('+(w.year||'')+').');
+  return seg.join('').replace(/[ \t]+/g,' ').replace(/\s+,/g,',').trim();
+}
+function bibAuthors(s){
+  return String(s||'').split(',')
+    .map(function(x){ return x.replace(/\*/g,'').trim(); })
+    .filter(function(x){ return x; }).join(' and ');
+}
+function bibKeyOf(w){
+  var au=String(w.authors||'').split(',')[0].replace(/\*/g,'').trim();
+  var last='';
+  if(au){ var sp=au.split(/\s+/); last=sp[sp.length-1]; }
+  last=last.toLowerCase().replace(/[^a-z]/g,'');
+  var tw=(String(w.title||'').toLowerCase().replace(/[^a-z ]/g,' ')
+          .split(/\s+/).filter(function(x){ return x.length>3; })[0])||'';
+  return (last||'ref')+(w.year||'')+(tw||'');
+}
+function bibText(w){
+  var type=String(w.bibtype||'article').replace(/[^a-z]/g,'')||'article';
+  var field=w.journal?'journal':'publisher';
+  var L=[];
+  L.push('@'+type+'{'+bibKeyOf(w)+',');
+  if(w.authors)  L.push('  author  = {'+bibAuthors(w.authors)+'},');
+  L.push('  title   = {'+String(w.title||'')+'},');
+  if(w.journal)  L.push('  '+field+'= {'+w.journal+'},');
+  if(w.year)     L.push('  year    = {'+w.year+'},');
+  if(w.volume)   L.push('  volume  = {'+w.volume+'},');
+  if(w.pages)    L.push('  pages   = {'+w.pages+'},');
+  if(w.doi)      L.push('  doi     = {'+w.doi+'}');
+  L.push('}');
+  // 最后一行没有 doi 时，倒数第二个结尾的逗号要去掉
+  var out=L.join('\n');
+  if(!w.doi) out=out.replace(/,(\s*\}\s*)$/,'$1');
+  return out;
+}
+function legacyCopy(t){
+  try{
+    var ta=document.createElement('textarea');
+    ta.value=t; ta.style.position='fixed'; ta.style.left='-9999px'; ta.style.top='0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, ta.value.length);
+    var ok=document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){ return false; }
+}
+function copyText(t){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(t).then(function(){ return true; })
+      .catch(function(){ return legacyCopy(t); });
+  }
+  return Promise.resolve(legacyCopy(t));
+}
+function doCopy(t,tip){
+  copyText(t).then(function(ok){
+    toast(ok?((tip||'已复制')):('复制失败，请手动选中下面的文本'), ok?'ok':'err');
+  });
+}
+function formCopyPub(id){
+  var w=byId(S.db.pubs,id); if(!w) return;
+  var c=citeText(w), bb=bibText(w);
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'引用格式':'Citation')+'</label>'
+      +'<textarea id="cpCite" rows="4" style="font-size:12px;line-height:1.6">'+esc(c)+'</textarea>'
+      +'<div class="hint" style="margin-top:6px"><button class="btn sm" data-act="pushCopy" data-src="cpCite">'
+      +ic('copy',12)+(LANG==='zh'?'复制这段':'Copy')+'</button></div></div>'
+    +'<div class="fld"><label>BibTeX</label>'
+      +'<textarea id="cpBib" rows="9" style="font-size:12px;line-height:1.55;font-family:Consolas,Monaco,monospace">'+esc(bb)+'</textarea>'
+      +'<div class="hint" style="margin-top:6px"><button class="btn sm" data-act="pushCopy" data-src="cpBib">'
+      +ic('copy',12)+(LANG==='zh'?'复制这段':'Copy')+'</button></div></div>';
+  modal(LANG==='zh'?'复制引用':'Copy citation', body,
+        '<button class="btn" data-act="closeModal">'+(LANG==='zh'?'关闭':'Close')+'</button>', true);
+}
+/* ---------- 导入论文：粘贴 BibTeX（离线）/ DOI（Crossref） ---------- */
+function formImportPub(){
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'粘贴 BibTeX（不用联网，推荐）':'Paste BibTeX (offline, recommended)')+'</label>'
+      +'<textarea id="imBib" rows="8" style="font-family:Consolas,Monaco,monospace;font-size:12px" '
+      +'placeholder="@article{xu2025realization,&#10;  title  = {...},&#10;  author = {Xu, Jie and Luo, Yang},&#10;  journal= {Advanced Optical Materials},&#10;  year   = {2025},&#10;  volume = {13},&#10;  pages  = {e01115},&#10;  doi    = {10.1002/adom.202501115}&#10;}"></textarea>'
+      +'<div class="hint" style="margin-top:6px">'+(LANG==='zh'?'Zotero / Google Scholar / 期刊官网都能导出 BibTeX，一次可以粘多条。'
+        :'Export BibTeX from Zotero, Google Scholar or the journal page. Several entries at once is fine.')+'</div></div>'
+    +'<div class="fld"><label>DOI'+(LANG==='zh'?'（联网查询 Crossref）':' (Crossref lookup)')+'</label>'
+      +'<div style="display:flex;gap:6px"><input id="imDoi" style="flex:1" placeholder="10.1002/adom.202501115">'
+      +'<button class="btn sm primary" data-act="fetchDoi">'+ic('search',12)+(LANG==='zh'?'查询':'Fetch')+'</button></div></div>'
+    +'<div id="imPreview"></div>';
+  modal(LANG==='zh'?'导入论文':'Import publication', body,
+        '<button class="btn" data-act="closeModal">'+esc(tt('cancel')||'取消')+'</button>'
+        +'<button class="btn primary" data-act="parseBib">'+ic('import',13)
+        +(LANG==='zh'?'解析':'Parse')+'</button>', true);
+}
+function renderImpPreview(rows, note){
+  var host=$('imPreview'); if(!host) return;
+  S.impRows=rows||[];
+  var h='';
+  if(note) h+='<div class="hint" style="margin:8px 0">'+esc(note)+'</div>';
+  if(!S.impRows.length){ host.innerHTML=h; return; }
+  h+='<div class="fld"><label>'+(LANG==='zh'?'解析到 '+S.impRows.length+' 条，点右边按钮加入':'Parsed '+S.impRows.length+' entries')+'</label>';
+  for(var i=0;i<S.impRows.length;i++){
+    var r=S.impRows[i];
+    h+='<div class="li" style="display:flex;gap:8px;align-items:center;justify-content:space-between">'
+      +'<div style="min-width:0"><div style="font-weight:500">'+esc(r.title||'(no title)')+'</div>'
+      +'<div class="sub">'+esc([r.authors,r.journal,r.year].filter(Boolean).join(' · '))+'</div></div>'
+      +'<button class="btn sm primary" data-act="addImpRow" data-i="'+i+'">'+ic('plus',12)
+      +(LANG==='zh'?'加入':'Add')+'</button></div>';
+  }
+  h+='</div>';
+  if(S.impRows.length>1){
+    h+='<div class="hint"><button class="btn sm" data-act="addImpAll">'+ic('down',12)
+      +(LANG==='zh'?'全部加入':'Add all')+'</button></div>';
+  }
+  host.innerHTML=h;
+}
+function addImpRow(r){
+  if(!r) return;
+  var rec={id:uid('w'), title:r.title||'', authors:r.authors||'', journal:r.journal||'',
+           year:r.year||new Date().getFullYear(), volume:r.volume||'', pages:r.pages||'',
+           doi:r.doi||'', role:'first', cites:0, notes:'', projectId:''};
+  if(r.bibtype) rec.bibtype=r.bibtype;
+  if(r.bibkey) rec.bibkey=r.bibkey;
+  if(r.abstract) rec.abstract=r.abstract;
+  if(r.url) rec.url=r.url;
+  S.db.pubs.unshift(rec);
+  return rec;
+}
+// 直接在卡片上改引用数，不用打开整个表单
+function formCite(id){
+  var w=byId(S.db.pubs,id); if(!w) return;
+  var n=prompt((LANG==='zh'?'被引次数（填数字，留空或 0 表示暂不统计）：':'Citations:'), (w.cites||0));
+  if(n===null) return;
+  w.cites=parseInt(String(n).replace(/[^\d]/g,'')||'0',10)||0;
+  saveKey('pubs'); refreshAll();
+  toast((LANG==='zh'?('引用数已改为 '):('Citations set to '))+w.cites,'ok');
+}
+
+/* ================= 页面：已发表 ================= */
+function viewPubs(){
+  var h='', i, j;
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('wall',18,'var(--purple)')+esc(tt('pubs'))+'</h1>'
+    +'<span class="sub">'+esc(tt('pubsSub'))+'</span><div class="right">'
+    +'<button class="btn" data-act="importPub" style="margin-right:6px">'+ic('import',13)
+      +(LANG==='zh'?'导入':'Import')+'</button>'
+    +'<button class="btn primary" data-act="addPub">'+ic('plus',13)+esc(tt('add'))+'</button></div></div>';
+  var all=S.db.pubs.slice();
+  if(!all.length){ h+='<div class="card"><div class="empty">'+ic('wall',28,'var(--sage)')
+    +(LANG==='zh'?'还没有成果记录':'No publications yet')+'</div></div></div>'; return h; }
+
+  var f=S.pubFilter||'all';
+  var nrep=all.filter(function(x){ return !!x.rep; }).length;
+  var list=all.filter(function(x){
+    if(f==='all') return true;
+    if(f==='rep') return !!x.rep;
+    return (x.role||'')===f;
+  });
+  var nf=all.filter(function(x){ return (x.role||'')==='first'; }).length;
+  var nc=all.filter(function(x){ return (x.role||'')==='co'; }).length;
+  var tc=0; for(i=0;i<all.length;i++) tc+=(parseInt(all[i].cites,10)||0);
+
+  h+='<div class="grid4">'
+    + statBox('论文总数',all.length,'篇','var(--purple)','wall')
+    + statBox('第一 / 通讯',nf,'篇','var(--green)','user')
+    + statBox('合作作者',nc,'篇','var(--blue)','paper')
+    + statBox('总引用',tc,'次','var(--orange)','spark')
+    +'</div>';
+
+  h+='<div class="seg" style="margin:14px 0 2px">';
+  var segs=[['all',tt('allYears')+' · '+all.length],['first',tt('firstOnly')+' · '+nf],['co',tt('coOnly')+' · '+nc],['rep',tt('repWorks')+' · '+nrep]];
+  for(i=0;i<segs.length;i++)
+    h+='<button class="'+(f===segs[i][0]?'on':'')+'" data-act="pubFilter" data-f="'+segs[i][0]+'">'+esc(segs[i][1])+'</button>';
+  h+='</div>';
+
+  if(f==='rep' && !list.length){
+    h+='<div class="card"><div class="empty">'+ic('star',28,'var(--sage)')+esc(tt('repEmpty'))+'</div></div></div>';
+    return h;
+  }
+
+  list.sort(function(a,b){ return (b.year||0)-(a.year||0); });
+  var byYear={}, years=[];
+  for(i=0;i<list.length;i++){
+    var y=list[i].year||'—';
+    if(!byYear[y]){ byYear[y]=[]; years.push(y); }
+    byYear[y].push(list[i]);
+  }
+  years.sort(function(a,b){ return (b==='—'?0:b)-(a==='—'?0:a); });
+  for(i=0;i<years.length;i++){
+    h+='<div class="cat"><div class="cat-h">'+ic('chevr2',13,'var(--sage)')+'<h3>'+esc(years[i])+'</h3>'
+      +'<span class="n">'+byYear[years[i]].length+(LANG==='zh'?' 篇':'')+'</span></div><div class="wall">';
+    for(j=0;j<byYear[years[i]].length;j++){
+      var w=byYear[years[i]][j], meta=[];
+      if(w.volume) meta.push(w.volume);
+      if(w.pages) meta.push(w.pages);
+      h+='<div class="wcard'+(w.rep?' rep':'')+'">'
+        +(w.rep?'<div class="rep-tag">'+ic('star',11,'var(--gold)')+esc(tt('repWorks'))+'</div>':'')
+        +'<div class="yr">'+esc(w.year||'')+'</div>'
+        +(w.journal?'<div class="jr">'+esc(w.journal)+(meta.length?' <span style="opacity:.7">'+esc(meta.join(', '))+'</span>':'')+'</div>':'')
+        +'<div class="ti">'+esc(w.title)+'</div>'
+        +(w.authors?'<div class="au">'+esc(w.authors)+'</div>':'')
+        +'<div class="ft">'
+        +'<button class="btn sm ghost star'+(w.rep?' on':'')+'" data-act="toggleRep" data-id="'+esc(w.id)+'" title="'
+          +(w.rep?esc(tt('repUnset')):esc(tt('repSet')))+'">'+ic('star',13,w.rep?'var(--gold)':'var(--ink3)')+'</button>'
+        +(w.myRole?'<span class="chip '+(w.role==='first'?'g':'b')+'">'+esc(w.myRole)+'</span>':'')
+        +(w.zone?'<span class="chip n">'+esc(w.zone)+'</span>':'')
+        +(w.if_?'<span class="chip n">IF '+esc(w.if_)+'</span>':'')
+        +'<span class="chip o" data-act="quickCite" data-id="'+esc(w.id)+'" style="cursor:pointer" title="'
+          +(LANG==='zh'?'点击修改引用数':'Click to edit citations')+'">'+(LANG==='zh'?'引用 ':'Cited ')+esc(w.cites||0)+'</span>'
+        +'<div class="spacer"></div>'
+        +'<button class="btn sm ghost" data-act="copyPub" data-id="'+esc(w.id)+'" title="'
+          +(LANG==='zh'?'复制引用 / BibTeX':'Copy citation / BibTeX')+'">'+ic('copy',12)+'</button>'
+        +(w.doi?'<button class="btn sm ghost" data-act="openUrl" data-url="https://doi.org/'+esc(w.doi)+'" title="DOI">'+ic('open',11)+'</button>':'')
+        +'<button class="btn sm ghost" data-act="editPub" data-id="'+esc(w.id)+'">'+ic('edit',12)+'</button>'
+        +'<button class="btn sm ghost" data-act="delPub" data-id="'+esc(w.id)+'">'+ic('trash',12)+'</button>'
+        +'</div></div>';
+    }
+    h+='</div></div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+/* ================= 页面：已立项（科研项目） ================= */
+function viewGrants(){
+  var h='', i, list=S.db.grants||[];
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('grant',18,'var(--blue)')+esc(tt('grants'))+'</h1>'
+    +'<span class="sub">'+esc(tt('grantsSub'))+'</span><div class="right">'
+    +'<button class="btn primary" data-act="addGrant">'+ic('plus',13)+esc(tt('add'))+'</button></div></div>';
+  if(!list.length){ h+='<div class="card"><div class="empty">'+ic('grant',28,'var(--sage)')
+    +(LANG==='zh'?'还没有立项记录':'No grants yet')+'</div></div></div>'; return h; }
+  var on=0, money=0;
+  for(i=0;i<list.length;i++){
+    if(list[i].status==='在研') on++;
+    var m=String(list[i].amount||'').match(/([\d.]+)/);
+    if(m&&list[i].role==='主持') money+=parseFloat(m[1]);
+  }
+  h+='<div class="grid4">'
+    + statBox('立项总数',list.length,'项','var(--blue)','grant')
+    + statBox('在研',on,'项','var(--green)','sprout')
+    + statBox('主持经费',Math.round(money),'万元','var(--purple)','wall')
+    + statBox('主持',list.filter(function(x){return x.role==='主持';}).length,'项','var(--orange)','user')
+    +'</div>';
+  var order=['在研','结题'], gs={在研:[],结题:[],其他:[]};
+  for(i=0;i<list.length;i++){
+    var k=gs[list[i].status]? list[i].status : '其他';
+    gs[k].push(list[i]);
+  }
+  for(var oi=0;oi<order.length+1;oi++){
+    var key = oi<order.length? order[oi] : '其他';
+    var arr=gs[key]; if(!arr.length) continue;
+    h+='<div class="cat"><div class="cat-h">'+ic(key==='在研'?'sprout':'check',15,
+        key==='在研'?'var(--green)':'var(--ink3)')+'<h3>'+esc(key==='其他'?'其他状态':key)+'</h3>'
+      +'<span class="n">'+arr.length+(LANG==='zh'?' 项':'')+'</span></div><div class="wall">';
+    for(i=0;i<arr.length;i++){
+      var g=arr[i];
+      h+='<div class="wcard">'
+        +'<div class="yr" style="background:'+(g.status==='在研'?'var(--green-soft);color:var(--green-d)':'var(--line2);color:var(--ink3)')+'">'
+        +esc(g.status||'')+'</div>'
+        +'<div class="jr">'+esc(g.org||'')+(g.kind?' · '+esc(g.kind):'')+'</div>'
+        +'<div class="ti">'+esc(g.name||'（未填项目名称）')+'</div>'
+        +'<div class="au">'+esc(g.period||'')
+        +(g.amount?' <span class="dotsep">·</span> '+esc(g.amount):'')
+        +(g.code?' <span class="dotsep">·</span> '+esc(g.code):'')+'</div>'
+        +'<div class="ft">'
+        +(g.role?'<span class="chip '+(g.role==='主持'?'g':'n')+'">'+esc(g.role)+'</span>':'')
+        +(g.code?'<span class="chip b">'+esc(g.code)+'</span>':'')
+        +'<div class="spacer"></div>'
+        +'<button class="btn sm ghost" data-act="editGrant" data-id="'+esc(g.id)+'">'+ic('edit',12)+'</button>'
+        +'<button class="btn sm ghost" data-act="delGrant" data-id="'+esc(g.id)+'">'+ic('trash',12)+'</button>'
+        +'</div></div>';
+    }
+    h+='</div></div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+/* ================= 页面：教学成果 ================= */
+function viewTeaching(){
+  var h='', i, list=S.db.teaching||[], tp=S.db.teachProjects||[];
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('teach',18,'var(--orange)')+esc(tt('teaching'))+'</h1>'
+    +'<span class="sub">'+esc(tt('teachingSub'))+'</span><div class="right">'
+    +'<button class="btn" data-act="addTeachProject">'+ic('plus',13)+esc(tt('otherProjects'))+'</button>'
+    +'<button class="btn primary" data-act="addTeaching">'+ic('plus',13)+esc(tt('add'))+'</button></div></div>';
+
+  var cats=['竞赛获奖','荣誉称号','教材编写','教改论文'], cmap={};
+  for(i=0;i<list.length;i++){ var c=list[i].cat||'其他'; (cmap[c]=cmap[c]||[]).push(list[i]); }
+  var allCats=cats.slice();
+  for(var k in cmap) if(allCats.indexOf(k)<0) allCats.push(k);
+
+  h+='<div class="grid2 mt">';
+  for(var ci=0;ci<allCats.length;ci++){
+    var cn=allCats[ci], arr=cmap[cn]||[];
+    var icn = cn==='竞赛获奖'?'medal':(cn==='荣誉称号'?'user':(cn==='教材编写'?'book':'paper'));
+    var col = cn==='竞赛获奖'?'var(--orange)':(cn==='荣誉称号'?'var(--purple)':(cn==='教材编写'?'var(--green)':'var(--blue)'));
+    h+='<div class="card"><div class="card-h">'+ic(icn,15,col)+'<h3>'+esc(cn)+'</h3>'
+      +'<span class="sub">'+arr.length+(LANG==='zh'?' 条':'')+'</span></div>';
+    if(!arr.length) h+='<div class="empty" style="padding:18px 8px">'+esc(LANG==='zh'?'暂无':'Empty')+'</div>';
+    else{
+      h+='<div style="padding:6px 16px 14px">';
+      for(i=0;i<arr.length;i++){
+        var t=arr[i];
+        h+='<div class="rem"><div class="ic" style="background:var(--sage-soft);color:var(--green-d)">'+ic(icn,12)+'</div>'
+          +'<div style="flex:1 1 auto;min-width:0"><div style="font-size:12.6px;font-weight:600">'+esc(t.content)+'</div>'
+          +'<div class="sub" style="font-size:11px">'
+          + [t.date, t.level].filter(Boolean).map(esc).join(' <span class="dotsep">·</span> ')+'</div></div>'
+          +'<button class="btn sm ghost" data-act="editTeaching" data-id="'+esc(t.id)+'">'+ic('edit',11)+'</button>'
+          +'<button class="btn sm ghost" data-act="delTeaching" data-id="'+esc(t.id)+'">'+ic('trash',11)+'</button></div>';
+      }
+      h+='</div>';
+    }
+    h+='</div>';
+  }
+  h+='</div>';
+
+  h+='<div class="cat" style="margin-top:18px"><div class="cat-h">'+ic('sprout',15,'var(--sage)')
+    +'<h3>'+esc(tt('otherProjects'))+'</h3><span class="n">'+tp.length+(LANG==='zh'?' 项':'')+'</span></div>';
+  if(!tp.length){
+    h+='<div class="card"><div class="empty">'+ic('sprout',26,'var(--sage)')
+      +(LANG==='zh'?'还没有其他项目（如大学生创新创业训练项目）':'No student projects yet')+'</div></div>';
+  }else{
+    h+='<div class="wall">';
+    for(i=0;i<tp.length;i++){
+      var p=tp[i];
+      h+='<div class="wcard">'
+        +'<div class="yr">'+esc(p.level||'')+'</div>'
+        +'<div class="ti">'+esc(p.name)+'</div>'
+        +'<div class="au">'+esc(p.period||'')
+        +(p.code?' <span class="dotsep">·</span> '+esc(p.code):'')+'</div>'
+        +'<div class="ft">'+(p.role?'<span class="chip g">'+esc(p.role)+'</span>':'')
+        +'<div class="spacer"></div>'
+        +'<button class="btn sm ghost" data-act="editTeachProject" data-id="'+esc(p.id)+'">'+ic('edit',12)+'</button>'
+        +'<button class="btn sm ghost" data-act="delTeachProject" data-id="'+esc(p.id)+'">'+ic('trash',12)+'</button>'
+        +'</div></div>';
+    }
+    h+='</div>';
+  }
+  h+='</div></div>';
+  return h;
+}
+
+/* ================= 页面：专利 ================= */
+function viewPatents(){
+  var h='', i, list=S.db.patents||[];
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('patent',18,'var(--purple)')+esc(tt('patents'))+'</h1>'
+    +'<span class="sub">'+esc(tt('patentsSub'))+'</span><div class="right">'
+    +'<button class="btn primary" data-act="addPatent">'+ic('plus',13)+esc(tt('add'))+'</button></div></div>';
+  if(!list.length){ h+='<div class="card"><div class="empty">'+ic('patent',28,'var(--sage)')
+    +(LANG==='zh'?'还没有专利记录':'No patents yet')+'</div></div></div>'; return h; }
+  h+='<div class="grid3">';
+  for(i=0;i<list.length;i++){
+    var p=list[i];
+    h+='<div class="card pad" style="display:flex;flex-direction:column;gap:8px">'
+      +'<div style="display:flex;gap:8px;align-items:flex-start">'
+      +'<span class="ic" style="background:var(--purple-soft);color:var(--purple);width:32px;height:32px;'
+      +'border-radius:9px;display:flex;align-items:center;justify-content:center;flex:0 0 32px">'+ic('patent',16)+'</span>'
+      +'<div style="flex:1 1 auto;min-width:0">'
+      +'<div style="font-size:13.8px;font-weight:700;line-height:1.45">'+esc(p.name)+'</div>'
+      +'<div class="sub" style="font-size:11.5px;margin-top:3px">'+esc(p.no||'')+'</div></div>'
+      + statusChip(p.status||'')+'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+      +(p.role?'<span class="chip g">'+esc(p.role)+'</span>':'')
+      +(p.date?'<span class="chip n">'+esc(p.date)+'</span>':'')
+      +'</div>'
+      +(p.notes?'<div class="sub" style="font-size:11.5px">'+esc(p.notes)+'</div>':'')
+      +'<div style="display:flex;gap:6px;margin-top:2px"><div class="spacer"></div>'
+      +'<button class="btn sm ghost" data-act="editPatent" data-id="'+esc(p.id)+'">'+ic('edit',12)+'</button>'
+      +'<button class="btn sm ghost" data-act="delPatent" data-id="'+esc(p.id)+'">'+ic('trash',12)+'</button></div>'
+      +'</div>';
+  }
+  h+='</div></div>';
+  return h;
+}
+
+/* ================= 页面：灵感 ================= */
+function viewIdeas(){
+  var h='', i;
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('idea',18,'var(--orange)')+esc(tt('ideas'))+'</h1>'
+    +'<span class="sub">'+esc(tt('ideasSub'))+'</span><div class="right">'
+    +'<button class="btn" data-act="browseObsidian">'+ic('book',13)
+    +(LANG==='zh'?'浏览 Obsidian':'Browse Obsidian')+'</button>'
+    +'<button class="btn" data-act="importObsidian">'+ic('up',13)+esc(tt('importIdea'))+'</button>'
+    +'<button class="btn primary" data-act="addIdea">'+ic('plus',13)+esc(tt('add'))+'</button></div></div>';
+  var list=S.db.ideas.slice();
+  if(S.ideaFilter){
+    var f=S.ideaFilter.toLowerCase();
+    list=list.filter(function(x){ return (x.title+' '+x.content+' '+(x.tags||[]).join(' ')).toLowerCase().indexOf(f)>=0; });
+  }
+  h+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">'
+    +'<div class="searchbox" style="cursor:text;flex:0 1 280px">'+ic('search',13)
+    +'<input id="ideaSearch" placeholder="'+(LANG==='zh'?'搜索灵感…':'Search ideas…')+'" value="'+esc(S.ideaFilter)+'"></div>'
+    +'<span class="sub">'+list.length+(LANG==='zh'?' 条':' items')+'</span></div>';
+  if(!list.length){ h+='<div class="card"><div class="empty">'+ic('bulb',28,'var(--sage)')
+    +(LANG==='zh'?'还没有灵感记录<br>可以自己写，或从 Obsidian 导入':'No ideas yet')+'</div></div></div>'; return h; }
+  h+='<div class="grid3">';
+  for(i=0;i<list.length;i++){
+    var d=list[i], tags='';
+    for(var j=0;j<(d.tags||[]).length;j++) tags+='<span class="tag">#'+esc(d.tags[j])+'</span>';
+    h+='<div class="icard"><div class="t">'+esc(d.title)+'</div>'
+      +'<div class="c">'+esc(d.content)+'</div>'
+      +'<div style="margin-top:9px">'+tags+'</div>'
+      +'<div class="ft"><span class="chip '+(d.status==='已转化为论文'?'g':'n')+'">'+esc(d.status||'待验证')+'</span>'
+      +(d.obsidianRel?'<span class="chip b">Obsidian</span>':'')
+      +'<div class="spacer"></div>'
+      +'<button class="btn sm" data-act="ideaToPaper" data-id="'+esc(d.id)+'" title="'+esc(tt('toPaper'))+'">'+ic('paper',12)+'</button>'
+      +'<button class="btn sm ghost" data-act="pushObsidian" data-id="'+esc(d.id)+'" title="写入 Obsidian">'+ic('up',12)+'</button>'
+      +'<button class="btn sm ghost" data-act="editIdea" data-id="'+esc(d.id)+'">'+ic('edit',12)+'</button>'
+      +'<button class="btn sm ghost" data-act="delIdea" data-id="'+esc(d.id)+'">'+ic('trash',12)+'</button>'
+      +'</div></div>';
+  }
+  h+='</div></div>';
+  return h;
+}
+
+/* ================= 页面：日记 ================= */
+function moodCls(m){ var i=MOODS.indexOf(m); return 'm'+((i<0?2:i)+1); }
+function viewDiary(){
+  var h='', i;
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('diary',18,'var(--sage)')+esc(tt('diary'))+'</h1>'
+    +'<span class="sub">'+esc(tt('diarySub'))+'</span><div class="right">'
+    +'<button class="btn" data-act="diaryPin">'+ic('pin',13)
+    +((S.db.settings&&S.db.settings.pin)?(LANG==='zh'?'修改 PIN':'Change PIN'):(LANG==='zh'?'设置 PIN':'Set PIN'))+'</button>'
+    +'<button class="btn primary" data-act="addDiary">'+ic('plus',13)+esc(tt('add'))+'</button></div></div>';
+  if(S.db.settings&&S.db.settings.pin&&!S.diaryUnlocked){
+    h+='<div class="card" style="max-width:420px;margin:40px auto"><div style="padding:24px;text-align:center">'
+      + ic('pin',26,'var(--sage)')
+      +'<div style="font-size:15px;font-weight:700;margin:12px 0 4px">'+(LANG==='zh'?'日记已加锁':'Journal locked')+'</div>'
+      +'<div class="sub" style="margin-bottom:14px">'+(LANG==='zh'?'输入 4 位 PIN 查看（本地保护）':'Enter 4-digit PIN')+'</div>'
+      +'<input id="pinInput" type="password" maxlength="4" inputmode="numeric" placeholder="----" '
+      +'style="width:126px;text-align:center;letter-spacing:8px;font-size:20px;border:1px solid var(--line);'
+      +'border-radius:10px;padding:9px;outline:none">'
+      +'<div style="margin-top:14px"><button class="btn primary" data-act="pinGo">'
+      +(LANG==='zh'?'解锁':'Unlock')+'</button></div></div></div></div>';
+    return h;
+  }
+  var list=S.db.diary.slice();
+  list.sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); });
+  if(!list.length){ h+='<div class="card"><div class="empty">'+ic('coffee',28,'var(--sage)')
+    +(LANG==='zh'?'还没有日记':'No entries yet')+'</div></div></div>'; return h; }
+  h+='<div style="max-width:800px">';
+  for(i=0;i<list.length;i++){
+    var d=list[i], tags='';
+    for(var j=0;j<(d.tags||[]).length;j++) tags+='<span class="tag">#'+esc(d.tags[j])+'</span>';
+    h+='<div class="dpaper" style="margin-bottom:14px"><div class="dh">'
+      +'<span class="dd">'+esc(d.date)+'</span>'
+      +(d.mood?'<span class="mood '+moodCls(d.mood)+'">'+esc(d.mood)+'</span>':'')
+      +tags+'<div class="spacer"></div>'
+      +'<button class="btn sm ghost" data-act="editDiary" data-id="'+esc(d.id)+'">'+ic('edit',12)+'</button>'
+      +'<button class="btn sm ghost" data-act="delDiary" data-id="'+esc(d.id)+'">'+ic('trash',12)+'</button>'
+      +'</div><div class="dt">'+esc(d.content)+'</div></div>';
+  }
+  h+='</div></div>';
+  return h;
+}
+
+/* ================= 页面：常用 ================= */
+function kindIcon(k){
+  if(k==='app') return 'app';
+  if(k==='url') return 'link';
+  if(k==='file') return 'file';
+  return 'folder';
+}
+function viewCommon(){
+  var h='', i, j;
+  h+='<div class="page"><div class="pg-h"><h1>'+ic('link',18,'var(--green)')+esc(tt('common'))+'</h1>'
+    +'<span class="sub">'+esc(tt('commonSub'))+'</span><div class="right">'
+    +'<button class="btn" data-act="rescan">'+ic('refresh',13)+(LANG==='zh'?'重新探测软件':'Rescan apps')+'</button>'
+    +'<button class="btn primary" data-act="addShortcut" data-cat="本地文件">'+ic('plus',13)+esc(tt('add'))+'</button></div></div>';
+
+  /* 我的材料 —— 由用户自己决定展示哪些，可增删改 */
+  var mats=S.db.materials||[];
+  h+='<div class="cat"><div class="cat-h">'+ic('user',15,'var(--purple)')+'<h3>'+esc(tt('materials'))+'</h3>'
+    +'<span class="n">'+mats.length+(LANG==='zh'?' 项':'')+'</span><div class="spacer"></div>'
+    +'<button class="btn sm" data-act="addMatFromZot" title="'+esc(tt('addFromZotero'))+'">'
+    +ic('db',12)+esc(tt('addFromZotero'))+'</button>'
+    +'<button class="btn sm primary" data-act="addMaterial">'+ic('plus',12)+esc(tt('add'))+'</button>'
+    +'</div>';
+  h+='<div class="lg">';
+  for(i=0;i<mats.length;i++){
+    var m=mats[i];
+    h+='<div class="li" data-act="openMaterial" data-id="'+esc(m.id)+'" title="'+esc(m.path)+'">'
+      +'<span class="ic" style="background:var(--purple-soft);color:var(--purple)">'+ic('user',15)+'</span>'
+      +'<span style="flex:1 1 auto;min-width:0"><span class="n">'+esc(m.name||m.title||'')+'</span>'
+      +'<span class="p">'+esc(m.path||'')+'</span></span><span class="x">'
+      +'<button data-act="editMaterial" data-id="'+esc(m.id)+'" title="'+esc(tt('edit'))+'">'+ic('edit',10,'','2.4')+'</button>'
+      +'<button class="del" data-act="delMaterial" data-id="'+esc(m.id)+'" title="'+esc(tt('del'))+'">'+ic('x',10,'','2.6')+'</button>'
+      +'</span></div>';
+  }
+  h+='<div class="li add" data-act="addMaterial"><span>'+ic('plus',14)+esc(tt('add'))+'</span></div>';
+  h+='</div>';
+  if(!mats.length) h+='<div class="sub" style="font-size:11.5px;margin-top:6px">'
+    +esc(LANG==='zh'?'还没有材料。点「新增」手动添加，或点「从 Zotero 添加」挑 Zotero 里的条目。':'Empty.')+'</div>';
+  h+='</div>';
+
+  var groups={}, order=[];
+  for(i=0;i<S.db.shortcuts.length;i++){
+    var s=S.db.shortcuts[i], c=s.category||'其他';
+    if(!groups[c]){ groups[c]=[]; order.push(c); }
+    groups[c].push(s);
+  }
+  for(i=0;i<order.length;i++){
+    var c2=order[i], arr=groups[c2];
+    h+='<div class="cat"><div class="cat-h">'+ic(kindIcon(arr[0].kind),15,'var(--sage)')+'<h3>'+esc(c2)+'</h3>'
+      +'<span class="n">'+arr.length+(LANG==='zh'?' 项':'')+'</span>'
+      +(arr.length>1?'<span class="hint">'+esc(tt('dragTip'))+'</span>':'')
+      +'</div><div class="lg">';
+    for(j=0;j<arr.length;j++){
+      var it=arr[j];
+      var col = it.kind==='app'? 'var(--purple-soft);color:var(--purple)'
+        : it.kind==='folder'? 'var(--orange-soft);color:var(--orange)'
+        : it.kind==='url'? 'var(--blue-soft);color:var(--blue)' : 'var(--sage-soft);color:var(--green-d)';
+      h+='<div class="li sc" draggable="true" data-act="openShortcut" data-id="'+esc(it.id)
+        +'" data-cat="'+esc(it.category||'')+'" title="'+esc(it.target)+'">'
+        +'<span class="grip" title="'+esc(tt('dragTip'))+'">'+ic('menu',13,'var(--ink3)')+'</span>'
+        +'<span class="ic" style="background:'+col+'">'+ic(kindIcon(it.kind),15)+'</span>'
+        +'<span style="flex:1 1 auto;min-width:0"><span class="n">'+esc(it.name)+'</span>'
+        +'<span class="p">'+esc(it.target)+'</span></span><span class="x">'
+        +(it.kind==='folder'?'<button data-act="browseDir" data-path="'+esc(it.target)+'" title="'
+          +(LANG==='zh'?'展开最近文件':'Browse')+'">'+ic('down2',10,'','2.6')+'</button>':'')
+        +'<button data-act="editShortcut" data-id="'+esc(it.id)+'" title="'+esc(tt('edit'))+'">'+ic('edit',10,'','2.4')+'</button>'
+        +'<button class="del" data-act="delShortcut" data-id="'+esc(it.id)+'" title="'+esc(tt('del'))+'">'+ic('x',10,'','2.6')+'</button>'
+        +'</span></div>';
+    }
+    h+='<div class="li add" data-act="addShortcut" data-cat="'+esc(c2)+'"><span>'+ic('plus',14)+esc(tt('add'))+'</span></div>';
+    h+='</div></div>';
+  }
+  h+='<div class="card" id="likeDrawer" style="margin-top:6px;display:none"></div>';
+  h+='</div>';
+  return h;
+}
+/* ================= 模态框架 ================= */
+function modal(title,body,foot,wide){
+  var h='<div class="mask"><div class="modal'+(wide?' wide':'')+'">'
+    +'<div class="mh">'+ic('sprout',16,'var(--sage)')+'<h3>'+esc(title)+'</h3>'
+    +'<button class="btn icon ghost" data-act="closeModal">'+ic('x',15)+'</button></div>'
+    +'<div class="mb">'+body+'</div><div class="mf">'+foot+'</div></div></div>';
+  $('modalHost').innerHTML=h;
+  var mask=$('modalHost').querySelector('.mask');
+  mask.onclick=function(e){ if(e.target===mask) closeModal(); };
+}
+function closeModal(){ $('modalHost').innerHTML=''; }
+function v(id){ var e=$(id); return e? e.value.trim() : ''; }
+function opts(list,cur){
+  var h='';
+  for(var i=0;i<list.length;i++) h+='<option'+(list[i]===cur?' selected':'')+'>'+esc(list[i])+'</option>';
+  return h;
+}
+function recOptions(recs,cur,ph){
+  var h='<option value="">'+esc(ph||'— 不关联 —')+'</option>';
+  for(var i=0;i<recs.length;i++)
+    h+='<option value="'+esc(recs[i].id)+'"'+(recs[i].id===cur?' selected':'')+'>'+esc(recs[i].name||recs[i].title)+'</option>';
+  return h;
+}
+function footBtns(saveId){
+  return '<button class="btn" data-act="closeModal">'+esc(tt('cancel'))+'</button>'
+    +'<button class="btn primary" id="'+saveId+'" type="button">'+esc(tt('save'))+'</button>';
+}
+
+/* ================= 论文表单 ================= */
+function formPaper(id){
+  var p=id? findPaper(id) : null;
+  var path=(p&&p.files&&p.files[0])? p.files[0].path : '';
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'论文标题':'Title')+'</label>'
+    +'<input id="fTitle" value="'+esc(p?p.title:'')+'"></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'研究阶段':'Stage')+'</label><select id="fStage">'+opts(STAGES,p?p.stage:'写作')+'</select></div>'
+    +'<div><label>'+(LANG==='zh'?'工作状态':'Status')+'</label><select id="fStatus">'+opts(PSTATUS,p?p.status:'进行中')+'</select></div>'
+    +'<div><label>'+(LANG==='zh'?'截止日期':'Due')+'</label><input id="fDue" type="date" value="'+esc(dayStr(p?p.due:''))+'"></div>'
+    +'</div></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'目标期刊':'Journal')+'</label><input id="fJournal" value="'+esc(p?p.journal:'')+'" placeholder="Optics Express"></div>'
+    +'<div><label>'+(LANG==='zh'?'投稿轮次':'Round')+'</label><input id="fRound" value="'+esc(p?p.round:'')+'" placeholder="第 1 轮"></div>'
+    +'</div></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'编辑决定':'Decision')+'</label><input id="fDecision" value="'+esc(p?p.decision:'')+'" placeholder="大修 / 小修 / 接收"></div>'
+    +'<div><label>'+(LANG==='zh'?'作者顺序':'Order')+'</label><input id="fOrder" value="'+esc(p?p.authorOrder:'')+'" placeholder="1 / 5"></div>'
+    +'<div><label>'+(LANG==='zh'?'本人角色':'My role')+'</label><input id="fRole" value="'+esc(p?p.myRole:'')+'" placeholder="第一作者"></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'下一步行动':'Next action')+'</label>'
+    +'<input id="fNext" value="'+esc(p?p.nextAction:'')+'"></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'关联课题':'Topic')+'</label>'
+    +'<select id="fProj">'+recOptions(S.db.projects,p?p.projectId:'')+'</select></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'课题目录':'Folder')+'</label><div class="row">'
+    +'<input id="fPath" value="'+esc(path)+'"><button class="btn" id="fPick" type="button">'
+    +(LANG==='zh'?'浏览':'Browse')+'</button></div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'备注':'Notes')+'</label><textarea id="fNotes">'+esc(p?p.notes:'')+'</textarea></div>';
+  modal(p?(LANG==='zh'?'编辑论文':'Edit paper'):(LANG==='zh'?'新增论文':'New paper'), body, footBtns('fSave'));
+  $('fPick').onclick=function(){ api('/api/pick',{kind:'folder'}).then(function(r){ if(r&&r.ok&&r.path) $('fPath').value=r.path; }); };
+  $('fSave').onclick=function(){
+    var t=v('fTitle'); if(!t){ alert(LANG==='zh'?'请填写标题':'Title required'); return; }
+    var rec=p||{id:uid('p'),zoteroKeys:[],files:[],history:[],projectId:''};
+    var isNew=!p;
+    var before=p?(p.stage+' → '+p.status+(p.decision?' → '+p.decision:'')):'';
+    rec.title=t; rec.stage=v('fStage'); rec.status=v('fStatus'); rec.due=v('fDue');
+    rec.journal=v('fJournal'); rec.round=v('fRound'); rec.decision=v('fDecision');
+    rec.authorOrder=v('fOrder'); rec.myRole=v('fRole'); rec.nextAction=v('fNext');
+    rec.projectId=v('fProj'); rec.notes=v('fNotes');
+    var pth=v('fPath');
+    rec.files = pth? [{name:pth.split('\\').pop()||pth, path:pth}] : (rec.files||[]);
+    rec.updatedAt=Date.now();
+    var after=rec.stage+' → '+rec.status+(rec.decision?' → '+rec.decision:'');
+    if(isNew){ logHistory(rec,'新建：'+after); S.db.papers.unshift(rec); S.selPaper=rec.id;
+      var jp=findProject(rec.projectId);
+      if(jp){ jp.paperIds=jp.paperIds||[]; if(jp.paperIds.indexOf(rec.id)<0) jp.paperIds.push(rec.id); saveKey('projects'); }
+    } else if(before!==after){ logHistory(rec,'阶段更新：'+before+'  ⇒  '+after); }
+    saveKey('papers'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+
+/* ================= 课题表单 ================= */
+function formProject(id){
+  var p=id? findProject(id) : null;
+  var mul='<select id="jPapers" multiple size="4" style="padding:6px">';
+  for(var i=0;i<S.db.papers.length;i++){
+    var sel=(p&&(p.paperIds||[]).indexOf(S.db.papers[i].id)>=0)?' selected':'';
+    mul+='<option value="'+esc(S.db.papers[i].id)+'"'+sel+'>'+esc(S.db.papers[i].title)+'</option>';
+  }
+  mul+='</select>';
+  var body=''
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'项目编号':'Code')+'</label><input id="jCode" value="'+esc(p?p.code:'')+'" placeholder="PRJ-2026-01"></div>'
+    +'<div><label>'+(LANG==='zh'?'本人角色':'Role')+'</label><input id="jRole" value="'+esc(p?p.role:'')+'" placeholder="负责人"></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'课题名称':'Name')+'</label><input id="jName" value="'+esc(p?p.name:'')+'"></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'状态':'Status')+'</label><select id="jStatus">'+opts(PRSTATUS,p?p.status:'进行中')+'</select></div>'
+    +'<div><label>'+(LANG==='zh'?'进度 %':'Progress')+'</label><input id="jProg" type="number" min="0" max="100" value="'+esc(p?(p.progress||0):0)+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'截止日期':'Due')+'</label><input id="jDue" type="date" value="'+esc(dayStr(p?p.due:''))+'"></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'下一步行动':'Next action')+'</label><input id="jNext" value="'+esc(p?p.nextAction:'')+'"></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'关联论文（可多选）':'Linked papers')+'</label>'+mul+'</div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'课题目录':'Folder')+'</label><div class="row">'
+    +'<input id="jPath" value="'+esc(p?p.path:'')+'"><button class="btn" id="jPick" type="button">'
+    +(LANG==='zh'?'浏览':'Browse')+'</button></div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'成果记录':'Outputs')+'</label>'
+    +'<input id="jOut" value="'+esc(p?(p.outputs||[]).join('；'):'')+'" placeholder="已发表 2 篇；专利 1 项"></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'备注':'Notes')+'</label><textarea id="jNotes">'+esc(p?p.notes:'')+'</textarea></div>';
+  modal(p?(LANG==='zh'?'编辑课题':'Edit topic'):(LANG==='zh'?'新增课题':'New topic'), body, footBtns('jSave'));
+  $('jPick').onclick=function(){ api('/api/pick',{kind:'folder'}).then(function(r){ if(r&&r.ok&&r.path) $('jPath').value=r.path; }); };
+  $('jSave').onclick=function(){
+    var nm=v('jName'); if(!nm){ alert(LANG==='zh'?'请填写课题名称':'Name required'); return; }
+    var rec=p||{id:uid('j'),paperIds:[],outputs:[],history:[]};
+    rec.code=v('jCode'); rec.role=v('jRole'); rec.name=nm; rec.status=v('jStatus');
+    rec.progress=Math.max(0,Math.min(100,parseInt(v('jProg')||'0',10)||0));
+    rec.due=v('jDue'); rec.nextAction=v('jNext'); rec.path=v('jPath'); rec.notes=v('jNotes');
+    rec.outputs=v('jOut')? v('jOut').split('；') : [];
+    var sel=$('jPapers'), ids=[];
+    for(var i=0;i<sel.options.length;i++) if(sel.options[i].selected) ids.push(sel.options[i].value);
+    rec.paperIds=ids; rec.updatedAt=Date.now();
+    if(!p){ logHistory(rec,'新建课题'); S.db.projects.unshift(rec); }
+    else logHistory(rec,'更新：'+rec.status+' · 进度 '+rec.progress+'%');
+    for(i=0;i<S.db.papers.length;i++){
+      var pp=S.db.papers[i], has=(pp.projectId===rec.id);
+      if(ids.indexOf(pp.id)>=0 && !has) pp.projectId=rec.id;
+      if(ids.indexOf(pp.id)<0 && has) pp.projectId='';
+    }
+    saveKey('papers'); saveKey('projects'); closeModal(); refreshAll();
+    toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+
+/* ================= 成果表单 ================= */
+function formPub(id, pre){
+  var w=id? byId(S.db.pubs,id) : null;
+  var d=w||pre||{};
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'论文标题':'Title')+'</label><input id="wTitle" value="'+esc(d.title||'')+'"></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'年份':'Year')+'</label><input id="wYear" type="number" value="'+esc(d.year||new Date().getFullYear())+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'期刊':'Journal')+'</label><input id="wJournal" value="'+esc(d.journal||'')+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'本人角色':'My role')+'</label><input id="wRole" value="'+esc(d.myRole||'')+'" placeholder="第一作者"></div>'
+    +'</div></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'作者身份':'Author type')+'</label><select id="wArole">'
+    +'<option value="first"'+(d.role==='co'?'':' selected')+'>'+(LANG==='zh'?'第一 / 通讯':'First / corresponding')+'</option>'
+    +'<option value="co"'+(d.role==='co'?' selected':'')+'>'+(LANG==='zh'?'合作作者':'Co-author')+'</option>'
+    +'</select></div>'
+    +'<div><label>'+(LANG==='zh'?'影响因子':'Impact factor')+'</label><input id="wIf" value="'+esc(d.if_||'')+'" placeholder="3.3"></div>'
+    +'<div><label>'+(LANG==='zh'?'分区 / 等级':'Zone')+'</label><input id="wZone" value="'+esc(d.zone||'')+'" placeholder="中科院2区TOP"></div>'
+    +'<div><label>'+(LANG==='zh'?'引用':'Citations')+'</label><input id="wCites" type="number" value="'+esc(d.cites||'0')+'"></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'作者列表':'Authors')+'</label><input id="wAuthors" value="'+esc(d.authors||'')+'" placeholder="J. Xu*, Y. Luo, ..."></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>DOI</label><input id="wDoi" value="'+esc(d.doi||'')+'" placeholder="10.1364/OE.xxxxx"></div>'
+    +'<div><label>'+(LANG==='zh'?'卷':'Volume')+'</label><input id="wVol" value="'+esc(d.volume||'')+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'页码':'Pages')+'</label><input id="wPages" value="'+esc(d.pages||'')+'"></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'关联课题':'Topic')+'</label>'
+    +'<select id="wProj">'+recOptions(S.db.projects,d.projectId||'')+'</select></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'备注':'Notes')+'</label><textarea id="wNotes">'+esc(d.notes||'')+'</textarea></div>';
+  modal(w?(LANG==='zh'?'编辑成果':'Edit publication'):(LANG==='zh'?'新增成果':'New publication'), body, footBtns('wSave'));
+  $('wSave').onclick=function(){
+    var t=v('wTitle'); if(!t){ alert(LANG==='zh'?'请填写标题':'Title required'); return; }
+    var rec=w||{id:uid('w')};
+    rec.title=t; rec.year=parseInt(v('wYear')||'0',10)||''; rec.journal=v('wJournal');
+    rec.myRole=v('wRole'); rec.role=v('wArole')||'first';
+    rec.if_=v('wIf'); rec.zone=v('wZone'); rec.cites=parseInt(v('wCites')||'0',10)||0;
+    rec.authors=v('wAuthors'); rec.doi=v('wDoi'); rec.volume=v('wVol'); rec.pages=v('wPages');
+    rec.projectId=v('wProj'); rec.notes=v('wNotes');
+    if(pre&&!id){ if(pre.bibtype) rec.bibtype=pre.bibtype; if(pre.bibkey) rec.bibkey=pre.bibkey;
+                  if(pre.abstract) rec.abstract=pre.abstract; if(pre.url) rec.url=pre.url; }
+    if(!w) S.db.pubs.unshift(rec);
+    saveKey('pubs'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+
+/* ================= 灵感表单 ================= */
+function formIdea(id){
+  var d=id? byId(S.db.ideas,id) : null;
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'想法标题':'Title')+'</label><input id="iTitle" value="'+esc(d?d.title:'')+'"></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'正文':'Content')+'</label><textarea id="iContent" style="min-height:130px">'+esc(d?d.content:'')+'</textarea></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'标签（逗号分隔）':'Tags')+'</label><input id="iTags" value="'+esc(d?(d.tags||[]).join(','):'')+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'状态':'Status')+'</label><select id="iStatus">'
+    +opts(['待验证','验证中','已转化为论文','已放弃'],d?d.status:'待验证')+'</select></div>'
+    +'</div></div>';
+  modal(d?(LANG==='zh'?'编辑灵感':'Edit idea'):(LANG==='zh'?'新增灵感':'New idea'), body, footBtns('iSave'));
+  $('iSave').onclick=function(){
+    var t=v('iTitle'); if(!t){ alert(LANG==='zh'?'请填写标题':'Title required'); return; }
+    var rec=d||{id:uid('i'),createdAt:Date.now(),paperId:'',obsidianRel:''};
+    rec.title=t; rec.content=v('iContent'); rec.status=v('iStatus');
+    rec.tags=v('iTags')? v('iTags').split(/[,，]/).map(function(x){return x.trim();}).filter(Boolean) : [];
+    if(!d) S.db.ideas.unshift(rec);
+    saveKey('ideas'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+
+/* ================= 日记表单 ================= */
+function formDiary(id){
+  var d=id? byId(S.db.diary,id) : null;
+  var body=''
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'日期':'Date')+'</label><input id="yDate" type="date" value="'+esc(d?d.date:todayStr())+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'心情':'Mood')+'</label><select id="yMood">'+opts(MOODS,d?d.mood:'还可以')+'</select></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'内容':'Content')+'</label>'
+    +'<textarea id="yContent" style="min-height:180px;font-family:Georgia,\'Songti SC\',serif;line-height:1.9">'+esc(d?d.content:'')+'</textarea></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'标签（逗号分隔）':'Tags')+'</label>'
+    +'<input id="yTags" value="'+esc(d?(d.tags||[]).join(','):'')+'" placeholder="科研, 家庭"></div>';
+  modal(d?(LANG==='zh'?'编辑日记':'Edit entry'):(LANG==='zh'?'写日记':'New entry'), body, footBtns('ySave'));
+  $('ySave').onclick=function(){
+    var rec=d||{id:uid('d')};
+    rec.date=v('yDate')||todayStr(); rec.mood=v('yMood'); rec.content=v('yContent');
+    rec.tags=v('yTags')? v('yTags').split(/[,，]/).map(function(x){return x.trim();}).filter(Boolean) : [];
+    rec.updatedAt=Date.now();
+    if(!d) S.db.diary.unshift(rec);
+    saveKey('diary'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+
+/* ================= 日程表单 ================= */
+function formEvent(id, presetDate){
+  var e=id? byId(S.db.events,id) : null;
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'事项':'Title')+'</label><input id="eTitle" value="'+esc(e?e.title:'')+'"></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'日期':'Date')+'</label><input id="eDate" type="date" value="'+esc(e?e.date:(presetDate||todayStr()))+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'开始':'Start')+'</label><input id="eStart" type="time" value="'+esc(e?(e.start||'09:00'):'09:00')+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'结束':'End')+'</label><input id="eEnd" type="time" value="'+esc(e?(e.end||'10:00'):'10:00')+'"></div>'
+    +'</div></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'类型':'Type')+'</label><select id="eType">'+opts(ETYPES,e?e.type:'会议')+'</select></div>'
+    +'<div><label>'+(LANG==='zh'?'关联论文':'Paper')+'</label>'
+    +'<select id="ePaper">'+recOptions(S.db.papers,(e&&e.relatedType==='paper')?e.relatedId:'','— 不关联 —')+'</select></div>'
+    +'<div><label>'+(LANG==='zh'?'关联课题':'Topic')+'</label>'
+    +'<select id="eProj">'+recOptions(S.db.projects,(e&&e.relatedType==='project')?e.relatedId:'','— 不关联 —')+'</select></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'备注':'Notes')+'</label><textarea id="eNotes">'+esc(e?e.notes:'')+'</textarea></div>';
+  modal(e?(LANG==='zh'?'编辑日程':'Edit event'):(LANG==='zh'?'新增日程':'New event'), body,
+    (id?'<button class="btn danger" data-act="delEvent" data-id="'+esc(id)+'">'+ic('trash',12)+esc(tt('del'))+'</button>':'')
+    +'<div class="spacer"></div>'+footBtns('eSave'));
+  $('eSave').onclick=function(){
+    var t=v('eTitle'); if(!t){ alert(LANG==='zh'?'请填写事项':'Title required'); return; }
+    var rec=e||{id:uid('e')};
+    rec.title=t; rec.date=v('eDate'); rec.start=v('eStart'); rec.end=v('eEnd');
+    rec.type=v('eType'); rec.notes=v('eNotes');
+    var pid=v('ePaper'), jid=v('eProj');
+    if(pid){ rec.relatedType='paper'; rec.relatedId=pid; }
+    else if(jid){ rec.relatedType='project'; rec.relatedId=jid; }
+    else { rec.relatedType=''; rec.relatedId=''; }
+    if(!e) S.db.events.push(rec);
+    saveKey('events'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+
+/* ================= 已立项（科研项目）表单 ================= */
+function formGrant(id){
+  var g=id? byId(S.db.grants,id) : null;
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'项目名称':'Project name')+'</label><input id="gName" value="'+esc(g?g.name:'')+'"></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'资助机构':'Funding agency')+'</label><input id="gOrg" value="'+esc(g?g.org:'')+'" placeholder="国家自然科学基金委"></div>'
+    +'<div><label>'+(LANG==='zh'?'项目类型':'Type')+'</label><input id="gKind" value="'+esc(g?g.kind:'')+'" placeholder="青年科学基金项目"></div>'
+    +'</div></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'项目编号':'Code')+'</label><input id="gCode" value="'+esc(g?g.code:'')+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'经费':'Budget')+'</label><input id="gAmount" value="'+esc(g?g.amount:'')+'" placeholder="30 万元"></div>'
+    +'<div><label>'+(LANG==='zh'?'状态':'Status')+'</label><select id="gStatus">'+opts(['在研','结题','暂停'],g?g.status:'在研')+'</select></div>'
+    +'<div><label>'+(LANG==='zh'?'本人角色':'Role')+'</label><select id="gRole">'+opts(['主持','参与'],g?g.role:'主持')+'</select></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'起止时间':'Period')+'</label><input id="gPeriod" value="'+esc(g?g.period:'')+'" placeholder="2025-01-01 至 2027-12-31"></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'备注':'Notes')+'</label><textarea id="gNotes">'+esc(g?g.notes:'')+'</textarea></div>';
+  modal(g?(LANG==='zh'?'编辑立项项目':'Edit grant'):(LANG==='zh'?'新增立项项目':'New grant'), body, footBtns('gSave'));
+  $('gSave').onclick=function(){
+    var n=v('gName'); if(!n){ alert(LANG==='zh'?'请填写项目名称':'Name required'); return; }
+    var rec=g||{id:uid('g')};
+    rec.name=n; rec.org=v('gOrg'); rec.kind=v('gKind'); rec.code=v('gCode');
+    rec.amount=v('gAmount'); rec.status=v('gStatus'); rec.role=v('gRole');
+    rec.period=v('gPeriod'); rec.notes=v('gNotes');
+    if(!g) S.db.grants.unshift(rec);
+    saveKey('grants'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+
+/* ================= 教学成果表单 ================= */
+function formTeaching(id){
+  var t=id? byId(S.db.teaching,id) : null;
+  var body=''
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'类别':'Category')+'</label><select id="tcCat">'
+    +opts(['竞赛获奖','荣誉称号','教材编写','教改论文','其他'],t?t.cat:'竞赛获奖')+'</select></div>'
+    +'<div><label>'+(LANG==='zh'?'级别':'Level')+'</label><input id="tcLevel" value="'+esc(t?t.level:'')+'" placeholder="国家级 / 省级 / 校级"></div>'
+    +'<div><label>'+(LANG==='zh'?'时间':'Date')+'</label><input id="tcDate" value="'+esc(t?t.date:'')+'" placeholder="2025.12"></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'内容':'Content')+'</label><textarea id="tcContent" style="min-height:96px">'+esc(t?t.content:'')+'</textarea></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'备注':'Notes')+'</label><input id="tcNotes" value="'+esc(t?t.notes:'')+'"></div>';
+  modal(t?(LANG==='zh'?'编辑教学成果':'Edit teaching record'):(LANG==='zh'?'新增教学成果':'New teaching record'), body, footBtns('tcSave'));
+  $('tcSave').onclick=function(){
+    var c=v('tcContent'); if(!c){ alert(LANG==='zh'?'请填写内容':'Content required'); return; }
+    var rec=t||{id:uid('t')};
+    rec.cat=v('tcCat'); rec.level=v('tcLevel'); rec.date=v('tcDate');
+    rec.content=c; rec.notes=v('tcNotes');
+    if(!t) S.db.teaching.unshift(rec);
+    saveKey('teaching'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+
+/* ================= 教学 · 其他项目（大创）表单 ================= */
+function formTeachProject(id){
+  var p=id? byId(S.db.teachProjects,id) : null;
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'项目名称':'Project name')+'</label><input id="tpName" value="'+esc(p?p.name:'')+'"></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'级别':'Level')+'</label><select id="tpLevel">'
+    +opts(['国家级','省级','校级','其他'],p?p.level:'校级')+'</select></div>'
+    +'<div><label>'+(LANG==='zh'?'项目编号':'Code')+'</label><input id="tpCode" value="'+esc(p?p.code:'')+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'起止时间':'Period')+'</label><input id="tpPeriod" value="'+esc(p?p.period:'')+'" placeholder="2026-06 至 2027-06"></div>'
+    +'<div><label>'+(LANG==='zh'?'本人角色':'Role')+'</label><input id="tpRole" value="'+esc(p?p.role:'第一指导教师')+'"></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'备注':'Notes')+'</label><input id="tpNotes" value="'+esc(p?p.notes:'')+'"></div>';
+  modal(p?(LANG==='zh'?'编辑其他项目':'Edit project'):(LANG==='zh'?'新增其他项目':'New project'), body, footBtns('tpSave'));
+  $('tpSave').onclick=function(){
+    var n=v('tpName'); if(!n){ alert(LANG==='zh'?'请填写项目名称':'Name required'); return; }
+    var rec=p||{id:uid('tp')};
+    rec.name=n; rec.level=v('tpLevel'); rec.code=v('tpCode');
+    rec.period=v('tpPeriod'); rec.role=v('tpRole'); rec.notes=v('tpNotes');
+    if(!p) S.db.teachProjects.unshift(rec);
+    saveKey('teachProjects'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+
+/* ================= 专利表单 ================= */
+function formPatent(id){
+  var p=id? byId(S.db.patents,id) : null;
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'专利名称':'Patent name')+'</label><input id="ptName" value="'+esc(p?p.name:'')+'"></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'专利号':'Number')+'</label><input id="ptNo" value="'+esc(p?p.no:'')+'" placeholder="ZL 2024 1 0000000.0"></div>'
+    +'<div><label>'+(LANG==='zh'?'状态':'Status')+'</label><select id="ptStatus">'+opts(['授权','申请中','实质审查','已受理'],p?p.status:'授权')+'</select></div>'
+    +'<div><label>'+(LANG==='zh'?'本人角色':'Role')+'</label><input id="ptRole" value="'+esc(p?p.role:'第一发明人')+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'年份':'Year')+'</label><input id="ptDate" value="'+esc(p?p.date:'')+'" placeholder="2024"></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'备注':'Notes')+'</label><textarea id="ptNotes">'+esc(p?p.notes:'')+'</textarea></div>';
+  modal(p?(LANG==='zh'?'编辑专利':'Edit patent'):(LANG==='zh'?'新增专利':'New patent'), body, footBtns('ptSave'));
+  $('ptSave').onclick=function(){
+    var n=v('ptName'); if(!n){ alert(LANG==='zh'?'请填写专利名称':'Name required'); return; }
+    var rec=p||{id:uid('pt')};
+    rec.name=n; rec.no=v('ptNo'); rec.status=v('ptStatus'); rec.role=v('ptRole');
+    rec.date=v('ptDate'); rec.notes=v('ptNotes');
+    if(!p) S.db.patents.unshift(rec);
+    saveKey('patents'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+
+/* ================= 我的材料表单 ================= */
+function formMaterial(id, preset){
+  var m=id? byId(S.db.materials,id) : null;
+  var pre=preset||{};
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'显示名称':'Display name')+'</label>'
+    +'<input id="mtName" value="'+esc(m?m.name:(pre.name||''))+'"></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'文件路径':'File path')+'</label><div class="row">'
+    +'<input id="mtPath" value="'+esc(m?m.path:(pre.path||''))+'">'
+    +'<button class="btn" id="mtPick" type="button">'+(LANG==='zh'?'浏览':'Browse')+'</button></div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'备注':'Notes')+'</label><input id="mtNote" value="'+esc(m?m.note:'')+'"></div>';
+  modal(m?(LANG==='zh'?'编辑材料':'Edit document'):(LANG==='zh'?'新增材料':'New document'), body, footBtns('mtSave'));
+  $('mtPick').onclick=function(){
+    api('/api/pick',{kind:'file'}).then(function(r){ if(r&&r.ok&&r.path) $('mtPath').value=r.path; });
+  };
+  $('mtSave').onclick=function(){
+    var n=v('mtName'), p2=v('mtPath');
+    if(!n||!p2){ alert(LANG==='zh'?'名称和路径都要填':'Name and path required'); return; }
+    var rec=m||{id:uid('m')};
+    rec.name=n; rec.path=p2; rec.note=v('mtNote'); rec.kind='file';
+    if(!m) S.db.materials.push(rec);
+    saveKey('materials'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+/* 从 Zotero 挑条目加入「我的材料」 */
+function pickZoteroMaterial(){
+  if(!S.zotProfile||!S.zotProfile.length){
+    toast(LANG==='zh'?'Zotero 暂无个人条目（简历等）':'No Zotero items found','info'); return;
+  }
+  var h='', i, j;
+  var have={};
+  for(i=0;i<(S.db.materials||[]).length;i++) have[S.db.materials[i].path]=1;
+  for(i=0;i<S.zotProfile.length;i++){
+    var z=S.zotProfile[i], hit=null;
+    for(j=0;j<(z.attachments||[]).length;j++) if(z.attachments[j].exists) hit=z.attachments[j];
+    if(!hit) continue;
+    h+='<div class="zrow"><span style="flex:1 1 auto;min-width:0">'
+      +'<div class="t">'+esc(z.title)+'</div><div class="m">'+esc(hit.path)+'</div></span>'
+      +(have[hit.path]
+        ? '<span class="chip g">'+(LANG==='zh'?'已添加':'Added')+'</span>'
+        : '<button class="btn sm" data-act="matAddZot" data-name="'+esc(z.title)+'" data-path="'+esc(hit.path)+'">'
+          +ic('plus',11)+(LANG==='zh'?'添加':'Add')+'</button>')
+      +'</div>';
+  }
+  modal(LANG==='zh'?'从 Zotero 添加材料':'Add from Zotero', h, '');
+}
+
+/* ================= 工作计划表单 ================= */
+function formPlan(id){
+  var p=id? byId(S.db.plans,id) : null;
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'事项':'Task')+'</label><input id="pnTitle" value="'+esc(p?p.title:'')+'"></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'优先级':'Priority')+'</label><select id="pnPri">'
+    +'<option value="high"'+(p&&p.priority==='high'?' selected':'')+'>'+(LANG==='zh'?'重要':'High')+'</option>'
+    +'<option value="normal"'+((!p||p.priority==='normal')?' selected':'')+'>'+(LANG==='zh'?'普通':'Normal')+'</option>'
+    +'<option value="low"'+(p&&p.priority==='low'?' selected':'')+'>'+(LANG==='zh'?'轻松':'Low')+'</option>'
+    +'</select></div>'
+    +'<div><label>'+(LANG==='zh'?'截止':'Due')+'</label><input id="pnDue" type="date" value="'+esc(p?p.due:'')+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'状态':'Status')+'</label><select id="pnDone">'
+    +'<option value="0"'+((!p||!p.done)?' selected':'')+'>'+(LANG==='zh'?'进行中':'Open')+'</option>'
+    +'<option value="1"'+(p&&p.done?' selected':'')+'>'+(LANG==='zh'?'已完成':'Done')+'</option>'
+    +'</select></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'备注':'Notes')+'</label><input id="pnNote" value="'+esc(p?p.note:'')+'"></div>';
+  modal(p?(LANG==='zh'?'编辑计划':'Edit task'):(LANG==='zh'?'新增计划':'New task'), body, footBtns('pnSave'));
+  $('pnSave').onclick=function(){
+    var t=v('pnTitle'); if(!t){ alert(LANG==='zh'?'请填写事项':'Task required'); return; }
+    var rec=p||{id:uid('pl'),createdAt:Date.now()};
+    rec.title=t; rec.priority=v('pnPri'); rec.due=v('pnDue'); rec.note=v('pnNote');
+    rec.done=v('pnDone')==='1';
+    if(!p) S.db.plans.unshift(rec);
+    saveKey('plans'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+
+/* ================= 快捷入口表单 ================= */
+function shortcutCats(){
+  var out=[], seen={};
+  var base=['本地文件','研究工具','知识库','数据库'];
+  for(var i=0;i<base.length;i++){ out.push(base[i]); seen[base[i]]=1; }
+  for(i=0;i<S.db.shortcuts.length;i++){
+    var c=S.db.shortcuts[i].category;
+    if(c&&!seen[c]){ seen[c]=1; out.push(c); }
+  }
+  return out;
+}
+function formShortcut(id, presetCat){
+  var s=id? byId(S.db.shortcuts,id) : null;
+  var cs=shortcutCats();
+  var dl='';
+  for(var i=0;i<cs.length;i++) dl+='<option value="'+esc(cs[i])+'"></option>';
+  var defCat = s? (s.category||'本地文件') : (presetCat||'本地文件');
+  var body=''
+    +'<div class="fld"><label>'+(LANG==='zh'?'名称':'Name')+'</label><input id="sName" value="'+esc(s?s.name:'')+'"></div>'
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'分类':'Category')+'</label>'
+    +'<input id="sCat" list="sCatList" value="'+esc(defCat)+'" placeholder="本地文件 / 数据库 / 研究工具">'
+    +'<datalist id="sCatList">'+dl+'</datalist></div>'
+    +'<div><label>'+(LANG==='zh'?'类型':'Type')+'</label><select id="sKind">'
+    +opts(['folder','app','url','file'], s?s.kind:'folder')+'</select></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'路径 / 网址':'Path or URL')+'</label><div class="row">'
+    +'<input id="sTarget" value="'+esc(s?s.target:'')+'"><button class="btn" id="sPick" type="button">'
+    +(LANG==='zh'?'浏览':'Browse')+'</button></div>'
+    +'<div class="hint">'+(LANG==='zh'
+      ? '类型 folder/app/file 填本地路径；类型 url 填网址。folder 卡片支持点击展开最近文件。'
+      : 'folder/app/file need a local path; url needs a link.')+'</div></div>';
+  modal(s?(LANG==='zh'?'编辑入口':'Edit shortcut'):(LANG==='zh'?'新增入口':'New shortcut'), body, footBtns('sSave'));
+  $('sPick').onclick=function(){
+    var k=v('sKind');
+    api('/api/pick',{kind:(k==='folder')?'folder':'file'}).then(function(r){ if(r&&r.ok&&r.path) $('sTarget').value=r.path; });
+  };
+  $('sSave').onclick=function(){
+    var nm=v('sName'), tg=v('sTarget');
+    if(!nm||!tg){ alert(LANG==='zh'?'名称和路径都要填':'Name and path required'); return; }
+    var rec=s||{id:uid('s')};
+    rec.name=nm; rec.category=v('sCat')||'其他'; rec.kind=v('sKind'); rec.target=tg;
+    if(!s) S.db.shortcuts.push(rec);
+    saveKey('shortcuts'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+}
+
+/* ================= 设置 ================= */
+function formSettings(){
+  var st=S.db.settings||{};
+  var vs='';
+  for(var i=0;i<S.obs.vaults.length;i++){
+    var v0=S.obs.vaults[i];
+    vs+='<option value="'+esc(v0.path)+'"'+(st.obsidianVault===v0.path?' selected':'')+'>'+esc(v0.name+' · '+v0.path)+'</option>';
+  }
+  var zs=zoteroStatusText();
+  var body=''
+    +'<div class="fld"><div class="row">'
+    +'<div><label>'+(LANG==='zh'?'称呼':'Name')+'</label><input id="cMe" value="'+esc(st.me||'')+'"></div>'
+    +'<div><label>'+(LANG==='zh'?'番茄钟分钟':'Pomodoro min')+'</label><input id="cFocus" type="number" min="5" max="120" value="'+esc(st.focusMin||25)+'"></div>'
+    +'</div></div>'
+    +'<div class="fld"><label>Obsidian '+(LANG==='zh'?'笔记仓库':'vault')+'</label>'
+    +'<select id="cVault"><option value="">'+(LANG==='zh'?'— 不启用 —':'— none —')+'</option>'+vs+'</select>'
+    +'<div class="hint">'+(LANG==='zh'
+      ? '自动读取 Obsidian 配置，共发现 '+S.obs.vaults.length+' 个仓库。写入笔记会存到该仓库下的「灵感」文件夹。'
+      : 'Read from Obsidian config.')+'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'灵感写入文件夹':'Idea folder')+'</label>'
+    +'<input id="cIdeaFolder" value="'+esc(st.obsidianIdeaFolder||'灵感')+'"></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'日记 PIN（4 位，留空即关闭）':'Journal PIN')+'</label>'
+    +'<input id="cPin" maxlength="4" value="'+esc(st.pin||'')+'">'
+    +'<div class="hint">'+(LANG==='zh'?'仅本地防误看的门锁，不是加密，请勿当密码用。':'Local gate only, not encryption.')+'</div></div>'
+    +'<div class="fld"><label>Zotero</label><div class="hint" style="margin-top:0">'+esc(zs)+'</div></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'数据目录':'Data folder')+'</label>'
+    +'<div class="hint" style="margin-top:0">'+esc(S.dataDir||'')+'</div></div>';
+  modal(LANG==='zh'?'设置':'Settings', body,
+    '<button class="btn" id="cExport" type="button">'+ic('down',12)+(LANG==='zh'?'导出备份':'Export')+'</button>'
+    +'<button class="btn" id="cImport" type="button">'+ic('up',12)+(LANG==='zh'?'导入恢复':'Import')+'</button>'
+    +'<div class="spacer"></div>'+footBtns('cSave'));
+  $('cSave').onclick=function(){
+    var st2=S.db.settings;
+    st2.me=v('cMe'); st2.focusMin=parseInt(v('cFocus')||'25',10)||25;
+    st2.obsidianVault=v('cVault'); st2.obsidianIdeaFolder=v('cIdeaFolder')||'灵感';
+    st2.pin=v('cPin').replace(/\D/g,'').slice(0,4);
+    FOCUS_MIN=st2.focusMin; focusLeft=FOCUS_MIN*60;
+    saveKey('settings'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
+  };
+  $('cExport').onclick=function(){
+    var blob=new Blob([JSON.stringify(S.db,null,1)],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='科研工作台备份-'+todayStr()+'.json'; a.click();
+    toast(LANG==='zh'?'已导出备份':'Exported','ok');
+  };
+  $('cImport').onclick=function(){
+    var inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+    inp.onchange=function(){
+      var f=inp.files&&inp.files[0]; if(!f) return;
+      var fr=new FileReader();
+      fr.onload=function(){
+        try{
+          var o=JSON.parse(fr.result);
+          if(!confirm(LANG==='zh'?'导入将覆盖当前数据，继续？':'Import will overwrite current data. Continue?')) return;
+          api('/api/state',{db:o}).then(function(){ location.reload(); });
+        }catch(err){ alert('解析失败：'+err.message); }
+      };
+      fr.readAsText(f,'utf-8');
+    };
+    inp.click();
+  };
+}
+function zoteroStatusText(){
+  if(S.zot.ok) return (LANG==='zh'?'已连接 · ':'Connected · ')+S.zot.total+(LANG==='zh'?' 条文献 · ':' items · ')+S.zot.dir;
+  return (S.zot.msg||(LANG==='zh'?'未连接':'Not connected'));
+}
+/* ================= Zotero 文献选择器 ================= */
+function zoteroOK(){
+  if(S.zot.ok) return true;
+  alert((LANG==='zh'?'Zotero 未连接：':'Zotero not connected: ')+zoteroStatusText());
+  return false;
+}
+function formZoteroPicker(paperId){
+  if(!zoteroOK()) return;
+  var body='<div class="fld"><div class="row">'
+    +'<div style="flex:2 1 0"><label>'+(LANG==='zh'?'搜索文献':'Search')+'</label>'
+    +'<input id="zq" placeholder="'+(LANG==='zh'?'标题 / 摘要 / 期刊 / DOI':'title / abstract / journal / DOI')+'"></div>'
+    +'<div style="flex:1 1 0"><label>'+(LANG==='zh'?'分类':'Collection')+'</label>'
+    +'<select id="zc"><option value="">'+(LANG==='zh'?'全部（最近添加）':'All (recent)')+'</option></select></div>'
+    +'</div></div><div id="zRes" style="max-height:min(52vh,460px);overflow:auto">'
+    +'<div class="sub" style="padding:14px">'+ic('refresh',13)+' '+(LANG==='zh'?'读取中…':'Loading…')+'</div></div>';
+  modal(LANG==='zh'?'关联 Zotero 文献':'Link Zotero item', body, '<button class="btn" data-act="closeModal">'+esc(tt('close'))+'</button>', true);
+
+  api('/api/zotero/collections').then(function(r){
+    var sel=$('zc'); if(!sel||!r||!r.collections) return;
+    var flat=[];
+    (function walk(list,depth){
+      for(var i=0;i<list.length;i++){
+        flat.push({id:list[i].id,name:list[i].name,count:list[i].count,depth:depth});
+        if(list[i].children&&list[i].children.length) walk(list[i].children,depth+1);
+      }
+    })(r.collections,0);
+    for(var i=0;i<flat.length;i++){
+      var o=document.createElement('option');
+      o.value=flat[i].id;
+      o.textContent=new Array(flat[i].depth+1).join('　')+flat[i].name+' ('+flat[i].count+')';
+      sel.appendChild(o);
+    }
+  });
+  function load(){
+    var box=$('zRes'); if(!box) return;
+    box.innerHTML='<div class="sub" style="padding:14px">'+(LANG==='zh'?'读取中…':'Loading…')+'</div>';
+    var q=v('zq'), c=v('zc');
+    api('/api/zotero/items?limit=120&q='+encodeURIComponent(q)+'&collection='+encodeURIComponent(c)).then(function(r){
+      var items=(r&&r.items)||[];
+      if(!items.length){ box.innerHTML='<div class="empty">'+(LANG==='zh'?'没有匹配的文献':'No matches')+'</div>'; return; }
+      var h='';
+      for(var i=0;i<items.length;i++){
+        var it=items[i], au=(it.creators||[]).slice(0,2).join(', ');
+        h+='<div class="zrow" data-act="zlink" data-pid="'+esc(paperId)+'" data-i="'+i+'">'
+          + ic('db',14,'var(--blue)')+'<div class="b"><div class="t">'+esc(it.title)+'</div>'
+          +'<div class="m">'+esc(au)+(it.date?' · '+esc(String(it.date).slice(0,4)):'')
+          +(it.publication?' · '+esc(it.publication):'')+'</div></div>'
+          + (it.attachments&&it.attachments.length? '<span class="chip g">PDF</span>':'')
+          +'</div>';
+      }
+      box.innerHTML=h;
+      S._zCache=items;
+    });
+  }
+  $('zq').oninput=(function(){ var t=null; return function(){ clearTimeout(t); t=setTimeout(load,320); }; })();
+  $('zc').onchange=load;
+  load();
+}
+function linkZotero(paperId, idx){
+  var p=findPaper(paperId); if(!p||!S._zCache) return;
+  var it=S._zCache[idx]; if(!it) return;
+  p.zoteroKeys=p.zoteroKeys||[];
+  for(var i=0;i<p.zoteroKeys.length;i++) if(p.zoteroKeys[i].key===it.key) { closeModal(); toast(LANG==='zh'?'已经关联过了':'Already linked'); return; }
+  var att=null;
+  for(i=0;i<(it.attachments||[]).length;i++) if(it.attachments[i].exists){ att=it.attachments[i]; break; }
+  p.zoteroKeys.push({key:it.key,title:it.title,journal:it.publication||'',doi:it.doi||'',
+    year:String(it.date||'').slice(0,4),path:att?att.path:'',authors:(it.creators||[]).join(', ')});
+  p.updatedAt=Date.now();
+  logHistory(p,'关联文献：'+it.title);
+  saveKey('papers'); closeModal(); refreshAll(); toast(LANG==='zh'?'已关联文献':'Linked','ok');
+}
+function openZoteroItem(paperId, idx){
+  var p=findPaper(paperId); if(!p) return;
+  var z=(p.zoteroKeys||[])[idx]; if(!z) return;
+  if(z.path) doOpen('file', z.path);
+  else if(z.doi) doOpen('url','https://doi.org/'+z.doi);
+  else toast(LANG==='zh'?'这条文献没有本地附件，也没有 DOI':'No attachment or DOI','err');
+}
+
+/* ================= Obsidian ================= */
+function vaultPath(){
+  var st=S.db.settings||{};
+  if(st.obsidianVault) return st.obsidianVault;
+  if(S.obs.vaults.length) return S.obs.vaults[0].path;
+  return '';
+}
+// 检索用的仓库参数：没在设置里锁定仓库就跨全部仓库搜
+function vaultArg(){ var st=S.db.settings||{}; return st.obsidianVault||'*'; }
+function vaultNameOf(vp){ return vp? String(vp).replace(/[\\/]+$/,'').split(/[\\/]/).pop() : ''; }
+function formObsidianBrowse(){
+  if(!S.obs.vaults.length){ alert(LANG==='zh'?'没有检测到 Obsidian 仓库':'No Obsidian vault found'); return; }
+  var vs='';
+  for(var i=0;i<S.obs.vaults.length;i++){
+    var v0=S.obs.vaults[i];
+    vs+='<option value="'+esc(v0.path)+'"'+(vaultPath()===v0.path?' selected':'')+'>'+esc(v0.name)+'</option>';
+  }
+  var body='<div class="fld"><div class="row">'
+    +'<div style="flex:1 1 0"><label>'+(LANG==='zh'?'仓库':'Vault')+'</label><select id="oVault">'+vs+'</select></div>'
+    +'<div style="flex:2 1 0"><label>'+(LANG==='zh'?'搜索笔记':'Search notes')+'</label><input id="oq"></div>'
+    +'</div></div>'
+    +'<div style="display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:12px">'
+    +'<div id="oList" style="max-height:min(52vh,460px);overflow:auto;border:1px solid var(--line2);border-radius:10px;padding:6px"></div>'
+    +'<div id="oView" style="max-height:min(52vh,460px);overflow:auto;border:1px solid var(--line2);'
+    +'border-radius:10px;padding:12px 14px;background:var(--card2)"><div class="sub">'
+    +(LANG==='zh'?'左侧选择一篇笔记查看':'Pick a note on the left')+'</div></div></div>';
+  modal('Obsidian '+(LANG==='zh'?'笔记':'notes'), body, '<button class="btn" data-act="closeModal">'+esc(tt('close'))+'</button>', true);
+  function loadList(){
+    var box=$('oList'); if(!box) return;
+    box.innerHTML='<div class="sub" style="padding:10px">'+(LANG==='zh'?'读取中…':'Loading…')+'</div>';
+    api('/api/obsidian/notes?vault='+encodeURIComponent(v('oVault'))+'&q='+encodeURIComponent(v('oq'))).then(function(r){
+      var ns=(r&&r.notes)||[];
+      if(!ns.length){ box.innerHTML='<div class="sub" style="padding:10px">'+(LANG==='zh'?'没有笔记':'No notes')+'</div>'; return; }
+      var h='';
+      for(var i=0;i<ns.length;i++){
+        h+='<div class="frow" data-act="oread" data-rel="'+esc(ns[i].rel)+'" style="align-items:flex-start">'
+          + ic('file',12,'var(--ink3)')+'<span class="fn" style="white-space:normal;font-size:12px">'+esc(ns[i].name)+'</span></div>';
+      }
+      box.innerHTML=h;
+    });
+  }
+  $('oVault').onchange=loadList;
+  $('oq').oninput=(function(){ var t=null; return function(){ clearTimeout(t); t=setTimeout(loadList,320); }; })();
+  loadList();
+}
+function readNote(rel){
+  var box=$('oView'); if(!box) return;
+  box.innerHTML='<div class="sub">'+(LANG==='zh'?'读取中…':'Loading…')+'</div>';
+  api('/api/obsidian/note?vault='+encodeURIComponent(v('oVault')||vaultPath())+'&rel='+encodeURIComponent(rel)).then(function(r){
+    if(!r||!r.ok){ box.innerHTML='<div class="sub">'+(LANG==='zh'?'读取失败':'Failed')+'</div>'; return; }
+    var n=r.note, tags='';
+    for(var i=0;i<(n.tags||[]).length;i++) tags+='<span class="tag">#'+esc(n.tags[i])+'</span>';
+    box.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">'
+      +'<b style="font-size:13px">'+esc(rel)+'</b><div class="spacer"></div>'
+      +'<button class="btn sm" data-act="oreveal" data-rel="'+esc(rel)+'">'+ic('open',12)+esc(tt('reveal'))+'</button></div>'
+      +'<div style="margin-bottom:8px">'+tags+'</div>'
+      +'<div style="font-size:12.5px;line-height:1.85;white-space:pre-wrap;color:var(--ink2)">'+esc(n.content)+'</div>';
+  });
+}
+function formObsidianImport(){
+  if(!S.obs.vaults.length){ alert(LANG==='zh'?'没有检测到 Obsidian 仓库':'No vault'); return; }
+  var vs='';
+  for(var i=0;i<S.obs.vaults.length;i++){
+    var v0=S.obs.vaults[i];
+    vs+='<option value="'+esc(v0.path)+'"'+(vaultPath()===v0.path?' selected':'')+'>'+esc(v0.name)+'</option>';
+  }
+  var body='<div class="fld"><label>'+(LANG==='zh'?'从哪个仓库导入':'Vault')+'</label><select id="oVault">'+vs+'</select>'
+    +'<div class="hint">'+(LANG==='zh'
+      ? '会扫描标题或标签含「idea / 灵感 / 想法」的笔记。选中后导入为灵感卡片，并可继续转化为论文。'
+      : 'Scans notes titled or tagged idea / inspiration.')+'</div></div>'
+    +'<div id="oImp" style="max-height:min(52vh,460px);overflow:auto">'
+    +'<div class="sub" style="padding:12px">'+(LANG==='zh'?'扫描中…':'Scanning…')+'</div></div>';
+  modal(LANG==='zh'?'从 Obsidian 导入灵感':'Import from Obsidian', body,
+    '<button class="btn" data-act="closeModal">'+esc(tt('cancel'))+'</button>'
+    +'<button class="btn primary" id="oDo" type="button">'+esc(LANG==='zh'?'导入选中':'Import selected')+'</button>', true);
+  function scan(){
+    var box=$('oImp'); if(!box) return;
+    box.innerHTML='<div class="sub" style="padding:12px">'+(LANG==='zh'?'扫描中…':'Scanning…')+'</div>';
+    api('/api/obsidian/ideas?vault='+encodeURIComponent(v('oVault'))).then(function(r){
+      var ds=(r&&r.ideas)||[];
+      if(!ds.length){ box.innerHTML='<div class="empty">'+(LANG==='zh'?'没有找到灵感类笔记':'No idea notes found')+'</div>'; return; }
+      var h='';
+      for(var i=0;i<ds.length;i++){
+        h+='<label class="zrow" style="cursor:pointer"><input type="checkbox" data-oi="'+i+'" '
+          +'style="width:15px;height:15px;margin-top:2px;flex:0 0 auto">'
+          +'<div class="b"><div class="t">'+esc(ds[i].title)+'</div>'
+          +'<div class="m">'+esc(ds[i].folder||'/')+' · '+esc(ds[i].excerpt||'')+'</div></div></label>';
+      }
+      box.innerHTML=h;
+      S._oCache=ds;
+    });
+  }
+  $('oVault').onchange=scan;
+  $('oDo').onclick=function(){
+    var cbs=$('oImp').querySelectorAll('input[type=checkbox]'), n=0;
+    for(var i=0;i<cbs.length;i++){
+      if(!cbs[i].checked) continue;
+      var d=S._oCache[parseInt(cbs[i].getAttribute('data-oi'),10)];
+      if(!d) continue;
+      var dup=false;
+      for(var k=0;k<S.db.ideas.length;k++) if(S.db.ideas[k].obsidianRel===d.rel) dup=true;
+      if(dup) continue;
+      S.db.ideas.unshift({ id:uid('i'), title:d.title, content:'（来自 Obsidian：'+d.rel+'）\n\n'+(d.excerpt||''),
+        tags:(d.tags&&d.tags.length? d.tags.slice(0,4) : ['Obsidian']), status:'待验证',
+        source:'Obsidian', createdAt:Date.now(), obsidianRel:d.rel, paperId:'' });
+      n++;
+    }
+    if(!n){ toast(LANG==='zh'?'没有新笔记可导入':'Nothing to import'); return; }
+    saveKey('ideas'); closeModal(); go('ideas'); toast((LANG==='zh'?'已导入 ':'Imported ')+n,'ok');
+  };
+  scan();
+}
+function pushIdeaToObsidian(id){
+  var d=byId(S.db.ideas,id); if(!d) return;
+  var vp=vaultPath();
+  if(!vp){ alert(LANG==='zh'?'请先在设置里选择 Obsidian 仓库':'Set an Obsidian vault in Settings first'); return; }
+  var folder=(S.db.settings.obsidianIdeaFolder||'灵感');
+  var safe=String(d.title).replace(/[\\/:*?"<>|]/g,'_').slice(0,60);
+  var rel=folder+'/'+safe+'.md';
+  var content='# '+d.title+'\n\n'+d.content+'\n\n---\n'
+    +'标签：'+((d.tags||[]).map(function(t){return '#'+t;}).join(' ')||'—')+'\n'
+    +'状态：'+(d.status||'待验证')+'\n来源：科研工作台 · '+todayStr()+'\n';
+  api('/api/obsidian/write',{vault:vp,rel:rel,content:content,mode:'overwrite'}).then(function(r){
+    if(r&&r.ok){
+      d.obsidianRel=rel; saveKey('ideas'); refreshAll();
+      toast((LANG==='zh'?'已写入 Obsidian：':'Saved to Obsidian: ')+rel,'ok');
+    } else toast((r&&r.msg)||'写入失败','err');
+  });
+}
+function ideaToPaper(id){
+  var d=byId(S.db.ideas,id); if(!d) return;
+  if(d.paperId&&findPaper(d.paperId)){ S.selPaper=d.paperId; go('papers'); return; }
+  if(!confirm(LANG==='zh'?'把这条灵感转成论文条目？':'Convert this idea into a paper entry?')) return;
+  var p={ id:uid('p'), title:d.title, journal:'', stage:'选题', status:'进行中',
+    nextAction:(d.content||'').split('\n')[0].slice(0,80), due:'', round:'', decision:'',
+    authorOrder:'', myRole:'', projectId:'', zoteroKeys:[],
+    files:[], notes:'由灵感转化：\n'+d.content, updatedAt:Date.now(), history:[] };
+  logHistory(p,'由灵感转化而来');
+  S.db.papers.unshift(p);
+  d.paperId=p.id; d.status='已转化为论文';
+  saveKey('papers'); saveKey('ideas');
+  S.selPaper=p.id; go('papers');
+  toast(LANG==='zh'?'已转化为论文条目':'Converted to paper','ok');
+}
+
+/* ================= 搜索面板 ================= */
+function palette(initial){
+  var h='<div class="mask"><div class="modal wide palette">'
+    +'<div class="pin">'+ic('search',17,'var(--ink3)')
+    +'<input id="pq" placeholder="'+(LANG==='zh'?'搜索论文、课题、已发表、已立项、教学、专利、灵感、日记…':'Search papers, projects, ideas, journal, events…')+'" value="'+esc(initial||'')+'">'
+    +'<button class="btn icon ghost" data-act="closeModal">'+ic('x',15)+'</button></div>'
+    +'<div class="res" id="pRes"></div></div></div>';
+  $('modalHost').innerHTML=h;
+  var mask=$('modalHost').querySelector('.mask');
+  mask.onclick=function(e){ if(e.target===mask) closeModal(); };
+  var inp=$('pq'); inp.focus(); inp.select();
+  function run(){
+    var q=inp.value.trim(), box=$('pRes');
+    if(!q){ box.innerHTML='<div class="sub" style="padding:18px 14px">'
+      +(LANG==='zh'?'输入关键词开始搜索；也可以搜 Zotero 文献和 Obsidian 笔记。':'Type to search.')+'</div>'; return; }
+    var res=searchAll(q), h2='', lastG='';
+    for(var i=0;i<res.length;i++){
+      if(res[i].g!==lastG){ lastG=res[i].g; h2+='<div class="pgrp">'+esc(lastG)+'</div>'; }
+      h2+='<div class="pit" data-act="pit" data-i="'+i+'"><div class="b"><div class="t">'+esc(res[i].t)+'</div>'
+        +'<div class="m">'+esc(res[i].m||'')+'</div></div></div>';
+    }
+    h2+='<div class="pgrp">Zotero</div><div id="pZot" class="sub" style="padding:6px 12px">'
+      +(S.zot.ok?(LANG==='zh'?'搜索中…':'Searching…'):(LANG==='zh'?'Zotero 未连接':'Zotero not connected'))+'</div>';
+    h2+='<div class="pgrp">Obsidian</div><div id="pObs" class="sub" style="padding:6px 12px">'
+      +(S.obs.vaults.length?(LANG==='zh'?'搜索中…':'Searching…'):(LANG==='zh'?'未检测到仓库':'No vault'))+'</div>';
+    box.innerHTML=h2;
+    S._pRes=res;
+    if(S.zot.ok) api('/api/zotero/items?limit=60&q='+encodeURIComponent(q)).then(function(r){
+      var b=$('pZot'); if(!b) return;
+      var is=(r&&r.items)||[];
+      if(!is.length){ b.innerHTML='<div class="sub" style="padding:6px 6px">'+(LANG==='zh'?'无匹配':'No match')+'</div>'; return; }
+      var hh='';
+      for(var i=0;i<Math.min(is.length,12);i++){
+        hh+='<div class="zrow" data-act="zopen" data-path="'+esc((is[i].attachments[0]||{}).path||'')+'" data-url="'+esc(is[i].doi?'https://doi.org/'+is[i].doi:'')+'">'
+          + ic('db',13,'var(--blue)')+'<div class="b"><div class="t">'+esc(is[i].title)+'</div>'
+          +'<div class="m">'+esc(is[i].publication||'')+(is[i].date?' · '+esc(String(is[i].date).slice(0,4)):'')+'</div></div></div>';
+      }
+      b.innerHTML=hh;
+    });
+    if(S.obs.vaults.length) api('/api/obsidian/notes?vault='+encodeURIComponent(vaultArg())+'&q='+encodeURIComponent(q)).then(function(r){
+      var b=$('pObs'); if(!b) return;
+      var ns=(r&&r.notes)||[];
+      if(!ns.length){ b.innerHTML='<div class="sub" style="padding:6px 6px">'+(LANG==='zh'?'无匹配':'No match')+'</div>'; return; }
+      var hh='';
+      for(var i=0;i<Math.min(ns.length,12);i++){
+        hh+='<div class="zrow" data-act="oOpen" data-rel="'+esc(ns[i].rel)+'" data-vault="'+esc(ns[i].vault||'')+'">'
+          + ic('book',13,'var(--purple)')+'<div class="b"><div class="t">'+esc(ns[i].name)+'</div>'
+          +'<div class="m">'+esc(ns[i].vaultName||'')+(ns[i].folder?' / '+esc(ns[i].folder):'')+'</div></div></div>';
+      }
+      b.innerHTML=hh;
+    });
+  }
+  inp.oninput=(function(){ var t=null; return function(){ clearTimeout(t); t=setTimeout(run,200); }; })();
+  inp.onkeydown=function(e){
+    if(e.key==='Enter'&&res0()){ e.preventDefault(); res0()(); }
+    if(e.key==='Escape') closeModal();
+  };
+  function res0(){
+    var res=S._pRes||[];
+    if(!res.length) return null;
+    return res[0].fn;
+  }
+  if(initial) run();
+}
+
+/* ================= 快速记录 ================= */
+function quickRecord(date){
+  var kinds=[
+    {k:'event',n:LANG==='zh'?'日程事件':'Event',i:'cal',c:'var(--blue)'},
+    {k:'paper',n:LANG==='zh'?'论文':'Paper',i:'paper',c:'var(--green)'},
+    {k:'project',n:LANG==='zh'?'课题':'Topic',i:'proj',c:'var(--blue)'},
+    {k:'idea',n:LANG==='zh'?'灵感':'Idea',i:'idea',c:'var(--orange)'},
+    {k:'diary',n:LANG==='zh'?'日记':'Journal',i:'diary',c:'var(--sage)'},
+    {k:'shortcut',n:LANG==='zh'?'常用链接':'Shortcut',i:'link',c:'var(--purple)'}
+  ];
+  var body='<div class="sub" style="margin-bottom:10px">'
+    +(LANG==='zh'?'选择要记录的类型：':'Pick a type to record:')+'</div><div class="grid3" style="gap:10px">';
+  for(var i=0;i<kinds.length;i++){
+    body+='<div class="li" data-act="qr" data-k="'+kinds[i].k+'" data-date="'+esc(date||'')+'" style="min-height:74px;align-items:center">'
+      +'<span class="ic" style="background:var(--sage-soft);color:'+kinds[i].c+'">'+ic(kinds[i].i,16)+'</span>'
+      +'<span class="n">'+esc(kinds[i].n)+'</span></div>';
+  }
+  body+='</div>';
+  modal(LANG==='zh'?'快速记录':'Quick add', body, '<button class="btn" data-act="closeModal">'+esc(tt('close'))+'</button>');
+}
+
+/* ================= 待办抽屉 ================= */
+function browseDir(path){
+  var box=$('likeDrawer'); if(!box) return;
+  if(S.drawerPath===path && box.style.display!=='none'){ box.style.display='none'; S.drawerPath=''; return; }
+  S.drawerPath=path; box.style.display='block';
+  box.innerHTML='<div class="card-h">'+ic('folder',14,'var(--orange)')+'<h3 style="font-size:13px;word-break:break-all">'+esc(path)+'</h3>'
+    +'<div class="right"><button class="btn sm" data-act="openPath" data-path="'+esc(path)+'">'+ic('open',12)+esc(tt('openDir'))+'</button>'
+    +'<button class="btn sm ghost" data-act="closeDrawer">'+ic('x',12)+'</button></div></div>'
+    +'<div class="drawer" id="drw"><div class="sub">'+(LANG==='zh'?'读取中…':'Loading…')+'</div></div>';
+  api('/api/dir?path='+encodeURIComponent(path)).then(function(r){
+    var es=(r&&r.entries)||[], h='';
+    if(!es.length) h='<div class="sub" style="padding:10px 4px">'+(LANG==='zh'?'空目录':'Empty')+'</div>';
+    for(var i=0;i<Math.min(es.length,80);i++){
+      var f=es[i];
+      h+='<div class="frow" data-act="openPath" data-path="'+esc(f.path)+'">'
+        + ic(f.dir?'folder':'file',13, f.dir?'var(--orange)':'var(--ink3)')
+        +'<span class="fn">'+esc(f.name)+'</span>'
+        +'<span class="fm">'+(f.dir?(LANG==='zh'?'文件夹':'Folder'):fmtSize(f.size))+' · '+fmtTime(f.mtime)+'</span></div>';
+    }
+    var dd=$('drw'); if(dd) dd.innerHTML=h;
+  });
+}
+/* ================= 打开动作 ================= */
+function doOpen(kind,target){
+  if(!target){ toast(LANG==='zh'?'没有可打开的路径':'Nothing to open','err'); return; }
+  api('/api/open',{kind:kind,target:target}).then(function(r){
+    if(r&&r.ok) toast((LANG==='zh'?'已打开：':'Opened: ')+target,'ok');
+    else toast((r&&r.msg)||(LANG==='zh'?'打开失败':'Failed'),'err');
+  }).catch(function(){ toast(LANG==='zh'?'打开失败':'Failed','err'); });
+}
+function openShortcut(id){
+  var s=byId(S.db.shortcuts,id); if(!s) return;
+  if(s.kind==='url') doOpen('url',s.target);
+  else if(s.kind==='app') doOpen('app',s.target);
+  else if(s.kind==='file') doOpen('file',s.target);
+  else doOpen('folder',s.target);
+}
+function openNoteModal(rel, vault){
+  var body='<div id="oView2" style="max-height:min(60vh,520px);overflow:auto"><div class="sub">'
+    +(LANG==='zh'?'读取中…':'Loading…')+'</div></div>';
+  modal(rel,body,'<button class="btn" data-act="closeModal">'+esc(tt('close'))+'</button>',true);
+  api('/api/obsidian/note?vault='+encodeURIComponent(vault||vaultArg())+'&rel='+encodeURIComponent(rel)).then(function(r){
+    var box=$('oView2'); if(!box) return;
+    if(!r||!r.ok){ box.innerHTML='<div class="sub">'+(LANG==='zh'?'读取失败':'Failed')+'</div>'; return; }
+    var n=r.note, tags='';
+    for(var i=0;i<(n.tags||[]).length;i++) tags+='<span class="tag">#'+esc(n.tags[i])+'</span>';
+    box.innerHTML='<div style="margin-bottom:8px">'+tags+'</div>'
+      +'<div style="font-size:12.5px;line-height:1.85;white-space:pre-wrap;color:var(--ink2)">'+esc(n.content)+'</div>'
+      +'<div style="margin-top:12px"><button class="btn sm" data-act="oreveal2" data-path="'+esc(n.path)+'">'
+      + ic('open',12)+(LANG==='zh'?'用系统程序打开':'Open with system app')+'</button></div>';
+  });
+}
+
+/* ================= 交互：点击路由 ================= */
+function pickActEl(t){
+  var el=t;
+  while(el && el!==document.body && el.nodeType===1){
+    if(el.tagName==='BUTTON') return el;
+    if(el.hasAttribute && el.hasAttribute('data-act')) return el;
+    el=el.parentNode;
+  }
+  return null;
+}
+document.addEventListener('click',function(e){
+  var el=pickActEl(e.target);
+  if(!el){
+    var cell=e.target;
+    while(cell && cell!==document.body){
+      if(cell.hasAttribute && cell.hasAttribute('data-daycell')){ formEvent(null,cell.getAttribute('data-daycell')); return; }
+      cell=cell.parentNode;
+    }
+    return;
+  }
+  var a=el.getAttribute('data-act');
+  var id=el.getAttribute('data-id');
+  var i;
+
+  if(a==='nav'){ go(el.getAttribute('data-nav')); return; }
+  if(a==='navRename'){ closeCtx(); startNavRename(el.getAttribute('data-nav')); return; }
+  if(a==='navReset'){
+    var nk=el.getAttribute('data-nav'); closeCtx();
+    setNavLabel(nk,''); refreshAll();
+    toast((LANG==='zh'?'已恢复为「':'Restored to "')+navDefault(nk)+(LANG==='zh'?'」':'"'),'ok');
+    return;
+  }
+  if(a==='closeModal'){ closeModal(); return; }
+  if(a==='settings'){ formSettings(); return; }
+
+  if(a==='openPath'){ doOpen('folder',el.getAttribute('data-path')); return; }
+  if(a==='revealPath'){ api('/api/reveal',{target:el.getAttribute('data-path')}).then(function(r){
+      toast(r&&r.ok?(LANG==='zh'?'已在资源管理器中定位':'Revealed'):((r&&r.msg)||'失败'), r&&r.ok?'ok':'err'); }); return; }
+  if(a==='openUrl'){ doOpen('url',el.getAttribute('data-url')); return; }
+  if(a==='openShortcut'){ openShortcut(id); return; }
+  if(a==='browseDir'){ e.stopPropagation(); browseDir(el.getAttribute('data-path')); return; }
+  if(a==='closeDrawer'){ var b=$('likeDrawer'); if(b) b.style.display='none'; S.drawerPath=''; return; }
+
+  if(a==='addEvent'){ formEvent(null,el.getAttribute('data-date')||todayStr()); return; }
+  if(a==='editEvent'){ if(S.dragMoved){ S.dragMoved=false; return; } formEvent(id); return; }
+  if(a==='delEvent'){ custom_remove('events',id,eventTitle(id)); return; }
+  if(a==='calMode'){ S.calMode=el.getAttribute('data-v'); refreshAll(); return; }
+  if(a==='calPrev'){ S.calMonth--; if(S.calMonth<0){S.calMonth=11;S.calYear--;} refreshAll(); return; }
+  if(a==='calNext'){ S.calMonth++; if(S.calMonth>11){S.calMonth=0;S.calYear++;} refreshAll(); return; }
+  if(a==='calToday'){ var d=new Date(); S.calYear=d.getFullYear(); S.calMonth=d.getMonth(); refreshAll(); return; }
+
+  if(a==='addClass'){ formSchedule(null,el.getAttribute('data-day'),el.getAttribute('data-start')); return; }
+  if(a==='editClass'){ formSchedule(id); return; }
+  if(a==='delClass'){
+    var cl=byId(S.db.classes||[],id);
+    if(cl){ S.db.classes.splice(S.db.classes.indexOf(cl),1); saveKey('classes'); refreshAll();
+            toast(LANG==='zh'?'已删除':'Deleted','ok'); }
+    return;
+  }
+  if(a==='clsPrev'){ S.schOff=(S.schOff||0)-1; refreshAll(); return; }
+  if(a==='clsNext'){ S.schOff=(S.schOff||0)+1; refreshAll(); return; }
+  if(a==='clsToday'){ S.schOff=0; refreshAll(); return; }
+  if(a==='clsSet'){ formClassSettings(); return; }
+  if(a==='schView'){ S.schView=(el.getAttribute('data-v')==='list')?'list':'week'; refreshAll(); return; }
+  if(a==='importSchedule'){ formImportSchedule(); return; }
+  if(a==='bulkWeeks'){
+    var bwv=($('bulkWeeks')&&$('bulkWeeks').value||'').trim();
+    var clsArr=S.db.classes||[], ci;
+    for(ci=0;ci<clsArr.length;ci++) clsArr[ci].weeks=bwv;
+    saveKey('classes'); refreshAll();
+    toast(LANG==='zh'?('已把 '+clsArr.length+' 门课的周次设为 '+(bwv||'空')):'Weeks updated','ok');
+    return;
+  }
+  if(a==='impAll'){ var ka=document.querySelectorAll('.impck'); for(var qa=0;qa<ka.length;qa++) ka[qa].checked=true; return; }
+  if(a==='impNone'){ var kn=document.querySelectorAll('.impck'); for(var qn=0;qn<kn.length;qn++) kn[qn].checked=false; return; }
+  if(a==='impDo'){ schedImportDo(); return; }
+
+  if(a==='selPaper'){ S.selPaper=id; refreshAll(); return; }
+  if(a==='addPaper'){ formPaper(null); return; }
+  if(a==='editPaper'){ formPaper(id); return; }
+  if(a==='delPaper'){ removeWithUndo('papers',id,(findPaper(id)||{}).title||''); return; }
+  if(a==='logProgress'){
+    var p=findPaper(id); if(!p) return;
+    var txt=prompt(LANG==='zh'?'记录一条进展：':'Log a progress note:');
+    if(!txt) return;
+    logHistory(p,txt); p.updatedAt=Date.now();
+    saveKey('papers'); refreshAll(); toast(LANG==='zh'?'已记录':'Logged','ok'); return;
+  }
+  if(a==='addFile'){
+    var pp=findPaper(id); if(!pp) return;
+    api('/api/pick',{kind:'file'}).then(function(r){
+      if(!r||!r.ok||!r.path) return;
+      pp.files=pp.files||[];
+      pp.files.push({name:r.path.split('\\').pop(), path:r.path});
+      saveKey('papers'); refreshAll(); toast(LANG==='zh'?'已添加文件':'File added','ok');
+    }); return;
+  }
+  if(a==='delFile'){
+    var p2=findPaper(id); if(!p2) return;
+    var idx=parseInt(el.getAttribute('data-idx'),10);
+    var removed=(p2.files||[]).splice(idx,1)[0];
+    saveKey('papers'); refreshAll();
+    toast(LANG==='zh'?'已移除文件':'Removed',null,function(){ p2.files.splice(idx,0,removed); saveKey('papers'); refreshAll(); });
+    return;
+  }
+  if(a==='jump'){
+    var k=el.getAttribute('data-kind');
+    if(k==='paper'){ S.selPaper=id; go('papers'); } else go('projects');
+    return;
+  }
+
+  if(a==='pickZotero'){ formZoteroPicker(id); return; }
+  if(a==='zlink'){ linkZotero(el.getAttribute('data-pid'),parseInt(el.getAttribute('data-i'),10)); return; }
+  if(a==='unlinkZotero'){
+    var p3=findPaper(id); if(!p3) return;
+    var ix=parseInt(el.getAttribute('data-idx'),10);
+    var rm=(p3.zoteroKeys||[]).splice(ix,1)[0];
+    saveKey('papers'); refreshAll();
+    toast(LANG==='zh'?'已取消关联':'Unlinked',null,function(){ p3.zoteroKeys.splice(ix,0,rm); saveKey('papers'); refreshAll(); });
+    return;
+  }
+  if(a==='openZoteroItem'){ openZoteroItem(id,parseInt(el.getAttribute('data-idx'),10)); return; }
+
+  if(a==='previewObs'){
+    openNoteModal(el.getAttribute('data-rel'),el.getAttribute('data-vault')||'');
+    return;
+  }
+  if(a==='openObsApp'){
+    var rl=el.getAttribute('data-rel')||'';
+    var vn=el.getAttribute('data-vault')||vaultNameOf(vaultPath());
+    doOpen('url','obsidian://open?vault='+encodeURIComponent(vn)
+      +'&file='+encodeURIComponent(rl.replace(/\.md$/i,'')));
+    return;
+  }
+  if(a==='linkObs'){
+    var lp=findPaper(id); if(!lp) return;
+    lp.obsidianRel=el.getAttribute('data-rel')||'';
+    lp.obsidianName=el.getAttribute('data-name')||'';
+    lp.obsidianVault=el.getAttribute('data-vault')||'';
+    lp.obsidianVaultName=el.getAttribute('data-vname')||vaultNameOf(lp.obsidianVault);
+    saveKey('papers'); renderObsMatch(id);
+    toast(LANG==='zh'?'已关联 Obsidian 笔记':'Note linked','ok'); return;
+  }
+  if(a==='unlinkObs'){
+    var up=findPaper(id); if(!up) return;
+    up.obsidianRel=''; up.obsidianName='';
+    up.obsidianVault=''; up.obsidianVaultName='';
+    saveKey('papers'); renderObsMatch(id); return;
+  }
+  if(a==='rematchObs'){ S._obsM=null; loadObsMatch(id); return; }
+  if(a==='openZoteroRaw'){
+    var pth=el.getAttribute('data-path');
+    if(pth) doOpen('file',pth);
+    else toast(LANG==='zh'?'该条目没有本地附件，可在 Zotero 里打开':'No local attachment','err');
+    return;
+  }
+
+  if(a==='addProject'){ formProject(null); return; }
+  if(a==='editProject'){ formProject(id); return; }
+  if(a==='delProject'){ removeWithUndo('projects',id,(findProject(id)||{}).name||''); return; }
+
+  if(a==='addPub'){ formPub(null); return; }
+  if(a==='importPub'){ formImportPub(); return; }
+  if(a==='parseBib'){
+    var txt=$('imBib')? $('imBib').value : '';
+    if(!txt.trim()){ toast(LANG==='zh'?'先粘贴 BibTeX 内容':'Paste BibTeX first','err'); return; }
+    api('/api/bibtex',{text:txt}).then(function(r){
+      renderImpPreview((r&&r.items)||[], (r&&!r.ok&&r.msg)? r.msg : '');
+    });
+    return;
+  }
+  if(a==='fetchDoi'){
+    var dv=$('imDoi')? $('imDoi').value.trim() : '';
+    if(!dv){ toast(LANG==='zh'?'先填 DOI':'Enter a DOI first','err'); return; }
+    toast(LANG==='zh'?'正在查询 Crossref…':'Querying Crossref…');
+    api('/api/doi',{doi:dv}).then(function(r){
+      if(!r||!r.ok){ toast((r&&r.msg)||(LANG==='zh'?'查询失败':'Lookup failed'),'err'); return; }
+      renderImpPreview([r], LANG==='zh'?('查到了：'+r.title):('Found: '+r.title));
+    });
+    return;
+  }
+  if(a==='addImpRow'){
+    var rc=addImpRow((S.impRows||[])[parseInt(el.getAttribute('data-i'),10)]);
+    if(rc){ saveKey('pubs'); closeModal(); refreshAll(); toast(LANG==='zh'?'已加入已发表':'Added','ok'); }
+    return;
+  }
+  if(a==='addImpAll'){
+    var rows=S.impRows||[], k;
+    for(k=rows.length-1;k>=0;k--) addImpRow(rows[k]);
+    saveKey('pubs'); closeModal(); refreshAll();
+    toast((LANG==='zh'?('已加入 '+rows.length+' 条'):('Added '+rows.length+' entries')),'ok');
+    return;
+  }
+  if(a==='copyPub'){ formCopyPub(id); return; }
+  if(a==='quickCite'){ formCite(id); return; }
+  if(a==='pushCopy'){
+    var src=$(el.getAttribute('data-src'));
+    if(src) doCopy(String(src.value), LANG==='zh'?'已复制到剪贴板':'Copied');
+    return;
+  }
+  if(a==='editPub'){ formPub(id); return; }
+  if(a==='delPub'){ removeWithUndo('pubs',id,(byId(S.db.pubs,id)||{}).title||''); return; }
+  if(a==='pubFilter'){ S.pubFilter=el.getAttribute('data-f')||'all'; renderPage(); return; }
+  if(a==='toggleRep'){
+    var rp=byId(S.db.pubs,id); if(!rp) return;
+    var reps=S.db.pubs.filter(function(x){ return !!x.rep; });
+    if(!rp.rep && reps.length>=5){
+      toast(tt('repFull'),'err'); return;
+    }
+    rp.rep=!rp.rep;
+    saveKey('pubs'); refreshAll();
+    toast(rp.rep?tt('repSet'):tt('repUnset'),'ok');
+    return;
+  }
+
+  /* ---- 已立项 ---- */
+  if(a==='addGrant'){ formGrant(null); return; }
+  if(a==='editGrant'){ formGrant(id); return; }
+  if(a==='delGrant'){ removeWithUndo('grants',id,(byId(S.db.grants,id)||{}).name||''); return; }
+
+  /* ---- 教学成果 ---- */
+  if(a==='addTeaching'){ formTeaching(null); return; }
+  if(a==='editTeaching'){ formTeaching(id); return; }
+  if(a==='delTeaching'){ removeWithUndo('teaching',id,(byId(S.db.teaching,id)||{}).content||''); return; }
+  if(a==='addTeachProject'){ formTeachProject(null); return; }
+  if(a==='editTeachProject'){ formTeachProject(id); return; }
+  if(a==='delTeachProject'){ removeWithUndo('teachProjects',id,(byId(S.db.teachProjects,id)||{}).name||''); return; }
+
+  /* ---- 专利 ---- */
+  if(a==='addPatent'){ formPatent(null); return; }
+  if(a==='editPatent'){ formPatent(id); return; }
+  if(a==='delPatent'){ removeWithUndo('patents',id,(byId(S.db.patents,id)||{}).name||''); return; }
+
+  /* ---- 我的材料 ---- */
+  if(a==='addMaterial'){ formMaterial(null); return; }
+  if(a==='editMaterial'){ formMaterial(id); return; }
+  if(a==='delMaterial'){ removeWithUndo('materials',id,(byId(S.db.materials,id)||{}).name||''); return; }
+  if(a==='addMatFromZot'){ pickZoteroMaterial(); return; }
+  if(a==='matAddZot'){
+    var mn=el.getAttribute('data-name')||'', mp=el.getAttribute('data-path')||'';
+    if(!mp) return;
+    var dup=false;
+    for(var mi=0;mi<S.db.materials.length;mi++) if(S.db.materials[mi].path===mp) dup=true;
+    if(dup){ toast(LANG==='zh'?'已经在列表里了':'Already added','info'); return; }
+    S.db.materials.push({id:uid('m'),name:mn,path:mp,kind:'file',note:''});
+    saveKey('materials'); closeModal(); refreshAll();
+    toast(LANG==='zh'?'已添加到我的材料':'Added','ok'); return;
+  }
+  if(a==='openMaterial'){
+    var mo=byId(S.db.materials,id);
+    if(mo&&mo.path) doOpen('file',mo.path);
+    else toast(LANG==='zh'?'没有可打开的路径':'No path','err');
+    return;
+  }
+
+  /* ---- 工作计划 ---- */
+  if(a==='addPlan'){ formPlan(null); return; }
+  if(a==='editPlan'){ formPlan(id); return; }
+  if(a==='delPlan'){ removeWithUndo('plans',id,(byId(S.db.plans,id)||{}).title||''); return; }
+  if(a==='togglePlan'){
+    var pl=byId(S.db.plans,id); if(!pl) return;
+    pl.done=!pl.done; saveKey('plans'); refreshAll(); return;
+  }
+
+  if(a==='addIdea'){ formIdea(null); return; }
+  if(a==='editIdea'){ formIdea(id); return; }
+  if(a==='delIdea'){ removeWithUndo('ideas',id,(byId(S.db.ideas,id)||{}).title||''); return; }
+  if(a==='ideaToPaper'){ ideaToPaper(id); return; }
+  if(a==='pushObsidian'){ pushIdeaToObsidian(id); return; }
+  if(a==='importObsidian'){ formObsidianImport(); return; }
+  if(a==='browseObsidian'){ formObsidianBrowse(); return; }
+  if(a==='oread'){ readNote(el.getAttribute('data-rel')); return; }
+  if(a==='oreveal'||a==='oreveal2'){
+    var rel=el.getAttribute('data-rel')||el.getAttribute('data-path');
+    api('/api/reveal',{target:rel}).then(function(r){ toast(r&&r.ok?'已定位':((r&&r.msg)||'失败'), r&&r.ok?'ok':'err'); });
+    return;
+  }
+  if(a==='oOpen'){
+    openNoteModal(el.getAttribute('data-rel'),el.getAttribute('data-vault')||'');
+    return;
+  }
+  if(a==='zopen'){
+    var zp=el.getAttribute('data-path'), zu=el.getAttribute('data-url');
+    if(zp) doOpen('file',zp); else if(zu) doOpen('url',zu);
+    else toast(LANG==='zh'?'无附件':'No attachment','err');
+    return;
+  }
+
+  if(a==='addDiary'){ formDiary(null); return; }
+  if(a==='editDiary'){ formDiary(id); return; }
+  if(a==='delDiary'){ removeWithUndo('diary',id,(byId(S.db.diary,id)||{}).date||''); return; }
+  if(a==='diaryPin'){ formSettings(); return; }
+  if(a==='pinGo'){
+    var inp=$('pinInput');
+    if(inp&&inp.value===((S.db.settings||{}).pin||'')){ S.diaryUnlocked=true; refreshAll(); }
+    else toast(LANG==='zh'?'PIN 不正确':'Wrong PIN','err');
+    return;
+  }
+
+  if(a==='addShortcut'){ formShortcut(null, el.getAttribute('data-cat')||'本地文件'); return; }
+  if(a==='editShortcut'){ formShortcut(id); return; }
+  if(a==='delShortcut'){
+    var arr=S.db.shortcuts, k2=-1;
+    for(i=0;i<arr.length;i++) if(arr[i].id===id){ k2=i; break; }
+    if(k2<0) return;
+    if(!confirm(LANG==='zh'?'从工作台移除这个入口？（不会删除本地文件）':'Remove this shortcut? (files are untouched)')) return;
+    var rmv=arr.splice(k2,1)[0];
+    saveKey('shortcuts'); refreshAll();
+    toast(LANG==='zh'?'已移除入口':'Removed',null,function(){ arr.splice(k2,0,rmv); saveKey('shortcuts'); refreshAll(); });
+    return;
+  }
+  if(a==='rescan'){
+    toast(LANG==='zh'?'正在探测已安装软件…':'Scanning…');
+    api('/api/rescan',{}).then(function(r){
+      var n=(r&&r.added)?r.added.length:0;
+      return api('/api/state').then(function(s2){
+        if(s2&&s2.db) S.db=s2.db;
+        refreshAll();
+        toast(n?(LANG==='zh'?'新增 ':'Added ')+n+(LANG==='zh'?' 个入口':'') : (LANG==='zh'?'没有新软件':'Nothing new'),'ok');
+      });
+    });
+    return;
+  }
+
+  if(a==='qr'){
+    var kk=el.getAttribute('data-k'), dt=el.getAttribute('data-date');
+    closeModal();
+    if(kk==='event') formEvent(null,dt||todayStr());
+    else if(kk==='paper') formPaper(null);
+    else if(kk==='project') formProject(null);
+    else if(kk==='idea') formIdea(null);
+    else if(kk==='diary') formDiary(null);
+    else formShortcut(null);
+    return;
+  }
+  if(a==='pit'){
+    var res=S._pRes||[], ix2=parseInt(el.getAttribute('data-i'),10);
+    if(res[ix2]&&res[ix2].fn){ var f=res[ix2].fn; closeModal(); f(); }
+    return;
+  }
+},false);
+function eventTitle(id){ var e=byId(S.db.events,id); return e? e.title : ''; }
+function custom_remove(key,id,label){
+  var box=$('modalHost');
+  if(box&&box.innerHTML) closeModal();
+  removeWithUndo(key,id,label);
+}
+
+/* ================= 交互：键盘 & 拖拽 & 定时器 ================= */
+document.addEventListener('keydown',function(e){
+  var meta=e.ctrlKey||e.metaKey;
+  if(meta&&(e.key==='k'||e.key==='K')){ e.preventDefault(); palette(''); return; }
+  if(meta&&(e.key==='n'||e.key==='N')){ e.preventDefault(); quickRecord(); return; }
+  if(e.key==='Escape'){ closeCtx(); closeModal(); return; }
+  if(e.key==='Enter'&&$('pinInput')&&document.activeElement===$('pinInput')){
+    var pb=document.querySelector('[data-act="pinGo"]'); if(pb) pb.click();
+  }
+});
+
+// 总表里直接改「行课周次」：改完就存，不整页刷新，免得输入框失焦
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(!t||!t.classList||!t.classList.contains('wk-in')) return;
+  var cid=t.getAttribute('data-wk');
+  var cc=byId(S.db.classes||[],cid);
+  if(!cc) return;
+  cc.weeks=(t.value||'').trim();
+  saveKey('classes');
+  toast(LANG==='zh'?'周次已保存':'Weeks saved','ok');
+});
+
+document.addEventListener('dragstart',function(e){
+  var el=e.target;
+  if(el&&el.classList){
+    if(el.classList.contains('ev')){
+      S.dragId=el.getAttribute('data-id'); S.dragMoved=false;
+      try{ e.dataTransfer.setData('text/plain',S.dragId); }catch(err){}
+    } else if(el.classList.contains('sc')){
+      S.dragShortcut=el.getAttribute('data-id');
+      try{ e.dataTransfer.setData('text/plain',S.dragShortcut); e.dataTransfer.effectAllowed='move'; }catch(err){}
+    }
+  }
+});
+document.addEventListener('dragover',function(e){
+  var el=e.target;
+  while(el&&el!==document.body){
+    if(el.hasAttribute&&el.hasAttribute('data-daycell')){ e.preventDefault(); el.classList.add('drop'); return; }
+    if(el.classList&&el.classList.contains('sc')){ e.preventDefault();
+      var cur=document.querySelectorAll('.sc-drop');
+      for(var k=0;k<cur.length;k++){ if(cur[k]!==el) cur[k].classList.remove('sc-drop'); }
+      el.classList.add('sc-drop'); return; }
+    el=el.parentNode;
+  }
+});
+document.addEventListener('dragleave',function(e){
+  var el=e.target;
+  if(el&&el.classList){
+    if(el.classList.contains('drop')) el.classList.remove('drop');
+    if(el.classList.contains('sc-drop')) el.classList.remove('sc-drop');
+  }
+});
+document.addEventListener('drop',function(e){
+  var el=e.target, cell=null, scEl=null;
+  while(el&&el!==document.body){
+    if(el.hasAttribute&&el.hasAttribute('data-daycell')){ cell=el; }
+    if(!scEl && el.classList && el.classList.contains('sc')){ scEl=el; }
+    el=el.parentNode;
+  }
+  var drops=document.querySelectorAll('.drop');
+  for(var i=0;i<drops.length;i++) drops[i].classList.remove('drop');
+  var scs=document.querySelectorAll('.sc-drop');
+  for(i=0;i<scs.length;i++) scs[i].classList.remove('sc-drop');
+
+  if(S.dragShortcut && scEl){
+    e.preventDefault();
+    var dg=S.dragShortcut;
+    if(scEl.getAttribute('data-id')!==dg){
+      reorderShortcut(dg, scEl.getAttribute('data-id'));
+    }
+    S.dragShortcut=null;
+    return;
+  }
+  if(!cell||!S.dragId) return;
+  e.preventDefault();
+  var ds=cell.getAttribute('data-daycell'), ev=byId(S.db.events,S.dragId);
+  if(ev&&ev.date!==ds){ ev.date=ds; saveKey('events'); S.dragMoved=true; refreshAll();
+    toast(LANG==='zh'?'已改期到 '+ds:'Moved to '+ds,'ok'); }
+  S.dragId='';
+});
+
+/* 同一分组内拖动排序 */
+function reorderShortcut(dragId, targetId){
+  var arr=S.db.shortcuts, di=-1, ti=-1, i;
+  for(i=0;i<arr.length;i++){
+    if(arr[i].id===dragId) di=i;
+    if(arr[i].id===targetId) ti=i;
+  }
+  if(di<0||ti<0||di===ti) return;
+  if((arr[di].category||'')!==(arr[ti].category||'')){
+    toast(tt('dragSame'),'err'); return;
+  }
+  var mov=arr.splice(di,1)[0];
+  for(i=0;i<arr.length;i++) if(arr[i].id===targetId) ti=i;
+  arr.splice(ti,0,mov);
+  saveKey('shortcuts'); refreshAll();
+  toast(LANG==='zh'?'已调整顺序':'Reordered','ok');
+}
+
+function focusTick(){
+  if(focusLeft<=0){
+    clearInterval(focusTimer); focusTimer=null; focusLeft=FOCUS_MIN*60;
+    S.db.focus=S.db.focus||{done:0,minutes:0,date:todayStr()};
+    if(S.db.focus.date!==todayStr()){ S.db.focus.date=todayStr(); S.db.focus.done=0; S.db.focus.minutes=0; }
+    S.db.focus.done=(S.db.focus.done||0)+1;
+    S.db.focus.minutes=(S.db.focus.minutes||0)+FOCUS_MIN;
+    saveKey('focus'); refreshAll();
+    toast(LANG==='zh'?'专注完成，去接杯水吧':'Focus done','ok');
+    return;
+  }
+  focusLeft--; renderFocus();
+}
+
+/* ================= 启动 ================= */
+function addSettingsLink(){
+  var f=document.querySelector('.side-foot');
+  if(!f||$('setLink')) return;
+  var d=document.createElement('div');
+  d.id='setLink'; d.className='st'; d.setAttribute('data-act','settings');
+  d.style.cursor='pointer';
+  d.innerHTML=ic('user',13)+'<span>'+(LANG==='zh'?'设置与数据':'Settings')+'</span>';
+  f.appendChild(d);
+}
+function loadZotero(n){
+  n=n||0;
+  api('/api/zotero/status').then(function(r){
+    r=r||{ok:false};
+    S.zot=r; renderTop();
+    // 后端正在复制快照（首次 / Zotero 运行中），稍后自动重试
+    if(r.pending && n<20){ setTimeout(function(){ loadZotero(n+1); },1200); return; }
+    if(r.ok) api('/api/zotero/profile').then(function(p2){
+      S.zotProfile=(p2&&p2.items)||[];
+      if(S.page==='common') renderPage();
+    });
+  }).catch(function(){ if(n<4) setTimeout(function(){ loadZotero(n+1); },1500); });
+}
+function loadObsidian(){
+  api('/api/obsidian/vaults').then(function(r){
+    S.obs={vaults:(r&&r.vaults)||[],cur:''};
+    renderTop();
+  });
+}
+function boot(){
+  api('/api/state').then(function(r){
+    if(!r||!r.ok){ toast(LANG==='zh'?'连接本地服务失败':'Cannot reach local service','err'); return; }
+    S.db=r.db; S.dataDir=r.dataDir; S.version=r.version;
+    LANG=(S.db.settings&&S.db.settings.lang)||'zh';
+    FOCUS_MIN=(S.db.settings&&S.db.settings.focusMin)||25;
+    focusLeft=FOCUS_MIN*60;
+    var d=new Date();
+    S.calYear=d.getFullYear(); S.calMonth=d.getMonth();
+    if(S.db.papers&&S.db.papers.length) S.selPaper=S.db.papers[0].id;
+    refreshAll(); addSettingsLink(); loadZotero(); loadObsidian();
+  }).catch(function(){ toast(LANG==='zh'?'连接本地服务失败':'Cannot reach local service','err'); });
+}
+
+$('focusBtn').onclick=function(){
+  if(focusTimer){ clearInterval(focusTimer); focusTimer=null; }
+  else focusTimer=setInterval(focusTick,1000);
+  renderFocus();
+};
+$('langBtn').onclick=function(){
+  LANG=(LANG==='zh'?'en':'zh');
+  S.db.settings.lang=LANG; saveKey('settings'); refreshAll();
+};
+$('quickBtn').onclick=function(){ quickRecord(); };
+$('searchBtn').onclick=function(){ palette(''); };
+
+// 注意：不要在这里发 /api/quit。窗口关闭由后端监控 Edge 进程来决定是否退出；
+// 整页刷新（F5、数据导入后的 location.reload）也会触发 beforeunload，若在此
+// 直接 quit 会误杀后端，导致界面还在却点不开任何链接。
+setInterval(function(){ fetch('/api/ping').catch(function(){}); },10000);
+
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
+else boot();
+})();

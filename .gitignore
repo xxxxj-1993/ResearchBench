@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# 构建产物（exe 走 GitHub Release 分发）
+build/
+dist/
+*.spec.bak
+
+# 本地数据 / 日志 / 截图草稿
+*.log
+.shots/
+appdata/
+
+# 含个人数据的旧截图，不入库
+assets/窗口实测.png
+assets/标题栏实测.png
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
