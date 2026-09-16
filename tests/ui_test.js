@@ -302,10 +302,10 @@ function waitFor(cond, ms = 30000) {
   }
 
   console.log('\n=== 新增栏目（9 点需求） ===');
-  // 已发表：31 篇 + 身份筛选
+  // 已发表：示例数据 + 身份筛选
   doc.querySelector('.nav a[data-nav="pubs"]').click();
   await wait(80);
-  chk('已发表 31 篇', doc.querySelectorAll('.wall .wcard').length === 31, doc.querySelectorAll('.wall .wcard').length);
+  chk('已发表 示例', doc.querySelectorAll('.wall .wcard').length === 3, doc.querySelectorAll('.wall .wcard').length);
   chk('已发表含身份筛选按钮', !!doc.querySelector('[data-act="pubFilter"][data-f="first"]') && !!doc.querySelector('[data-act="pubFilter"][data-f="co"]'));
   doc.querySelector('[data-act="pubFilter"][data-f="first"]').click();
   await wait(80);

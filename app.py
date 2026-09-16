@@ -39,7 +39,7 @@ except Exception:  # 打包后同目录，正常情况下一定能导入
     seeddata = None
 
 APP_NAME = "ResearchWorkbench"
-VERSION = "2.4.2"
+VERSION = "2.4.3"
 CURATED_V = 3  # 内容种子版本：升级时用于给老数据补新栏目
 
 # ================================================================ 基础路径
@@ -1903,7 +1903,7 @@ def parse_schedule_payload(html_text="", plain_text="", teacher_key=""):
 #   bibtype  article / inproceedings / book ...
 #   bibkey   条目 key
 #   title    已清理 LaTeX
-#   authors  "J. Xu, Y. Luo, K. L. Tsakmakidis"（名缩写在前，符合理工科投稿习惯）
+#   authors  "S. Zhang, S. Li, K. Wang"（名缩写在前，符合理工科投稿习惯）
 #   journal 期刊 / 会议 / 出版社，按优先级取一个
 #   year     int
 #   volume / pages / doi / publisher / abstract / url
@@ -2001,7 +2001,7 @@ def _initials_of(given):
 
 
 def _bib_authors(raw):
-    """Xu, Jie and Luo, Yang  →  J. Xu, Y. Luo"""
+    """Zhang, San and Li, Si  →  S. Zhang, S. Li"""
     raw = re.sub(r'\s+', ' ', (raw or '').strip())
     if not raw:
         return ''

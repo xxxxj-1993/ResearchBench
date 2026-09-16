@@ -39,6 +39,7 @@ CHECKS = [
     ("新增文案 timetable:'课表'", "timetable:'课表'" in packed),
     ("NAVDEF 里 schedule 指向 timetable", ",lb:'timetable'" in packed),
     ("今日页卡片仍用 schedule:'今日安排'", "schedule:'今日安排'" in packed),
+    ("保存请求 keepalive 防关闭丢包", "keepalive:true" in packed),
 ]
 
 bad = 0

@@ -315,7 +315,7 @@ A：改 ui/app.js 和 app.py，重新打包即可。数据不会丢——新字�
     （不做联网自动更新：数据自己维护，错了改一下就行，
       也省得每次点更新都要等网络）
   · 卡片上的复制按钮会弹出两段文本，各配一个复制键：
-      引用格式   F. Wang, Y. Luo, ..., and Q. Shen, "论文标题," Adv. Opt.
+      引用格式   F. Wang, S. Li, ..., and Q. Li, "论文标题," Adv. Opt.
                  Mater. 13, e01115 (2025).
       BibTeX     @article{wang2025realization, author = {Wang, Fang and ...}, ...}
     复制失败时会提示手动选中下面的文本框自己 Ctrl+C（系统剪贴板限制）。

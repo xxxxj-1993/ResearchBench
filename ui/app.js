@@ -182,7 +182,11 @@ function toast(msg,kind,undoFn){
 /* ================= 数据层 ================= */
 function saveKey(key){
   var v = (key==='settings')? S.db.settings : ((key==='focus')? S.db.focus : S.db[key]);
-  return api('/api/patch',{key:key,value:v});
+  // keepalive：页面关闭/导航时该请求也会发完，避免“改完直接关程序导致没保存”
+  return fetch('/api/patch',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({key:key,value:v}),keepalive:true})
+    .then(function(r){ return r.json(); })
+    .catch(function(e){ console.error('saveKey failed:',key,e); return {ok:false}; });
 }
 function byId(arr,id){ if(!arr) return null; for(var i=0;i<arr.length;i++) if(arr[i].id===id) return arr[i]; return null; }
 function findPaper(id){ return byId(S.db.papers,id); }
@@ -366,7 +370,7 @@ function setNavLabel(k,v){
   if(!S.db.settings) S.db.settings={};
   S.db.settings.navLabels=S.db.settings.navLabels||{};
   S.db.settings.navLabels[k]=(v==null?'':String(v)).trim();
-  saveKey('settings');
+  return saveKey('settings');
 }
 function renderNav(){
   var h='',m='',i,n,b,lb,tip;
@@ -423,7 +427,8 @@ function startNavRename(k){
     if(done) return; done=true;
     var v=ok? String(inp.value).replace(/\s+/g,' ').trim().slice(0,12) : navCustom(k);
     if(!ok||v===navCustom(k)){ refreshAll(); if(msg) toast(msg); return; }
-    setNavLabel(k, v===navDefault(k)? '' : v);
+    var nv = (v===navDefault(k))? '' : v;
+    setNavLabel(k, nv).catch(function(){ toast(LANG==='zh'?'保存失败，请重试':'Save failed, retry','err'); });
     refreshAll();
     toast(msg||((LANG==='zh'?'已重命名为「':'Renamed to "')+navLabel(k)+(LANG==='zh'?'」':'"')),'ok',
       function(){ setNavLabel(k,''); refreshAll(); });
@@ -1099,7 +1104,7 @@ function formImportSchedule(){
         +'从记事本复制的纯文本也能用，但准确率低一些。'
         :'Select the whole table in Word/Excel and paste here with Ctrl+V.')+'</div></div>'
     +'<div class="fld"><label>'+(Z?'第 2 步（可选）：只保留某个老师的课':'Step 2 (optional): only keep one teacher')+'</label>'
-    +'<input id="impTeacher" placeholder="'+(Z?'如：徐':'e.g. Xu')+'">'
+    +'<input id="impTeacher" placeholder="'+(Z?'如：张':'e.g. Zhang')+'">'
     +'<div class="hint" style="margin-top:6px">'
     +(Z?'填了之后，只有原始单元格里含这个字的课会被自动勾选，方便从教研室合排的表里挑出自己的。'
         :'Only rows containing this text get checked.')+'</div></div>'
@@ -1414,7 +1419,7 @@ function citeAuthors(s){
   if(arr.length>=2) return arr.slice(0,-1).join(', ')+', and '+arr[arr.length-1];
   return s;
 }
-// J. Xu*, ..., and Q. Shen*, "Title," Adv. Opt. Mater. 13, e01115 (2025).
+// S. Zhang*, ..., and Q. Li*, "Title," Adv. Opt. Mater. 13, e01115 (2025).
 function citeText(w){
   var seg=[];
   var au=citeAuthors(w.authors);
@@ -1500,7 +1505,7 @@ function formImportPub(){
   var body=''
     +'<div class="fld"><label>'+(LANG==='zh'?'粘贴 BibTeX（不用联网，推荐）':'Paste BibTeX (offline, recommended)')+'</label>'
       +'<textarea id="imBib" rows="8" style="font-family:Consolas,Monaco,monospace;font-size:12px" '
-      +'placeholder="@article{xu2025realization,&#10;  title  = {...},&#10;  author = {Xu, Jie and Luo, Yang},&#10;  journal= {Advanced Optical Materials},&#10;  year   = {2025},&#10;  volume = {13},&#10;  pages  = {e01115},&#10;  doi    = {10.1002/adom.202501115}&#10;}"></textarea>'
+      +'placeholder="@article{zhang2025realization,&#10;  title  = {...},&#10;  author = {Zhang, San and Li, Si},&#10;  journal= {Advanced Optical Materials},&#10;  year   = {2025},&#10;  volume = {13},&#10;  pages  = {e01115},&#10;  doi    = {10.1002/adom.202501115}&#10;}"></textarea>'
       +'<div class="hint" style="margin-top:6px">'+(LANG==='zh'?'Zotero / Google Scholar / 期刊官网都能导出 BibTeX，一次可以粘多条。'
         :'Export BibTeX from Zotero, Google Scholar or the journal page. Several entries at once is fine.')+'</div></div>'
     +'<div class="fld"><label>DOI'+(LANG==='zh'?'（联网查询 Crossref）':' (Crossref lookup)')+'</label>'
@@ -2100,7 +2105,7 @@ function formPub(id, pre){
     +'<div><label>'+(LANG==='zh'?'分区 / 等级':'Zone')+'</label><input id="wZone" value="'+esc(d.zone||'')+'" placeholder="中科院2区TOP"></div>'
     +'<div><label>'+(LANG==='zh'?'引用':'Citations')+'</label><input id="wCites" type="number" value="'+esc(d.cites||'0')+'"></div>'
     +'</div></div>'
-    +'<div class="fld"><label>'+(LANG==='zh'?'作者列表':'Authors')+'</label><input id="wAuthors" value="'+esc(d.authors||'')+'" placeholder="J. Xu*, Y. Luo, ..."></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'作者列表':'Authors')+'</label><input id="wAuthors" value="'+esc(d.authors||'')+'" placeholder="S. Zhang*, S. Li, ..."></div>'
     +'<div class="fld"><div class="row">'
     +'<div><label>DOI</label><input id="wDoi" value="'+esc(d.doi||'')+'" placeholder="10.1364/OE.xxxxx"></div>'
     +'<div><label>'+(LANG==='zh'?'卷':'Volume')+'</label><input id="wVol" value="'+esc(d.volume||'')+'"></div>'

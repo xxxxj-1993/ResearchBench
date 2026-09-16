@@ -107,7 +107,7 @@ const goto = async k => { click('[data-act="nav"][data-nav="' + k + '"]'); await
   chk('有解析按钮', !!doc.getElementById('impGo'));
 
   doc.getElementById('impPaste').setAttribute('data-html', FIXTURE);
-  doc.getElementById('impTeacher').value = '徐';
+  doc.getElementById('impTeacher').value = '张';
   doc.getElementById('impGo').click();
 
   await waitFor(() => doc.querySelectorAll('.impck').length > 0, 40000);
@@ -119,7 +119,7 @@ const goto = async k => { click('[data-act="nav"][data-nav="' + k + '"]'); await
   chk('教室 13/13 抽到', rooms.length === 13 && rooms.every(r => !!r.value),
     rooms.filter(r => !r.value).length + ' 个空');
   const cks = [...doc.querySelectorAll('.impck')];
-  chk('按教师「徐」全部勾选', cks.filter(c => c.checked).length === 13,
+  chk('按教师「张」全部勾选', cks.filter(c => c.checked).length === 13,
     cks.filter(c => c.checked).length + ' 条');
 
   console.log('\n=== 改周次后导入 ===');
