@@ -5,6 +5,8 @@
 **当前版本：v2.4.3** · **支持 Windows 10 / 11** · **单文件约 10 MB** · **双击即用，无需安装 Python**
 
 [下载最新版本](../../releases/latest) · [提交问题或建议](../../issues)
+<img width="2543" height="1318" alt="image" src="https://github.com/user-attachments/assets/0c76536a-aec3-4e36-b81e-98e8b9a6e217" />
+
 
 > [!IMPORTANT]
 > ResearchBench 采用本地优先设计。论文、项目、日记等工作数据只保存在你的电脑中，不需要注册账号，也不会自动上传或同步。
