@@ -1398,43 +1398,120 @@ def _path_score(p):
 
 
 _UNINSTALL_CACHE = None
+_APP_PATH_CACHE = None
 _SKIP_DIR = ("$recycle.bin", "system volume information", "windows", "winsxs",
              "installer", "$patchcache$", "driverstore", "temp", "tmp",
              "node_modules", "__pycache__", "package cache")
 
 
+def _registry_views():
+    """当前系统可用的注册表视图，兼容 32/64 位软件登记位置。"""
+    if winreg is None:
+        return [0]
+    out = [0]
+    for attr in ("KEY_WOW64_64KEY", "KEY_WOW64_32KEY"):
+        flag = getattr(winreg, attr, 0)
+        if flag and flag not in out:
+            out.append(flag)
+    return out
+
+
+def _registry_path(value):
+    """从注册表值中提取可用于有限深度搜索的目录。"""
+    value = str(value or "").strip()
+    if not value:
+        return ""
+    if value.startswith('"'):
+        m = re.match(r'^"([^"]+)"', value)
+        path = m.group(1) if m else value.strip('"')
+    else:
+        path = value.split(",", 1)[0].strip()
+        if ".exe" in path.lower():
+            path = path[:path.lower().find(".exe") + 4]
+    path = os.path.expandvars(path).strip().strip('"')
+    if os.path.isfile(path):
+        return os.path.dirname(os.path.normpath(path))
+    if os.path.isdir(path):
+        return os.path.normpath(path)
+    return ""
+
+
 def uninstall_entries():
-    """注册表里的 (显示名, 安装目录)，用于兜底查找装在自定义路径的软件。"""
+    """注册表里的 (显示名, 安装目录)，用于兜底查找自定义安装路径。"""
     global _UNINSTALL_CACHE
     if _UNINSTALL_CACHE is None:
         items = []
         if winreg is not None:
-            subs = (r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
-                    r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall")
+            subs = (r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",)
             for hive in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
                 for sub in subs:
+                    for view in _registry_views():
+                        try:
+                            h = winreg.OpenKey(hive, sub, 0, winreg.KEY_READ | view)
+                        except OSError:
+                            continue
+                        i = 0
+                        while True:
+                            try:
+                                k = winreg.EnumKey(h, i)
+                            except OSError:
+                                break
+                            i += 1
+                            try:
+                                it = winreg.OpenKey(h, k, 0, winreg.KEY_READ | view)
+                                dn = str(winreg.QueryValueEx(it, "DisplayName")[0] or "")
+                            except OSError:
+                                continue
+                            loc = ""
+                            for field in ("InstallLocation", "DisplayIcon", "UninstallString"):
+                                try:
+                                    loc = _registry_path(winreg.QueryValueEx(it, field)[0])
+                                except OSError:
+                                    loc = ""
+                                if loc:
+                                    break
+                            if dn and loc:
+                                items.append((dn, loc))
+        _UNINSTALL_CACHE = items
+    return _UNINSTALL_CACHE
+
+
+def app_path_entries():
+    """读取 Windows App Paths，补足没有卸载项安装目录的软件。"""
+    global _APP_PATH_CACHE
+    if _APP_PATH_CACHE is None:
+        items = []
+        if winreg is not None:
+            sub = r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"
+            for hive in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+                for view in _registry_views():
                     try:
-                        h = winreg.OpenKey(hive, sub)
+                        h = winreg.OpenKey(hive, sub, 0, winreg.KEY_READ | view)
                     except OSError:
                         continue
                     i = 0
                     while True:
                         try:
-                            k = winreg.EnumKey(h, i)
+                            exe_name = winreg.EnumKey(h, i)
                         except OSError:
                             break
                         i += 1
                         try:
-                            it = winreg.OpenKey(h, k)
-                            dn = str(winreg.QueryValueEx(it, "DisplayName")[0] or "")
-                            loc = str(winreg.QueryValueEx(it, "InstallLocation")[0] or "")
+                            it = winreg.OpenKey(h, exe_name, 0, winreg.KEY_READ | view)
+                            exe_path = str(winreg.QueryValueEx(it, "")[0] or "")
                         except OSError:
                             continue
-                        loc = loc.strip().strip('"')
-                        if dn and loc and os.path.isdir(loc):
-                            items.append((dn, os.path.normpath(loc)))
-        _UNINSTALL_CACHE = items
-    return _UNINSTALL_CACHE
+                        exe_path = os.path.expandvars(exe_path).strip().strip('"')
+                        if os.path.isfile(exe_path):
+                            items.append((exe_name.lower(), os.path.normpath(exe_path)))
+        _APP_PATH_CACHE = items
+    return _APP_PATH_CACHE
+
+
+def _app_path_hits(patterns):
+    wanted = [_exe_regex(p) for p in patterns]
+    return [path for exe_name, path in app_path_entries()
+            if any(rx.match(exe_name) for rx in wanted)]
 
 
 def _kw(s):
@@ -1498,6 +1575,11 @@ def default_apps():
       ① 路径模板 × 本机所有盘符（覆盖主流安装位置，不再写死 C:/D:）
       ② 注册表卸载信息里的安装目录（覆盖装在自定义路径的软件）
     同一软件有多个安装时取打分最高者，Program Files 正规版优先。"""
+    # 手工重新探测时读取本次调用的磁盘与注册表状态，避免沿用启动时缓存。
+    global _UNINSTALL_CACHE, _APP_PATH_CACHE, _DRIVE_CACHE
+    _UNINSTALL_CACHE = None
+    _APP_PATH_CACHE = None
+    _DRIVE_CACHE = None
     out = []
     for cat, name, pats in APP_HINTS:
         cands, seen = [], set()
@@ -1513,6 +1595,7 @@ def default_apps():
                 hits += [h for h in glob.glob(c) if os.path.isfile(h)]
             except Exception:
                 pass
+        hits += _app_path_hits(pats)
         if not hits:                      # 模板没找到 → 查注册表里的安装目录
             hits = _search_exe(_reg_dirs_for(name), _exe_regex(pats[0]))
         if not hits:
@@ -2429,17 +2512,6 @@ def load_db():
             db["plans"] = base2.get("plans", [])
         db["_seedV"] = CURATED_V
 
-    # ---- 软件快捷入口：仅在“一个软件入口都没有”时自动补齐一次 ----
-    # 用户手动删除过的软件入口不会被自动加回来（需要时用界面上的“重新扫描”）。
-    # 这样启动也不再做软件扫描，常用栏目完全以用户自己的编辑为准。
-    if not any(s.get("kind") == "app" for s in (db.get("shortcuts") or [])):
-        have = set((s.get("kind"), s.get("target")) for s in db.get("shortcuts", []))
-        for s in default_apps():
-            if (s["kind"], s["target"]) not in have:
-                s["id"] = "auto" + str(abs(hash(s["target"])) % (10 ** 9))
-                db.setdefault("shortcuts", []).append(s)
-                have.add((s["kind"], s["target"]))
-
     STATE["db"] = db
     return db
 
@@ -2451,6 +2523,29 @@ def save_db():
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(STATE["db"], f, ensure_ascii=False, indent=1)
     os.replace(tmp, DATA_FILE)
+
+
+def merge_scanned_shortcuts(db, fresh):
+    """把扫描结果合并进常用入口，并按规范化路径避免重复。"""
+    db.setdefault("shortcuts", [])
+    have = set((s.get("kind"), os.path.normcase(os.path.normpath(s.get("target") or "")))
+               for s in db["shortcuts"])
+    added = []
+    for s in fresh:
+        key = (s.get("kind"), os.path.normcase(os.path.normpath(s.get("target") or "")))
+        if key in have:
+            continue
+        s = dict(s)
+        s["id"] = "ap" + str(now_ms()) + str(len(added))
+        db["shortcuts"].append(s)
+        added.append(s)
+        have.add(key)
+    found_apps = sum(1 for s in fresh if s.get("kind") == "app")
+    added_apps = sum(1 for s in added if s.get("kind") == "app")
+    return {"ok": True, "added": added, "total": len(fresh),
+            "foundApps": found_apps, "addedApps": added_apps,
+            "foundResources": len(fresh) - found_apps,
+            "addedResources": len(added) - added_apps}
 
 
 # ================================================================ HTTP
@@ -2726,15 +2821,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/rescan":
             db = STATE["db"]
             fresh = default_apps()
-            have = set((s["kind"], s["target"]) for s in db["shortcuts"])
-            added = []
-            for s in fresh:
-                if (s["kind"], s["target"]) not in have:
-                    s["id"] = "ap" + str(now_ms()) + str(len(added))
-                    db["shortcuts"].append(s)
-                    added.append(s)
+            result = merge_scanned_shortcuts(db, fresh)
             save_db()
-            self._json({"ok": True, "added": added, "total": len(fresh)})
+            self._json(result)
             return
 
         self._json({"ok": False, "msg": "not found"}, 404)

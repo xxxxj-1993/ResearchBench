@@ -3698,13 +3698,21 @@ document.addEventListener('click',function(e){
   if(a==='rescan'){
     toast(LANG==='zh'?'正在探测已安装软件…':'Scanning…');
     api('/api/rescan',{}).then(function(r){
+      if(!r||!r.ok){ throw new Error((r&&r.msg)||'scan failed'); }
       var n=(r&&r.added)?r.added.length:0;
+      var found=Number(r&&r.foundApps!=null?r.foundApps:(r&&r.total))||0;
       return api('/api/state').then(function(s2){
         if(s2&&s2.db) S.db=s2.db;
         refreshAll();
-        toast(n?(LANG==='zh'?'新增 ':'Added ')+n+(LANG==='zh'?' 个入口':'') : (LANG==='zh'?'没有新软件':'Nothing new'),'ok');
+        if(n){
+          toast((LANG==='zh'?'扫描完成，新增 ':'Scan complete: added ')+n+(LANG==='zh'?' 个入口':' item(s)'),'ok');
+        }else if(found){
+          toast(LANG==='zh'?('已识别 '+found+' 个软件，均已在列表中'):('Found '+found+' app(s); all are already listed'),'ok');
+        }else{
+          toast(LANG==='zh'?'未识别到支持的软件，可用“新增入口”手动添加':'No supported app found; add one manually','err');
+        }
       });
-    });
+    }).catch(function(){ toast(LANG==='zh'?'扫描失败，请稍后重试':'Scan failed; please retry','err'); });
     return;
   }
 
