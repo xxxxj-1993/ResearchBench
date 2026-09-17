@@ -9,7 +9,8 @@
 
   PUBS            已发表论文    id / year / role / journal / myRole / title /
                                authors / volume / pages / doi / if_ / zone /
-                               cites / notes
+                               cites / citesSource / citesUpdatedAt / openalexId /
+                               notes
   GRANTS          已立项项目    id / org / kind / code / name / period /
                                amount / status / role / notes
   TEACHING        教学成果      id / year / kind / name / level / role / notes

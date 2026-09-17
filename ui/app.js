@@ -133,7 +133,7 @@ var S={ db:null, page:'today', lang:'zh',
   zot:{ok:false,msg:'',total:0}, obs:{vaults:[],cur:''},
   calYear:0, calMonth:0, calMode:'month',
   selPaper:'', selVault:'', drawerPath:'', ideaFilter:'', pubFilter:'all',
-  diaryUnlocked:false, obsIdeas:[], dragId:'', dragShortcut:'' };
+  diaryUnlocked:false, obsIdeas:[], dragId:'', dragShortcut:'', citationUpdating:false };
 var STAGES=['选题','理论','仿真','实验','写作','投稿','返修','接收'];
 var PSTATUS=['进行中','等待审稿','等待回复','等待决定','暂停','已完成'];
 var PRSTATUS=['进行中','等待回复','等待审稿','暂停','已完成'];
@@ -1104,7 +1104,7 @@ function formImportSchedule(){
         +'从记事本复制的纯文本也能用，但准确率低一些。'
         :'Select the whole table in Word/Excel and paste here with Ctrl+V.')+'</div></div>'
     +'<div class="fld"><label>'+(Z?'第 2 步（可选）：只保留某个老师的课':'Step 2 (optional): only keep one teacher')+'</label>'
-    +'<input id="impTeacher" placeholder="'+(Z?'如：张':'e.g. Zhang')+'">'
+    +'<input id="impTeacher" placeholder="'+(Z?'如：李':'e.g. Lee')+'">'
     +'<div class="hint" style="margin-top:6px">'
     +(Z?'填了之后，只有原始单元格里含这个字的课会被自动勾选，方便从教研室合排的表里挑出自己的。'
         :'Only rows containing this text get checked.')+'</div></div>'
@@ -1419,7 +1419,7 @@ function citeAuthors(s){
   if(arr.length>=2) return arr.slice(0,-1).join(', ')+', and '+arr[arr.length-1];
   return s;
 }
-// S. Zhang*, ..., and Q. Li*, "Title," Adv. Opt. Mater. 13, e01115 (2025).
+// A. Author*, ..., and B. Researcher*, "Title," Example Journal 13, 100–110 (2025).
 function citeText(w){
   var seg=[];
   var au=citeAuthors(w.authors);
@@ -1505,11 +1505,11 @@ function formImportPub(){
   var body=''
     +'<div class="fld"><label>'+(LANG==='zh'?'粘贴 BibTeX（不用联网，推荐）':'Paste BibTeX (offline, recommended)')+'</label>'
       +'<textarea id="imBib" rows="8" style="font-family:Consolas,Monaco,monospace;font-size:12px" '
-      +'placeholder="@article{zhang2025realization,&#10;  title  = {...},&#10;  author = {Zhang, San and Li, Si},&#10;  journal= {Advanced Optical Materials},&#10;  year   = {2025},&#10;  volume = {13},&#10;  pages  = {e01115},&#10;  doi    = {10.1002/adom.202501115}&#10;}"></textarea>'
+      +'placeholder="@article{author2025example,&#10;  title  = {...},&#10;  author = {Author, Alice and Researcher, Bob},&#10;  journal= {Example Journal},&#10;  year   = {2025},&#10;  volume = {13},&#10;  pages  = {100--110},&#10;  doi    = {10.1234/example.2025.001}&#10;}"></textarea>'
       +'<div class="hint" style="margin-top:6px">'+(LANG==='zh'?'Zotero / Google Scholar / 期刊官网都能导出 BibTeX，一次可以粘多条。'
         :'Export BibTeX from Zotero, Google Scholar or the journal page. Several entries at once is fine.')+'</div></div>'
     +'<div class="fld"><label>DOI'+(LANG==='zh'?'（联网查询 Crossref）':' (Crossref lookup)')+'</label>'
-      +'<div style="display:flex;gap:6px"><input id="imDoi" style="flex:1" placeholder="10.1002/adom.202501115">'
+      +'<div style="display:flex;gap:6px"><input id="imDoi" style="flex:1" placeholder="10.1234/example.2025.001">'
       +'<button class="btn sm primary" data-act="fetchDoi">'+ic('search',12)+(LANG==='zh'?'查询':'Fetch')+'</button></div></div>'
     +'<div id="imPreview"></div>';
   modal(LANG==='zh'?'导入论文':'Import publication', body,
@@ -1557,8 +1557,57 @@ function formCite(id){
   var n=prompt((LANG==='zh'?'被引次数（填数字，留空或 0 表示暂不统计）：':'Citations:'), (w.cites||0));
   if(n===null) return;
   w.cites=parseInt(String(n).replace(/[^\d]/g,'')||'0',10)||0;
+  delete w.citesSource; delete w.citesUpdatedAt; delete w.openalexId;
   saveKey('pubs'); refreshAll();
   toast((LANG==='zh'?('引用数已改为 '):('Citations set to '))+w.cites,'ok');
+}
+
+function refreshCitationCounts(){
+  if(S.citationUpdating) return;
+  var pubs=S.db.pubs||[];
+  if(!pubs.length){ toast(LANG==='zh'?'还没有已发表论文':'No publications yet','err'); return; }
+  var query=pubs.map(function(w){ return {id:w.id,doi:w.doi||''}; });
+  var hasDoi=query.some(function(w){ return !!String(w.doi||'').trim(); });
+  if(!hasDoi){ toast(LANG==='zh'?'没有可查询的 DOI，请先补充 DOI':'Add DOI before updating','err'); return; }
+  S.citationUpdating=true; refreshAll();
+  toast(LANG==='zh'?'正在从 OpenAlex 查询引用次数…':'Updating citations from OpenAlex…');
+  var backups=[];
+  api('/api/citations/refresh',{items:query}).then(function(r){
+    if(!r||!r.ok) throw new Error((r&&r.msg)||(LANG==='zh'?'查询失败':'Lookup failed'));
+    var rows=r.results||[], changed=0;
+    for(var i=0;i<rows.length;i++){
+      var w=byId(S.db.pubs,rows[i].id); if(!w) continue;
+      backups.push({w:w,cites:w.cites,citesSource:w.citesSource,
+                    citesUpdatedAt:w.citesUpdatedAt,openalexId:w.openalexId});
+      w.cites=parseInt(rows[i].cites,10)||0;
+      w.citesSource=rows[i].source||'OpenAlex';
+      w.citesUpdatedAt=rows[i].updatedAt||'';
+      w.openalexId=rows[i].openalexId||'';
+      changed++;
+    }
+    var done=function(){
+      S.citationUpdating=false; refreshAll();
+      var msg=LANG==='zh'
+        ?('引用更新完成：成功 '+changed+' 篇，跳过 '+(r.skippedCount||0)+' 篇，失败 '+(r.failedCount||0)+' 篇')
+        :('Citation update: '+changed+' updated, '+(r.skippedCount||0)+' skipped, '+(r.failedCount||0)+' failed');
+      toast(msg,changed?'ok':((r.failedCount||0)?'err':null));
+    };
+    if(changed) return saveKey('pubs').then(function(saved){
+      if(!saved||!saved.ok) throw new Error(LANG==='zh'?'本地保存失败':'Local save failed');
+      done();
+    });
+    done();
+  }).catch(function(e){
+    for(var i=0;i<backups.length;i++){
+      var b=backups[i], w=b.w;
+      w.cites=b.cites;
+      if(b.citesSource===undefined) delete w.citesSource; else w.citesSource=b.citesSource;
+      if(b.citesUpdatedAt===undefined) delete w.citesUpdatedAt; else w.citesUpdatedAt=b.citesUpdatedAt;
+      if(b.openalexId===undefined) delete w.openalexId; else w.openalexId=b.openalexId;
+    }
+    S.citationUpdating=false; refreshAll();
+    toast((LANG==='zh'?'引用更新失败：':'Citation update failed: ')+(e&&e.message?e.message:e),'err');
+  });
 }
 
 /* ================= 页面：已发表 ================= */
@@ -1568,6 +1617,9 @@ function viewPubs(){
     +'<span class="sub">'+esc(tt('pubsSub'))+'</span><div class="right">'
     +'<button class="btn" data-act="importPub" style="margin-right:6px">'+ic('import',13)
       +(LANG==='zh'?'导入':'Import')+'</button>'
+    +'<button class="btn" data-act="refreshCites"'+(S.citationUpdating?' disabled':'')+' style="margin-right:6px" title="'
+      +esc(LANG==='zh'?'仅发送 DOI 到 OpenAlex；查询失败不会覆盖原数据':'Only DOI is sent to OpenAlex')+'">'
+      +ic('spark',13)+(S.citationUpdating?(LANG==='zh'?'更新中…':'Updating…'):(LANG==='zh'?'更新引用':'Update citations'))+'</button>'
     +'<button class="btn primary" data-act="addPub">'+ic('plus',13)+esc(tt('add'))+'</button></div></div>';
   var all=S.db.pubs.slice();
   if(!all.length){ h+='<div class="card"><div class="empty">'+ic('wall',28,'var(--sage)')
@@ -1630,7 +1682,8 @@ function viewPubs(){
         +(w.zone?'<span class="chip n">'+esc(w.zone)+'</span>':'')
         +(w.if_?'<span class="chip n">IF '+esc(w.if_)+'</span>':'')
         +'<span class="chip o" data-act="quickCite" data-id="'+esc(w.id)+'" style="cursor:pointer" title="'
-          +(LANG==='zh'?'点击修改引用数':'Click to edit citations')+'">'+(LANG==='zh'?'引用 ':'Cited ')+esc(w.cites||0)+'</span>'
+          +esc((LANG==='zh'?'点击修改引用数':'Click to edit citations')+(w.citesSource?' · '+w.citesSource+(w.citesUpdatedAt?' · '+String(w.citesUpdatedAt).slice(0,10):''):''))
+          +'">'+(LANG==='zh'?'引用 ':'Cited ')+esc(w.cites||0)+(w.citesSource?' · '+esc(w.citesSource):'')+'</span>'
         +'<div class="spacer"></div>'
         +'<button class="btn sm ghost" data-act="copyPub" data-id="'+esc(w.id)+'" title="'
           +(LANG==='zh'?'复制引用 / BibTeX':'Copy citation / BibTeX')+'">'+ic('copy',12)+'</button>'
@@ -2105,9 +2158,9 @@ function formPub(id, pre){
     +'<div><label>'+(LANG==='zh'?'分区 / 等级':'Zone')+'</label><input id="wZone" value="'+esc(d.zone||'')+'" placeholder="中科院2区TOP"></div>'
     +'<div><label>'+(LANG==='zh'?'引用':'Citations')+'</label><input id="wCites" type="number" value="'+esc(d.cites||'0')+'"></div>'
     +'</div></div>'
-    +'<div class="fld"><label>'+(LANG==='zh'?'作者列表':'Authors')+'</label><input id="wAuthors" value="'+esc(d.authors||'')+'" placeholder="S. Zhang*, S. Li, ..."></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'作者列表':'Authors')+'</label><input id="wAuthors" value="'+esc(d.authors||'')+'" placeholder="A. Author*, B. Researcher, ..."></div>'
     +'<div class="fld"><div class="row">'
-    +'<div><label>DOI</label><input id="wDoi" value="'+esc(d.doi||'')+'" placeholder="10.1364/OE.xxxxx"></div>'
+    +'<div><label>DOI</label><input id="wDoi" value="'+esc(d.doi||'')+'" placeholder="10.1234/example.xxxxx"></div>'
     +'<div><label>'+(LANG==='zh'?'卷':'Volume')+'</label><input id="wVol" value="'+esc(d.volume||'')+'"></div>'
     +'<div><label>'+(LANG==='zh'?'页码':'Pages')+'</label><input id="wPages" value="'+esc(d.pages||'')+'"></div>'
     +'</div></div>'
@@ -2118,10 +2171,15 @@ function formPub(id, pre){
   $('wSave').onclick=function(){
     var t=v('wTitle'); if(!t){ alert(LANG==='zh'?'请填写标题':'Title required'); return; }
     var rec=w||{id:uid('w')};
+    var oldCites=w?(parseInt(w.cites,10)||0):null;
+    var oldDoi=w?String(w.doi||'').trim().toLowerCase():null;
     rec.title=t; rec.year=parseInt(v('wYear')||'0',10)||''; rec.journal=v('wJournal');
     rec.myRole=v('wRole'); rec.role=v('wArole')||'first';
     rec.if_=v('wIf'); rec.zone=v('wZone'); rec.cites=parseInt(v('wCites')||'0',10)||0;
     rec.authors=v('wAuthors'); rec.doi=v('wDoi'); rec.volume=v('wVol'); rec.pages=v('wPages');
+    if(oldCites!==null&&(oldCites!==rec.cites||oldDoi!==String(rec.doi||'').trim().toLowerCase())){
+      delete rec.citesSource; delete rec.citesUpdatedAt; delete rec.openalexId;
+    }
     rec.projectId=v('wProj'); rec.notes=v('wNotes');
     if(pre&&!id){ if(pre.bibtype) rec.bibtype=pre.bibtype; if(pre.bibkey) rec.bibkey=pre.bibkey;
                   if(pre.abstract) rec.abstract=pre.abstract; if(pre.url) rec.url=pre.url; }
@@ -3025,6 +3083,7 @@ document.addEventListener('click',function(e){
 
   if(a==='addPub'){ formPub(null); return; }
   if(a==='importPub'){ formImportPub(); return; }
+  if(a==='refreshCites'){ refreshCitationCounts(); return; }
   if(a==='parseBib'){
     var txt=$('imBib')? $('imBib').value : '';
     if(!txt.trim()){ toast(LANG==='zh'?'先粘贴 BibTeX 内容':'Paste BibTeX first','err'); return; }

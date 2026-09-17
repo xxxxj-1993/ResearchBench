@@ -1,4 +1,4 @@
-科研工作台（本地版 v2.4.2）使用说明
+科研工作台（本地版 v2.4.4）使用说明
 ================================
 
 一、怎么运行
@@ -179,9 +179,11 @@ A：能。扫描不限定盘符，会遍历本机所有分区，并额外查系�
 Q：粘贴 BibTeX 会联网吗？
 A：不会，解析全在本机完成。只有输入 DOI 查询时才会访问 Crossref。
 
-Q：为什么不联网自动更新引用数？
-A：一是保持「不联网也能用」的底线，二是被引数据各家对不上，
-   自己每年填一次更可控。想更新就点卡片上的「引用 N」直接改。
+Q：怎样一键更新引用数？
+A：进入「已发表」，点击右上角「更新引用」。工作台会按 DOI 从 OpenAlex
+   查询最新被引次数并自动保存；无 DOI、未收录或查询失败的条目会保留原值。
+   各数据库统计口径不同，所以卡片会标明 OpenAlex 来源。仍可点击
+   「引用 N」手工修改；手工修改后会清除自动来源标记。
 
 Q：数据会同步到别的电脑吗？
 A：不会，数据只在本机。用「导出 JSON 备份」→ 到新电脑「导入恢复」。
@@ -297,8 +299,8 @@ A：改 ui/app.js 和 app.py，重新打包即可。数据不会丢——新字�
      Zotero / Google Scholar / 期刊官网都能导出 BibTeX，整段粘进去就行，
      一次可以粘多条。程序在本机把 LaTeX 记号转成可读文字：
 
-       author = {Wang, Fang and Smith, John A.}
-         →  F. Wang, J. A. Smith             （名缩写在前，投稿时的习惯写法）
+       author = {Author, Alice and Researcher, Bob}
+         →  A. Author, B. Researcher          （名缩写在前，投稿时的习惯写法）
        title  = {... {C}hern Photonic Crystals}
          →  ... Chern Photonic Crystals      （大小写保护的花括号已还原）
        pages  = {1--10}  →  1–10
@@ -312,12 +314,12 @@ A：改 ui/app.js 和 app.py，重新打包即可。数据不会丢——新字�
 
 【引用数与复制】
   · 每张论文卡片上有个「引用 N」标签，点一下就能直接改被引次数
-    （不做联网自动更新：数据自己维护，错了改一下就行，
-      也省得每次点更新都要等网络）
+  · 页面右上角「更新引用」可按 DOI 从 OpenAlex 批量更新全部论文
+  · 查询时只发送 DOI；失败或无 DOI 的条目不会覆盖原有引用数
   · 卡片上的复制按钮会弹出两段文本，各配一个复制键：
-      引用格式   F. Wang, S. Li, ..., and Q. Li, "论文标题," Adv. Opt.
-                 Mater. 13, e01115 (2025).
-      BibTeX     @article{wang2025realization, author = {Wang, Fang and ...}, ...}
+      引用格式   A. Author, B. Researcher, "论文标题," Example Journal
+                 13, 100–110 (2025).
+      BibTeX     @article{author2025example, author = {Author, Alice and ...}, ...}
     复制失败时会提示手动选中下面的文本框自己 Ctrl+C（系统剪贴板限制）。
 
 

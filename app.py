@@ -23,6 +23,8 @@ import threading
 import subprocess
 import webbrowser
 import ctypes
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs, unquote, quote
 from urllib.request import Request, urlopen
@@ -39,7 +41,7 @@ except Exception:  # 打包后同目录，正常情况下一定能导入
     seeddata = None
 
 APP_NAME = "ResearchWorkbench"
-VERSION = "2.4.3"
+VERSION = "2.4.4"
 CURATED_V = 3  # 内容种子版本：升级时用于给老数据补新栏目
 
 # ================================================================ 基础路径
@@ -1903,12 +1905,13 @@ def parse_schedule_payload(html_text="", plain_text="", teacher_key=""):
 #   bibtype  article / inproceedings / book ...
 #   bibkey   条目 key
 #   title    已清理 LaTeX
-#   authors  "S. Zhang, S. Li, K. Wang"（名缩写在前，符合理工科投稿习惯）
+#   authors  "A. Author, B. Researcher"（名缩写在前，符合理工科投稿习惯）
 #   journal 期刊 / 会议 / 出版社，按优先级取一个
 #   year     int
 #   volume / pages / doi / publisher / abstract / url
 
 _CROSSREF_UA = ("ResearchBench/%s (Windows; local desktop app)" % VERSION)
+_OPENALEX_UA = _CROSSREF_UA
 
 # LaTeX 重音与转义 → 普通字符
 _TEX_ACCENT = {
@@ -2001,7 +2004,7 @@ def _initials_of(given):
 
 
 def _bib_authors(raw):
-    """Zhang, San and Li, Si  →  S. Zhang, S. Li"""
+    """Author, Alice and Researcher, Bob  →  A. Author, B. Researcher"""
     raw = re.sub(r'\s+', ' ', (raw or '').strip())
     if not raw:
         return ''
@@ -2155,7 +2158,7 @@ def crossref_pub(doi, timeout=12):
     raw = (doi or '').strip()
     m = re.search(r'(10\.\d{4,9}/[^\s"\'<>]+)', raw)
     if not m:
-        return {"ok": False, "msg": "没认出这是 DOI。长这样：10.1002/adom.202501115"}
+        return {"ok": False, "msg": "没认出这是 DOI。长这样：10.1234/example.2025.001"}
     d = quote(m.group(1).rstrip('.,;'), safe='')
     try:
         req = Request("https://api.crossref.org/works/" + d,
@@ -2210,6 +2213,95 @@ def crossref_pub(doi, timeout=12):
         "abstract": _tex_clean(msg.get("abstract") or '') if msg.get("abstract") else '',
         "url": str(msg.get("URL") or '').strip(),
     }
+
+
+def normalize_doi(doi):
+    """从 DOI、doi: 前缀或 doi.org 链接中提取可查询的 DOI。"""
+    raw = unquote(str(doi or '')).strip()
+    raw = re.sub(r'^doi\s*:\s*', '', raw, flags=re.I)
+    raw = re.sub(r'^https?://(?:dx\.)?doi\.org/', '', raw, flags=re.I)
+    m = re.search(r'(10\.\d{4,9}/[^\s"\'<>]+)', raw, flags=re.I)
+    return m.group(1).rstrip('.,;').lower() if m else ''
+
+
+def openalex_citation(doi, timeout=12):
+    """按 DOI 查询 OpenAlex 被引次数；失败时绝不返回伪造的 0。"""
+    clean = normalize_doi(doi)
+    if not clean:
+        return {"ok": False, "msg": "没有可识别的 DOI"}
+    work_id = quote("https://doi.org/" + clean, safe=':/')
+    url = "https://api.openalex.org/works/" + work_id + "?select=id,doi,cited_by_count"
+    try:
+        req = Request(url, headers={"User-Agent": _OPENALEX_UA,
+                                    "Accept": "application/json"})
+        with urlopen(req, timeout=timeout) as r:
+            data = json.loads(r.read().decode("utf-8", "replace"))
+    except HTTPError as e:
+        code = getattr(e, "code", 0)
+        if code == 404:
+            return {"ok": False, "doi": clean, "msg": "OpenAlex 未收录该 DOI"}
+        if code == 429:
+            return {"ok": False, "doi": clean, "msg": "OpenAlex 请求过于频繁，请稍后重试"}
+        return {"ok": False, "doi": clean, "msg": "OpenAlex 返回错误 %s" % (code or "?")}
+    except (URLError, socket.timeout, TimeoutError):
+        return {"ok": False, "doi": clean, "msg": "无法连接 OpenAlex"}
+    except Exception as e:
+        return {"ok": False, "doi": clean, "msg": "查询失败：%s" % e}
+
+    cites = data.get("cited_by_count") if isinstance(data, dict) else None
+    if isinstance(cites, bool) or not isinstance(cites, (int, float)) or cites < 0:
+        return {"ok": False, "doi": clean, "msg": "OpenAlex 返回的引用数无效"}
+    source_id = str(data.get("id") or '').rstrip('/').split('/')[-1]
+    return {"ok": True, "doi": clean, "cites": int(cites),
+            "source": "OpenAlex", "openalexId": source_id}
+
+
+def refresh_citation_counts(items, fetcher=None, max_workers=4):
+    """并发查询一批成果；只返回结果，由前端写回当前数据。"""
+    fetcher = fetcher or openalex_citation
+    rows = items if isinstance(items, list) else []
+    rows = rows[:200]
+    by_doi = {}
+    skipped = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        rid = str(row.get("id") or '')
+        doi = normalize_doi(row.get("doi"))
+        if not rid or not doi:
+            skipped.append({"id": rid, "reason": "缺少 DOI"})
+            continue
+        by_doi.setdefault(doi, []).append(rid)
+
+    fetched = {}
+    if by_doi:
+        workers = max(1, min(int(max_workers or 1), 4, len(by_doi)))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            pending = {pool.submit(fetcher, doi): doi for doi in by_doi}
+            for future in as_completed(pending):
+                doi = pending[future]
+                try:
+                    fetched[doi] = future.result()
+                except Exception as e:
+                    fetched[doi] = {"ok": False, "doi": doi, "msg": "查询失败：%s" % e}
+
+    updated_at = datetime.now().astimezone().isoformat(timespec="seconds")
+    results, failed = [], []
+    for doi, ids in by_doi.items():
+        result = fetched.get(doi) or {"ok": False, "msg": "没有查询结果"}
+        for rid in ids:
+            if result.get("ok"):
+                results.append({"id": rid, "doi": doi,
+                                "cites": int(result.get("cites", 0)),
+                                "source": "OpenAlex",
+                                "openalexId": result.get("openalexId") or '',
+                                "updatedAt": updated_at})
+            else:
+                failed.append({"id": rid, "doi": doi,
+                               "reason": result.get("msg") or "查询失败"})
+    return {"ok": True, "results": results, "failed": failed, "skipped": skipped,
+            "updated": len(results), "failedCount": len(failed),
+            "skippedCount": len(skipped)}
 
 
 LINK_PRESETS = [
@@ -2579,6 +2671,14 @@ class Handler(BaseHTTPRequestHandler):
             r = crossref_pub(b.get("doi") or "")
             r.setdefault("ok", False)
             self._json(r)
+            return
+
+        if path == "/api/citations/refresh":
+            items = b.get("items")
+            if not isinstance(items, list):
+                self._json({"ok": False, "msg": "缺少论文列表"}, 400)
+                return
+            self._json(refresh_citation_counts(items))
             return
 
         # ---------- 课表导入：粘贴 Word / Excel / 网页复制的表格 ----------
