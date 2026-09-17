@@ -14,9 +14,12 @@ import app
 class AppScanTests(unittest.TestCase):
     def test_macos_appdata_uses_application_support(self):
         with mock.patch.object(app, "IS_MAC", True), \
-                mock.patch("app.os.path.expanduser", side_effect=lambda p: p.replace("~", "/Users/tester", 1)):
+                mock.patch("app.os.path.expanduser", side_effect=lambda p: p.replace("~", "/Users/tester", 1)), \
+                mock.patch("app.os.makedirs") as makedirs:
             self.assertEqual("/Users/tester/Library/Application Support/ResearchWorkbench",
                              app.appdata_dir())
+        makedirs.assert_called_once_with(
+            "/Users/tester/Library/Application Support/ResearchWorkbench", exist_ok=True)
 
     def test_macos_scan_returns_app_bundles(self):
         def fake_glob(pattern, recursive=False):
