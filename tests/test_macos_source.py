@@ -15,7 +15,8 @@ class MacOSSourceTests(unittest.TestCase):
         raw = (ROOT / "macos" / "build_macos.sh").read_bytes()
         self.assertNotIn(b"\r\n", raw)
         text = raw.decode("utf-8")
-        for command in ("iconutil -c icns", "PyInstaller", "codesign", "hdiutil create"):
+        for command in ("sips -s format png", "iconutil -c icns", "PyInstaller",
+                        "codesign", "hdiutil create"):
             self.assertIn(command, text)
 
     def test_workflow_targets_macos(self):
