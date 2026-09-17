@@ -12,6 +12,51 @@ import app
 
 
 class AppScanTests(unittest.TestCase):
+    def test_macos_appdata_uses_application_support(self):
+        with mock.patch.object(app, "IS_MAC", True), \
+                mock.patch("app.os.path.expanduser", side_effect=lambda p: p.replace("~", "/Users/tester", 1)):
+            self.assertEqual("/Users/tester/Library/Application Support/ResearchWorkbench",
+                             app.appdata_dir())
+
+    def test_macos_scan_returns_app_bundles(self):
+        def fake_glob(pattern, recursive=False):
+            return ["/Applications/Zotero.app"] if "Zotero.app" in pattern else []
+
+        with mock.patch("app.glob.glob", side_effect=fake_glob), \
+                mock.patch("app.os.path.isdir", side_effect=lambda p: p == "/Applications/Zotero.app"):
+            found = app.mac_default_apps()
+        self.assertEqual(1, len(found))
+        self.assertEqual(("Zotero", "app", "/Applications/Zotero.app"),
+                         (found[0]["name"], found[0]["kind"], found[0]["target"]))
+
+    def test_macos_launch_uses_open_app(self):
+        with mock.patch.object(app, "IS_MAC", True), \
+                mock.patch("app.os.path.isdir", return_value=True), \
+                mock.patch("app.os.path.isfile", return_value=False), \
+                mock.patch("app.subprocess.Popen") as popen:
+            popen.return_value.pid = 1
+            ok, _ = app.launch_app("/Applications/Zotero.app")
+        self.assertTrue(ok)
+        self.assertEqual(["open", "/Applications/Zotero.app"], popen.call_args.args[0])
+
+    def test_macos_reveal_uses_finder(self):
+        with mock.patch.object(app, "IS_MAC", True), \
+                mock.patch("app.os.path.exists", return_value=True), \
+                mock.patch("app.os.path.isfile", return_value=True), \
+                mock.patch("app.subprocess.Popen") as popen:
+            ok, _ = app.reveal_in_explorer("/Users/tester/paper.pdf")
+        self.assertTrue(ok)
+        self.assertEqual(["open", "-R", "/Users/tester/paper.pdf"], popen.call_args.args[0])
+
+    def test_macos_picker_can_choose_application_bundle(self):
+        done = mock.Mock(returncode=0, stdout="/Applications/Zotero.app\n")
+        with mock.patch.object(app, "IS_MAC", True), \
+                mock.patch("app.subprocess.run", return_value=done) as run:
+            ok, path = app.native_pick("app")
+        self.assertTrue(ok)
+        self.assertEqual("/Applications/Zotero.app", path)
+        self.assertIn("choose application", run.call_args.args[0][-1])
+
     def test_fresh_load_does_not_scan_implicitly(self):
         with tempfile.TemporaryDirectory() as td:
             data_file = os.path.join(td, "data.json")

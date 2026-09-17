@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-科研工作台 Desktop  v2.0
-- 纯 Python 标准库，本机回环服务 + Edge 应用模式窗口
+科研工作台 Desktop  v2.4.4
+- 纯 Python 标准库，本机回环服务 + 系统浏览器应用窗口
 - 文件夹 / 软件 / 链接 点击直达
 - 只读联动 Zotero 与 Obsidian（多 vault）
-- 数据保存在 %APPDATA%\\ResearchWorkbench\\
+- Windows 数据保存在 %APPDATA%\\ResearchWorkbench\\
+- macOS 数据保存在 ~/Library/Application Support/ResearchWorkbench/
 """
 import os
 import re
@@ -23,6 +24,7 @@ import threading
 import subprocess
 import webbrowser
 import ctypes
+import posixpath
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -43,11 +45,17 @@ except Exception:  # 打包后同目录，正常情况下一定能导入
 APP_NAME = "ResearchWorkbench"
 VERSION = "2.4.4"
 CURATED_V = 3  # 内容种子版本：升级时用于给老数据补新栏目
+IS_WINDOWS = sys.platform == "win32"
+IS_MAC = sys.platform == "darwin"
 
 # ================================================================ 基础路径
 def appdata_dir():
-    base = os.environ.get("APPDATA") or os.path.expanduser("~")
-    d = os.path.join(base, APP_NAME)
+    if IS_MAC:
+        base = os.path.expanduser("~/Library/Application Support")
+        d = posixpath.join(base, APP_NAME)
+    else:
+        base = os.environ.get("APPDATA") or os.path.expanduser("~")
+        d = os.path.join(base, APP_NAME)
     os.makedirs(d, exist_ok=True)
     return d
 
@@ -394,7 +402,10 @@ def open_path(path):
     except Exception:
         before = None
     try:
-        if os.path.isdir(path):
+        if IS_MAC:
+            proc = subprocess.Popen(["open", path], stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+        elif os.path.isdir(path):
             # 用 explorer 打开文件夹
             proc = subprocess.Popen(["explorer", os.path.normpath(path)],
                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -418,14 +429,19 @@ def launch_app(exe, args=None):
     if not exe:
         return False, "未配置程序路径"
     exe = os.path.expandvars(os.path.expanduser(exe))
-    if not os.path.isfile(exe):
+    if not (os.path.isfile(exe) or (IS_MAC and exe.lower().endswith(".app") and os.path.isdir(exe))):
         return False, "程序不存在：" + exe
     try:
-        before = _snapshot_windows()  # 打开前的窗口快照，用于识别新窗口
+        before = _snapshot_windows() if IS_WINDOWS else None
     except Exception:
         before = None
     try:
-        cmd = [exe] + list(args or [])
+        if IS_MAC:
+            cmd = ["open", exe]
+            if args:
+                cmd += ["--args"] + list(args)
+        else:
+            cmd = [exe] + list(args or [])
         proc = subprocess.Popen(cmd, cwd=os.path.dirname(exe) or None,
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                 stdin=subprocess.DEVNULL, close_fds=True)
@@ -433,7 +449,8 @@ def launch_app(exe, args=None):
         logging.exception("launch_app")
         return False, str(e)
     try:
-        _after_open(proc, before=before)
+        if IS_WINDOWS:
+            _after_open(proc, before=before)
     except Exception:
         pass
     return True, "已启动"
@@ -445,6 +462,13 @@ def open_url(url):
     if not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", url):
         url = "https://" + url
     # 自定义协议（obsidian:// 等）交给 shell 处理，cmd start 会把 & 当分隔符
+    if IS_MAC:
+        try:
+            subprocess.Popen(["open", url], stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+            return True, "已交给系统打开"
+        except Exception as e:
+            return False, str(e)
     if not re.match(r"^https?:", url, re.I):
         try:
             os.startfile(url)  # noqa: S606
@@ -484,8 +508,13 @@ def reveal_in_explorer(path):
     except Exception:
         before = None
     try:
-        proc = subprocess.Popen(["explorer", "/select,", os.path.normpath(path)],
-                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if IS_MAC:
+            args = ["open", "-R", path] if os.path.isfile(path) else ["open", path]
+            proc = subprocess.Popen(args, stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+        else:
+            proc = subprocess.Popen(["explorer", "/select,", os.path.normpath(path)],
+                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception as e:
         return False, str(e)
     try:
@@ -498,6 +527,20 @@ def reveal_in_explorer(path):
 
 
 def native_pick(kind):
+    if IS_MAC:
+        if kind == "folder":
+            script = 'POSIX path of (choose folder with prompt "选择文件夹")'
+        elif kind == "app":
+            script = 'POSIX path of (choose application with prompt "选择应用")'
+        else:
+            script = 'POSIX path of (choose file with prompt "选择文件")'
+        try:
+            r = subprocess.run(["osascript", "-e", script], capture_output=True,
+                               text=True, timeout=300)
+            out = (r.stdout or "").strip()
+            return (True, out) if r.returncode == 0 and out else (False, "已取消")
+        except Exception as e:
+            return False, str(e)
     if kind == "folder":
         ps = ("Add-Type -AssemblyName System.Windows.Forms;"
               "$d=New-Object System.Windows.Forms.FolderBrowserDialog;"
@@ -550,6 +593,7 @@ ZOT_SNAP_META = os.path.join(DATA_DIR, "zot_snapshot.json")
 ZOT_SNAP_TTL = 300.0                # 快照最长复用 5 分钟
 
 ZOT_FALLBACK_DIRS = [
+    os.path.expanduser("~/Zotero"),
     r"D:\Zotero", r"E:\Zotero", r"C:\Zotero",
 ]
 
@@ -558,8 +602,12 @@ def zotero_data_dir():
     if ZOT["dir"]:
         return ZOT["dir"]
     # 1) 读 Zotero 配置
-    pats = [os.path.join(os.environ.get("APPDATA", ""), "Zotero", "Zotero", "Profiles", "*", "prefs.js"),
-            os.path.join(os.environ.get("APPDATA", ""), "Zotero", "Profiles", "*", "prefs.js")]
+    if IS_MAC:
+        pats = [os.path.expanduser("~/Library/Application Support/Zotero/Profiles/*/prefs.js"),
+                os.path.expanduser("~/Library/Application Support/Zotero/Zotero/Profiles/*/prefs.js")]
+    else:
+        pats = [os.path.join(os.environ.get("APPDATA", ""), "Zotero", "Zotero", "Profiles", "*", "prefs.js"),
+                os.path.join(os.environ.get("APPDATA", ""), "Zotero", "Profiles", "*", "prefs.js")]
     for pat in pats:
         for p in glob.glob(pat):
             try:
@@ -947,7 +995,10 @@ def obsidian_vaults():
     if OBS["vaults"] and time.time() - OBS["scan"] < 60:
         return OBS["vaults"]
     out = []
-    cfg = os.path.join(os.environ.get("APPDATA", ""), "obsidian", "obsidian.json")
+    if IS_MAC:
+        cfg = os.path.expanduser("~/Library/Application Support/obsidian/obsidian.json")
+    else:
+        cfg = os.path.join(os.environ.get("APPDATA", ""), "obsidian", "obsidian.json")
     if os.path.isfile(cfg):
         try:
             d = json.load(open(cfg, encoding="utf-8"))
@@ -1343,6 +1394,63 @@ APP_HINTS = [
 ]
 
 
+# macOS 应用包识别规则。目标保存为 .app，由 launch_app 使用 `open -a` 启动。
+MAC_APP_HINTS = [
+    ("仿真计算", "COMSOL", ["/Applications/COMSOL*.app", "/Applications/COMSOL*/**/*.app",
+                              "~/Applications/COMSOL*.app"]),
+    ("仿真计算", "MATLAB", ["/Applications/MATLAB_R*.app", "~/Applications/MATLAB_R*.app"]),
+    ("仿真计算", "Lumerical FDTD", ["/Applications/Lumerical*.app", "/Applications/Lumerical*/**/FDTD*.app",
+                                     "/Applications/Ansys Lumerical*.app", "/Applications/Ansys*/**/FDTD*.app"]),
+    ("仿真计算", "Python", ["/Applications/Python 3*.app"]),
+    ("三维建模", "AutoCAD", ["/Applications/Autodesk/AutoCAD *.app",
+                               "/Applications/Autodesk/AutoCAD */AutoCAD*.app", "/Applications/AutoCAD *.app"]),
+    ("三维建模", "Maya", ["/Applications/Autodesk/maya*.app", "/Applications/Autodesk/Maya*.app",
+                            "/Applications/Autodesk/maya*/Maya.app", "/Applications/Autodesk/Maya*/Maya.app"]),
+    ("三维建模", "Rhino", ["/Applications/Rhinoceros*.app", "/Applications/Rhino*.app"]),
+    ("三维建模", "Blender", ["/Applications/Blender.app", "~/Applications/Blender.app"]),
+    ("三维建模", "SketchUp", ["/Applications/SketchUp *.app", "/Applications/SketchUp*.app"]),
+    ("三维建模", "Cinema 4D", ["/Applications/Maxon Cinema 4D *.app", "/Applications/Cinema 4D*.app"]),
+    ("三维建模", "FreeCAD", ["/Applications/FreeCAD.app", "~/Applications/FreeCAD.app"]),
+    ("三维建模", "KeyShot", ["/Applications/KeyShot*.app"]),
+    ("绘图图像", "Photoshop", ["/Applications/Adobe Photoshop */Adobe Photoshop *.app", "/Applications/Adobe Photoshop*.app"]),
+    ("绘图图像", "Illustrator", ["/Applications/Adobe Illustrator */Adobe Illustrator.app", "/Applications/Adobe Illustrator*.app"]),
+    ("绘图图像", "Inkscape", ["/Applications/Inkscape.app", "~/Applications/Inkscape.app"]),
+    ("绘图图像", "GIMP", ["/Applications/GIMP*.app", "~/Applications/GIMP*.app"]),
+    ("绘图图像", "ImageJ", ["/Applications/ImageJ*.app"]),
+    ("绘图图像", "Fiji", ["/Applications/Fiji.app", "~/Applications/Fiji.app"]),
+    ("绘图图像", "GraphPad Prism", ["/Applications/Prism*.app", "/Applications/GraphPad Prism*.app"]),
+    ("绘图图像", "Premiere Pro", ["/Applications/Adobe Premiere Pro */Adobe Premiere Pro *.app"]),
+    ("绘图图像", "After Effects", ["/Applications/Adobe After Effects */Adobe After Effects *.app"]),
+    ("文献写作", "Zotero", ["/Applications/Zotero.app", "~/Applications/Zotero.app"]),
+    ("文献写作", "EndNote", ["/Applications/EndNote*.app"]),
+    ("文献写作", "Mendeley", ["/Applications/Mendeley Reference Manager.app", "/Applications/Mendeley Desktop.app"]),
+    ("文献写作", "TeXstudio", ["/Applications/texstudio.app", "~/Applications/texstudio.app"]),
+    ("文献写作", "Typora", ["/Applications/Typora.app", "~/Applications/Typora.app"]),
+    ("文献写作", "VS Code", ["/Applications/Visual Studio Code.app", "~/Applications/Visual Studio Code.app"]),
+    ("文献写作", "Obsidian", ["/Applications/Obsidian.app", "~/Applications/Obsidian.app"]),
+    ("数据分析", "SPSS", ["/Applications/IBM SPSS Statistics*/SPSS Statistics.app", "/Applications/SPSS Statistics.app"]),
+    ("数据分析", "RStudio", ["/Applications/RStudio.app", "~/Applications/RStudio.app"]),
+]
+
+
+def mac_default_apps():
+    out = []
+    for cat, name, pats in MAC_APP_HINTS:
+        hits = []
+        for pat in pats:
+            try:
+                hits.extend(p for p in glob.glob(os.path.expanduser(pat), recursive=True)
+                            if os.path.isdir(p))
+            except Exception:
+                pass
+        if hits:
+            best = sorted({posixpath.normpath(p) for p in hits},
+                          key=lambda p: (not p.startswith("/Applications/"), p.lower()))[0]
+            out.append({"id": "ap" + str(len(out)), "category": cat, "name": name,
+                        "kind": "app", "target": best, "note": ""})
+    return out
+
+
 # ---------------- 盘符枚举、注册表兜底、多版本取舍 ----------------
 _DRIVE_CACHE = None
 
@@ -1575,7 +1683,24 @@ def default_apps():
       ① 路径模板 × 本机所有盘符（覆盖主流安装位置，不再写死 C:/D:）
       ② 注册表卸载信息里的安装目录（覆盖装在自定义路径的软件）
     同一软件有多个安装时取打分最高者，Program Files 正规版优先。"""
-    # 手工重新探测时读取本次调用的磁盘与注册表状态，避免沿用启动时缓存。
+    # macOS 直接扫描 /Applications 与 ~/Applications 中的应用包。
+    if IS_MAC:
+        out = mac_default_apps()
+        for i, v in enumerate(obsidian_vaults()):
+            out.append({"id": "apv" + str(i), "category": "知识库",
+                        "name": "Obsidian · " + v["name"], "kind": "folder",
+                        "target": v["path"], "note": "笔记仓库"})
+        zd = zotero_data_dir()
+        if zd:
+            out.append({"id": "apz0", "category": "知识库", "name": "Zotero 数据目录",
+                        "kind": "folder", "target": zd, "note": "含 zotero.sqlite"})
+            st = os.path.join(zd, "storage")
+            if os.path.isdir(st):
+                out.append({"id": "apz1", "category": "知识库", "name": "Zotero PDF 附件",
+                            "kind": "folder", "target": st, "note": "所有文献附件"})
+        return out
+
+    # Windows 手工重新探测时读取本次调用的磁盘与注册表状态，避免沿用启动时缓存。
     global _UNINSTALL_CACHE, _APP_PATH_CACHE, _DRIVE_CACHE
     _UNINSTALL_CACHE = None
     _APP_PATH_CACHE = None
@@ -2854,14 +2979,22 @@ def free_port(start=8756):
 
 
 def open_window(url):
-    profile = os.path.join(os.environ.get("TEMP", DATA_DIR), APP_NAME + "-webview")
-    cands = [
-        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-        os.path.join(os.environ.get("LOCALAPPDATA", ""), r"Google\Chrome\Application\chrome.exe"),
-    ]
+    profile = os.path.join(tempfile.gettempdir(), APP_NAME + "-webview")
+    if IS_MAC:
+        cands = [
+            "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            os.path.expanduser("~/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"),
+            os.path.expanduser("~/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
+        ]
+    else:
+        cands = [
+            r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+            r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+            os.path.join(os.environ.get("LOCALAPPDATA", ""), r"Google\Chrome\Application\chrome.exe"),
+        ]
     for exe in cands:
         if exe and os.path.isfile(exe):
             args = [exe, "--app=" + url, "--window-size=1440,960",
@@ -2881,6 +3014,21 @@ def open_window(url):
                 continue
     webbrowser.open(url)
     return None
+
+
+def run_macos_webview(url):
+    """在 macOS 使用系统 Cocoa WebView；依赖缺失时返回 False 走浏览器兜底。"""
+    if not IS_MAC:
+        return False
+    try:
+        import webview
+        webview.create_window("科研工作台", url, width=1440, height=960,
+                              min_size=(1024, 700))
+        webview.start(debug=False)
+        return True
+    except Exception:
+        logging.exception("macOS webview")
+        return False
 
 
 def warm_up():
@@ -2917,6 +3065,9 @@ def main():
         # 仅运行本地服务（测试/CI 用），不拉起浏览器窗口，纯服务常驻。
         print("SERVING " + url)
         run_guard(None, True)
+    elif IS_MAC and run_macos_webview(url):
+        # Cocoa 窗口关闭后 webview.start() 返回，随后正常关闭本地服务。
+        pass
     else:
         proc = open_window(url)
         # 生命周期以「Edge 窗口进程是否还活着」为准：窗口关了才退出；
@@ -2939,8 +3090,13 @@ def run_guard(proc, no_window):
     try:
         while True:
             time.sleep(1)
-            if proc is not None and proc.poll() is not None:
+            if proc is not None and proc.poll() is not None and not IS_MAC:
                 return
+            # Mac 浏览器可能保留后台进程或把命令转交给已有进程，统一以页面心跳判断。
+            if IS_MAC and not no_window:
+                if LAST_SEEN["t"] and time.time() - LAST_SEEN["t"] > 45:
+                    return
+                continue
             if proc is None and not no_window:
                 # 没能拉起任何浏览器窗口（只剩 webbrowser 兜底且无声），
                 # 给 8 秒缓冲后主动退出，避免空跑占端口。

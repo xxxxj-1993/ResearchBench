@@ -20,7 +20,7 @@
   IDEAS           灵感          id / title / content / tags / status / source
   MATERIALS       我的材料      id / name / kind / path / note
 
-改完重新打包：pyinstaller --noconfirm 科研工作台.spec
+改完重新打包：./macos/build_macos.sh
 """
 
 PUBS = []

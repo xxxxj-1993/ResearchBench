@@ -1099,10 +1099,10 @@ function formImportSchedule(){
     +'<div class="fld"><label>'+(Z?'第 1 步：把课表复制进来':'Step 1: paste the timetable')+'</label>'
     +'<div id="impPaste" class="pastebox" contenteditable="true"></div>'
     +'<div class="hint" style="margin-top:6px">'
-    +(Z?'在 Word / WPS / Excel / 网页里框选整个课表复制，回到这里按 Ctrl+V。'
+    +(Z?'在 Word / WPS / Excel / 网页里框选整个课表复制，回到这里按 Command+V（Windows 为 Ctrl+V）。'
         +'程序读的是剪贴板里的表格结构，所以「星期」和「节次」能对得上；'
         +'从记事本复制的纯文本也能用，但准确率低一些。'
-        :'Select the whole table in Word/Excel and paste here with Ctrl+V.')+'</div></div>'
+        :'Select the whole table in Word/Excel and paste here with Command+V (Ctrl+V on Windows).')+'</div></div>'
     +'<div class="fld"><label>'+(Z?'第 2 步（可选）：只保留某个老师的课':'Step 2 (optional): only keep one teacher')+'</label>'
     +'<input id="impTeacher" placeholder="'+(Z?'如：李':'e.g. Lee')+'">'
     +'<div class="hint" style="margin-top:6px">'
@@ -2473,12 +2473,12 @@ function formShortcut(id, presetCat){
     +'<input id="sTarget" value="'+esc(s?s.target:'')+'"><button class="btn" id="sPick" type="button">'
     +(LANG==='zh'?'浏览':'Browse')+'</button></div>'
     +'<div class="hint">'+(LANG==='zh'
-      ? '类型 folder/app/file 填本地路径；类型 url 填网址。folder 卡片支持点击展开最近文件。'
+      ? '类型 folder/app/file 填本地路径；app 可选择 macOS 的 .app 应用；类型 url 填网址。'
       : 'folder/app/file need a local path; url needs a link.')+'</div></div>';
   modal(s?(LANG==='zh'?'编辑入口':'Edit shortcut'):(LANG==='zh'?'新增入口':'New shortcut'), body, footBtns('sSave'));
   $('sPick').onclick=function(){
     var k=v('sKind');
-    api('/api/pick',{kind:(k==='folder')?'folder':'file'}).then(function(r){ if(r&&r.ok&&r.path) $('sTarget').value=r.path; });
+    api('/api/pick',{kind:(k==='folder')?'folder':(k==='app'?'app':'file')}).then(function(r){ if(r&&r.ok&&r.path) $('sTarget').value=r.path; });
   };
   $('sSave').onclick=function(){
     var nm=v('sName'), tg=v('sTarget');
