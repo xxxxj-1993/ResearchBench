@@ -1,8 +1,8 @@
 # 科研工作台 ResearchBench
 
-**一个跑在 macOS 本地的科研工作台。论文、课题、基金、专利、教学成果、课表、灵感、日记收在一处，数据只存在你自己的电脑上，不主动上传、不同步。**
+**一个运行在 Windows 和 macOS 本地的科研工作台。论文、课题、基金、专利、教学成果、课表、灵感、日记收在一处，数据只存在你自己的电脑上，不主动上传、不同步。**
 
-当前版本 v2.4.4 · macOS 11+ · 提供 `.app` / `.dmg` · 双击即用，不需要安装 Python
+当前版本 v2.4.4 · 支持 Windows 10/11 与 macOS 11+ · 提供 `.exe` / `.dmg` · 双击即用，不需要安装 Python
 
 ## 为什么做这个
 
@@ -24,9 +24,9 @@
 
 ## 它是什么
 
-一个 macOS 桌面小工具。打开应用后，里面装着日常科研工作的几乎所有东西：在写的论文、在跑的项目、已发表清单、基金课题、教学成果、专利、灵感、日记、日程、这学期课表，还有常用文件夹和软件的快捷入口。
+一个跨 Windows 和 macOS 的桌面小工具。打开应用后，里面装着日常科研工作的几乎所有东西：在写的论文、在跑的项目、已发表清单、基金课题、教学成果、专利、灵感、日记、日程、这学期课表，还有常用文件夹和软件的快捷入口。
 
-数据只存在你自己的电脑上。所有内容就是一个 JSON 文件，放在 `~/Library/Application Support/ResearchWorkbench/data.json`。备份就是复制这个文件，换电脑就是拷过去或者走「导入恢复」，想彻底重置，删掉它重开就行。
+数据只存在你自己的电脑上。所有内容就是一个 `data.json` 文件：Windows 保存在 `%APPDATA%\ResearchWorkbench\`，macOS 保存在 `~/Library/Application Support/ResearchWorkbench/`。备份就是复制这个文件，换电脑可使用「导入恢复」，想彻底重置，删掉它再打开应用即可。
 
 它不联网也能用。飞机上、高铁上、学校网又崩了的时候，工具不会变成一个空白页。
 
@@ -45,29 +45,62 @@
 - **专利**：专利清单。
 - **灵感**：随手记 idea，可一键写入 Obsidian，也可一键转化为论文。
 - **日记**：每日记录，可设 4 位 PIN 防误看。
-- **常用**：文件夹 / 软件 / 网址快捷入口，支持拖拽排序与「重新探测软件」，内置 46 款科研软件识别规则（仿真计算、三维建模、绘图图像、文献写作、数据分析五类）。
+- **常用**：文件夹 / 软件 / 网址快捷入口，支持拖拽排序与「重新探测软件」，覆盖仿真计算、三维建模、绘图图像、文献写作、数据分析等常见科研软件。
 
 **左栏导航可改名**：在任意一个导航项上点右键 →「重命名」，就地输入（Enter 保存、Esc 取消），新名字同时用在该页大标题上；右键 →「恢复默认名称」还原。名字存在本地数据里，最长 12 个字。比如有人把「课表」叫「课表」，也有人更习惯叫「本周课程」，随你。
 
-**全局搜索 `Command + K`**：工作台内容、Zotero 文献、Obsidian 笔记一起搜，搜到的笔记可直接跳转打开。
+**全局搜索 `Ctrl + K` / `Command + K`**：工作台内容、Zotero 文献、Obsidian 笔记一起搜，搜到的笔记可直接跳转打开。
 
-**快速记录 `Command + N`**：任一页面都能记。`Esc` 关闭弹窗。中英双语界面可切换。
+**快速记录 `Ctrl + N` / `Command + N`**：任一页面都能记。`Esc` 关闭弹窗。中英双语界面可切换。
 
 ## 下载与运行
 
-下载 `ResearchBench-v2.4.4-macOS.dmg`，打开后将应用拖到“应用程序”，再双击运行，不用安装 Python。
+请在仓库右侧的 **Releases** 页面选择对应系统的安装包：
 
-第一次打开后进入「常用」，点一下「重新探测软件」，即可扫描 `/Applications` 与 `~/Applications` 中受支持的科研软件。当前测试构建未做 Apple Developer 签名；如果系统阻止打开，请在 Finder 中按住 Control 点击应用并选择“打开”。
+| 系统 | 下载文件 | 使用方法 |
+|---|---|---|
+| Windows 10/11 | `ResearchBench-v2.4.4.exe` | 下载后双击运行，无需安装 |
+| macOS 11+ | `ResearchBench-v2.4.4-macOS.dmg` | 打开 DMG，将应用拖入“应用程序”后运行 |
+
+### Windows 首次运行
+
+如果 Windows SmartScreen 显示“未知发布者”，可点击“更多信息”→“仍要运行”。程序当前没有商业代码签名。
+
+### macOS 首次运行
+
+当前 macOS 构建未进行 Apple Developer 正式签名和公证。如果系统阻止打开，请在 Finder 的“应用程序”中按住 `Control` 点击 ResearchBench，选择“打开”，然后在弹窗中再次确认。
+
+### 一键探测科研软件
+
+第一次打开后进入「常用」，点击「重新探测软件」：
+
+- Windows 会扫描各磁盘常见安装位置，并读取系统登记的安装目录与 App Paths；
+- macOS 会扫描 `/Applications` 与 `~/Applications` 中受支持的 `.app` 应用；
+- 未被自动识别的软件可以通过「新增入口」手动添加。
 
 关闭窗口即退出程序。
 
 ## 数据在哪
 
-```
-~/Library/Application Support/ResearchWorkbench/
+### Windows
+
+```text
+C:\Users\<你的用户名>\AppData\Roaming\ResearchWorkbench\
   data.json            论文 / 课题 / 已发表 / 已立项 / 教学成果 / 专利 /
                        灵感 / 日记 / 日程 / 快捷入口 / 我的材料
   zot_snapshot.sqlite  Zotero 数据库快照（Zotero 开着时会锁库，用它只读副本）
+  app.log              运行日志（出问题先看这里）
+```
+
+也可以在资源管理器地址栏输入 `%APPDATA%\ResearchWorkbench` 直接打开。
+
+### macOS
+
+```text
+~/Library/Application Support/ResearchWorkbench/
+  data.json            论文 / 课题 / 已发表 / 已立项 / 教学成果 / 专利 /
+                       灵感 / 日记 / 日程 / 快捷入口 / 我的材料
+  zot_snapshot.sqlite  Zotero 数据库快照
   app.log              运行日志（出问题先看这里）
 ```
 
@@ -79,34 +112,48 @@
 
 ## 几个设计上的取舍
 
-- **本地服务 + macOS 原生 WebView。** 后端只监听 `127.0.0.1`，界面通过 Cocoa WebView 显示，不对外开放端口；若 WebView 初始化失败才调用本机浏览器兜底。
+- **本地服务 + 系统界面容器。** 后端只监听 `127.0.0.1`，不对外开放端口。Windows 使用系统 Edge/Chrome 应用窗口，macOS 使用 Cocoa 原生 WebView；macOS WebView 初始化失败时才调用本机浏览器兜底。
 - **课表导入读剪贴板 HTML，不解析 .docx。** 从 Word 复制一张表格时，剪贴板里带着完整的 HTML，表头和合并单元格信息都在；而直接读 .docx 等于要自己解压 zip、再对着 Word 内部 XML 手动还原 `vMerge` / `gridSpan`，吃力不讨好。所以用标准库 `HTMLParser` 把带 `rowspan` / `colspan` 的表还原成二维网格，再按「星期」和「节次」两个维度定位每一门课。顺带的好处是 WPS、Excel、网页表格复制过来一样能用，代价是不能直接把一个 Word 文件拖进来。
 - **自动识别必须过一遍人眼。** 凡是自动识别出来的东西，写进数据库之前先摊成一张可勾选、可编辑的确认表。你勾哪几条、哪一格改成什么，点「导入」才真正写入。自动识别是为了省力气，不是为了替你做决定；宁可多一步点击，也不要事后偷偷弄脏你的数据。
-- **电脑里已经有的，别再让我抄一遍。** 软件扫描覆盖 `/Applications` 与 `~/Applications` 下的常见科研应用包；识别规则外的软件仍可通过「新增入口」选择 `.app` 手动加入。
+- **电脑里已经有的，别再让我抄一遍。** Windows 会扫描各磁盘及注册表登记的软件，macOS 会扫描 `/Applications` 与 `~/Applications` 下的常见科研应用包；识别规则外的软件仍可通过「新增入口」手动加入。
 - **不抢 Zotero 和 Obsidian 的活。** Zotero 文献库只读，Obsidian 只写入「灵感」文件夹。碎片想法在工作台里，长文沉淀在 Obsidian 里，各归各位。
 - **改完就落盘。** 没有「保存」按钮，也就没有「忘了保存」这回事。
 
 ## 从源码运行
 
-```bash
+```shell
 # 将源码压缩包解压后进入项目目录
 cd ResearchBench-v2.4.4
-python3 app.py                # 拉起应用窗口
-RB_NO_WINDOW=1 python app.py  # 只起本地服务，不拉窗口（调试 / CI 用）
+
+# Windows
+python app.py
+
+# macOS
+python3 app.py
 ```
 
-打包：
+### Windows 打包
+
+```powershell
+python -m pip install pyinstaller
+python build_ui.py
+python -m PyInstaller --noconfirm --clean 科研工作台.spec
+```
+
+### macOS 打包
 
 ```bash
 chmod +x macos/build_macos.sh
 ./macos/build_macos.sh        # 产物在 dist/，包含 .app 与 .dmg
 ```
 
+macOS 也可以在 GitHub 的 **Actions → Build macOS package** 中手动运行在线构建。
+
 目录说明：`app.py` 后端，`ui/` 前端（构建时内联成单文件 HTML），`seeddata.py` 预置内容（默认为空），`tests/` 冒烟与抓取脚本，`tools/make_icon.py` 生成图标。
 
 ## 它还做不到什么
 
-- 当前 macOS 包必须在 Mac 或 GitHub macOS 构建机上生成，Windows 不能直接交叉编译。
+- Windows EXE 必须在 Windows 环境构建；macOS APP/DMG 必须在 Mac 或 GitHub macOS 构建机上生成，二者不能直接交叉编译。
 - 单机，没有同步。多机之间靠导出 / 导入 JSON。
 - 日记的 4 位 PIN 只是防误看级别，不是加密。
 - 引用数可在「已发表」页一键从 OpenAlex 更新。只发送论文 DOI；无 DOI、未收录或查询失败的条目会保留原值。各数据库统计口径不同，因此界面会标明 OpenAlex 来源，仍可点击引用数手工修改。
