@@ -12,6 +12,63 @@ import app
 
 
 class AppScanTests(unittest.TestCase):
+    def test_import_backup_file_writes_and_reports_counts(self):
+        with tempfile.TemporaryDirectory() as td:
+            source = os.path.join(td, "windows-data.json")
+            data_file = os.path.join(td, "app", "data.json")
+            os.makedirs(os.path.dirname(data_file), exist_ok=True)
+            payload = {"papers": [{"id": "p1", "title": "Paper"}],
+                       "pubs": [{"id": "w1", "title": "Published"}],
+                       "projects": [], "settings": {}}
+            with open(source, "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False)
+            old_db = app.STATE.get("db")
+            try:
+                with mock.patch.object(app, "DATA_DIR", os.path.dirname(data_file)), \
+                        mock.patch.object(app, "DATA_FILE", data_file), \
+                        mock.patch.object(app, "OLD_LAUNCH", os.path.join(td, "launch.json")):
+                    result = app.import_backup_file(source)
+                    with open(data_file, encoding="utf-8") as f:
+                        saved = json.load(f)
+            finally:
+                app.STATE["db"] = old_db
+        self.assertTrue(result["ok"])
+        self.assertEqual(1, result["counts"]["papers"])
+        self.assertEqual(1, result["counts"]["pubs"])
+        self.assertEqual("Paper", saved["papers"][0]["title"])
+
+    def test_import_backup_file_rejects_unrelated_json(self):
+        with tempfile.TemporaryDirectory() as td:
+            source = os.path.join(td, "other.json")
+            with open(source, "w", encoding="utf-8") as f:
+                json.dump({"hello": "world"}, f)
+            result = app.import_backup_file(source)
+        self.assertFalse(result["ok"])
+        self.assertIn("没有识别到", result["msg"])
+
+    def test_backup_import_http_endpoint_uses_native_picker(self):
+        old_db = app.STATE.get("db")
+        app.STATE["db"] = {"papers": [], "settings": {}}
+        server = ThreadingHTTPServer(("127.0.0.1", 0), app.Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        url = "http://127.0.0.1:%d/api/backup/import" % server.server_address[1]
+        reply = {"ok": True, "db": {"papers": [{"id": "p1"}]},
+                 "counts": {"papers": 1}}
+        try:
+            with mock.patch.object(app, "native_pick", return_value=(True, "/tmp/data.json")) as pick, \
+                    mock.patch.object(app, "import_backup_file", return_value=reply) as importer:
+                req = Request(url, data=b"{}", headers={"Content-Type": "application/json"})
+                result = json.loads(urlopen(req, timeout=3).read().decode("utf-8"))
+        finally:
+            server.shutdown()
+            server.server_close()
+            app.STATE["db"] = old_db
+        self.assertTrue(result["ok"])
+        self.assertEqual(1, result["counts"]["papers"])
+        pick.assert_called_once_with("file")
+        importer.assert_called_once_with("/tmp/data.json")
+
     def test_macos_appdata_uses_application_support(self):
         with mock.patch.object(app, "IS_MAC", True), \
                 mock.patch("app.os.path.expanduser", side_effect=lambda p: p.replace("~", "/Users/tester", 1)), \

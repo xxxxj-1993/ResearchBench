@@ -2603,7 +2603,8 @@ def _all_sample(lst):
 def load_db():
     raw = None
     try:
-        raw = json.load(open(DATA_FILE, encoding="utf-8"))
+        with open(DATA_FILE, encoding="utf-8") as f:
+            raw = json.load(f)
     except Exception:
         raw = None
 
@@ -2709,6 +2710,56 @@ def save_db():
     os.replace(tmp, DATA_FILE)
 
 
+_BACKUP_LIST_KEYS = ("papers", "projects", "pubs", "grants", "teaching",
+                     "teachProjects", "patents", "ideas", "diary", "events",
+                     "classes", "plans", "materials", "shortcuts")
+
+
+def _backup_counts(db):
+    """返回导入结果摘要，供界面明确展示是否真的恢复了数据。"""
+    return {k: len(db.get(k) or []) if isinstance(db.get(k), list) else 0
+            for k in _BACKUP_LIST_KEYS}
+
+
+def import_backup_file(path):
+    """从本地 JSON 恢复整个工作台，并保留一份导入前数据。"""
+    path = os.path.abspath(os.path.expanduser(os.path.expandvars(path or "")))
+    if not path or not os.path.isfile(path):
+        return {"ok": False, "msg": "没有选择有效的 JSON 备份文件"}
+    try:
+        if os.path.getsize(path) > 50 * 1024 * 1024:
+            return {"ok": False, "msg": "备份文件超过 50 MB，已停止导入"}
+        with open(path, encoding="utf-8-sig") as f:
+            incoming = json.load(f)
+    except Exception as e:
+        return {"ok": False, "msg": "无法解析备份文件：%s" % e}
+    if not isinstance(incoming, dict):
+        return {"ok": False, "msg": "备份内容不是有效的工作台数据"}
+    recognized = set(_BACKUP_LIST_KEYS) | {"settings", "focus", "items"}
+    if not recognized.intersection(incoming):
+        return {"ok": False, "msg": "没有识别到论文、项目或设置等工作台字段"}
+
+    previous = STATE.get("db")
+    before_path = ""
+    try:
+        if os.path.isfile(DATA_FILE):
+            stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            before_path = os.path.join(DATA_DIR, "data-before-import-%s.json" % stamp)
+            shutil.copy2(DATA_FILE, before_path)
+        STATE["db"] = incoming
+        save_db()
+        # 复用启动时的兼容迁移，给旧备份补齐 v2.4.4 所需字段。
+        normalized = load_db()
+        save_db()
+        return {"ok": True, "msg": "导入成功", "db": normalized,
+                "counts": _backup_counts(normalized), "dataFile": DATA_FILE,
+                "beforeImport": before_path}
+    except Exception as e:
+        STATE["db"] = previous
+        logging.exception("import backup failed")
+        return {"ok": False, "msg": "写入备份失败：%s" % e}
+
+
 def merge_scanned_shortcuts(db, fresh):
     """把扫描结果合并进常用入口，并按规范化路径避免重复。"""
     db.setdefault("shortcuts", [])
@@ -2797,7 +2848,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/state":
             db = STATE["db"]
             self._json({"ok": True, "db": db, "version": VERSION, "dataDir": DATA_DIR,
-                        "today": iso(0)})
+                        "platform": sys.platform, "today": iso(0)})
             return
 
         if path == "/api/dir":
@@ -2893,6 +2944,18 @@ class Handler(BaseHTTPRequestHandler):
                 STATE["db"] = b["db"]
             save_db()
             self._json({"ok": True, "saved": time.time()})
+            return
+
+        if path == "/api/backup/import":
+            source = b.get("path") or ""
+            if not source:
+                ok, picked = native_pick("file")
+                if not ok:
+                    self._json({"ok": False, "cancelled": picked == "已取消",
+                                "msg": picked})
+                    return
+                source = picked
+            self._json(import_backup_file(source))
             return
 
         if path == "/api/patch":

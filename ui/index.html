@@ -3000,20 +3000,27 @@ function formSettings(){
     toast(LANG==='zh'?'已导出备份':'Exported','ok');
   };
   $('cImport').onclick=function(){
-    var inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
-    inp.onchange=function(){
-      var f=inp.files&&inp.files[0]; if(!f) return;
-      var fr=new FileReader();
-      fr.onload=function(){
-        try{
-          var o=JSON.parse(fr.result);
-          if(!confirm(LANG==='zh'?'导入将覆盖当前数据，继续？':'Import will overwrite current data. Continue?')) return;
-          api('/api/state',{db:o}).then(function(){ location.reload(); });
-        }catch(err){ alert('解析失败：'+err.message); }
-      };
-      fr.readAsText(f,'utf-8');
-    };
-    inp.click();
+    if(!confirm(LANG==='zh'?'导入将覆盖当前数据，并自动保留一份导入前备份。继续？'
+                              :'Import will replace current data and keep a safety copy. Continue?')) return;
+    var btn=$('cImport'); if(btn) btn.disabled=true;
+    api('/api/backup/import',{}).then(function(r){
+      if(btn) btn.disabled=false;
+      if(!r||!r.ok){
+        if(!(r&&r.cancelled)) alert((LANG==='zh'?'导入失败：':'Import failed: ')+((r&&r.msg)||'未知错误'));
+        return;
+      }
+      S.db=r.db;
+      var c=r.counts||{};
+      closeModal(); refreshAll();
+      alert(LANG==='zh'
+        ?('导入成功。论文 '+(c.papers||0)+' 篇，已发表 '+(c.pubs||0)+' 篇，课题 '+(c.projects||0)
+          +' 个，已立项 '+(c.grants||0)+' 个，课程 '+(c.classes||0)+' 门。')
+        :'Import succeeded. Papers '+(c.papers||0)+', publications '+(c.pubs||0)
+          +', topics '+(c.projects||0)+', grants '+(c.grants||0)+', classes '+(c.classes||0)+'.');
+    }).catch(function(e){
+      if(btn) btn.disabled=false;
+      alert((LANG==='zh'?'导入失败：':'Import failed: ')+(e&&e.message?e.message:e));
+    });
   };
 }
 function zoteroStatusText(){
@@ -3886,7 +3893,7 @@ function loadObsidian(){
 function boot(){
   api('/api/state').then(function(r){
     if(!r||!r.ok){ toast(LANG==='zh'?'连接本地服务失败':'Cannot reach local service','err'); return; }
-    S.db=r.db; S.dataDir=r.dataDir; S.version=r.version;
+    S.db=r.db; S.dataDir=r.dataDir; S.version=r.version; S.platform=r.platform||'';
     LANG=(S.db.settings&&S.db.settings.lang)||'zh';
     FOCUS_MIN=(S.db.settings&&S.db.settings.focusMin)||25;
     focusLeft=FOCUS_MIN*60;
