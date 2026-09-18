@@ -6,6 +6,7 @@ import sys
 import unittest
 import threading
 import urllib.request
+from urllib.error import URLError
 from unittest.mock import patch
 from http.server import ThreadingHTTPServer
 
@@ -31,6 +32,62 @@ class _Response:
 
 
 class CitationTests(unittest.TestCase):
+    def test_native_windows_request_uses_powershell(self):
+        completed = type("Completed", (), {
+            "returncode": 0,
+            "stdout": b'{"ok": true}',
+            "stderr": b"",
+        })()
+        with patch.object(app, "IS_WINDOWS", True), \
+                patch.object(app, "IS_MAC", False), \
+                patch.object(app.subprocess, "run", return_value=completed) as run:
+            result = app._native_json_request("https://api.crossref.org/works/test",
+                                              {"User-Agent": "ResearchBench-Test"}, 8)
+        self.assertTrue(result["ok"])
+        command = run.call_args.args[0]
+        self.assertEqual("powershell", command[0])
+        self.assertIn("Invoke-WebRequest", command[4])
+        self.assertEqual("https://api.crossref.org/works/test",
+                         run.call_args.kwargs["env"]["RB_REQUEST_URL"])
+
+    def test_native_macos_request_uses_system_curl(self):
+        completed = type("Completed", (), {
+            "returncode": 0,
+            "stdout": b'{"ok": true}',
+            "stderr": b"",
+        })()
+        with patch.object(app, "IS_WINDOWS", False), \
+                patch.object(app, "IS_MAC", True), \
+                patch.object(app.subprocess, "run", return_value=completed) as run:
+            result = app._native_json_request("https://api.crossref.org/works/test",
+                                              {"User-Agent": "ResearchBench-Test"}, 8)
+        self.assertTrue(result["ok"])
+        command = run.call_args.args[0]
+        self.assertEqual("/usr/bin/curl", command[0])
+        self.assertIn("--max-time", command)
+        self.assertEqual("https://api.crossref.org/works/test", command[-1])
+        self.assertIsNone(run.call_args.kwargs["env"])
+
+    def test_fetch_json_falls_back_to_system_network(self):
+        payload = {"message": {"title": ["Fallback works"]}}
+        with patch.object(app, "urlopen", side_effect=URLError("certificate failed")), \
+                patch.object(app, "_native_json_request", return_value=payload) as native:
+            result = app.fetch_json("https://api.crossref.org/works/10.1000/test",
+                                    {"Accept": "application/json"}, 9)
+        self.assertEqual(payload, result)
+        native.assert_called_once()
+
+    def test_crossref_import_uses_shared_network_helper(self):
+        payload = {"message": {"title": ["Example paper"], "author": [],
+                               "container-title": ["Example Journal"],
+                               "issued": {"date-parts": [[2025]]},
+                               "DOI": "10.1000/test"}}
+        with patch.object(app, "fetch_json", return_value=payload) as fetch:
+            result = app.crossref_pub("https://doi.org/10.1000/test")
+        self.assertTrue(result["ok"])
+        self.assertEqual("Example paper", result["title"])
+        self.assertIn("api.crossref.org/works/10.1000%2Ftest", fetch.call_args.args[0])
+
     def test_normalize_doi(self):
         self.assertEqual(app.normalize_doi("https://doi.org/10.1000/ABC.12"), "10.1000/abc.12")
         self.assertEqual(app.normalize_doi("doi: 10.5555/Test;"), "10.5555/test")

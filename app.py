@@ -2118,8 +2118,70 @@ def parse_schedule_payload(html_text="", plain_text="", teacher_key=""):
 #   year     int
 #   volume / pages / doi / publisher / abstract / url
 
-_CROSSREF_UA = ("ResearchBench/%s (Windows; local desktop app)" % VERSION)
+_CROSSREF_UA = ("ResearchBench/%s" % VERSION)
 _OPENALEX_UA = _CROSSREF_UA
+
+
+def _native_json_request(url, headers=None, timeout=12):
+    """通过系统网络工具读取 JSON。
+
+    浏览器可联网而打包后的 Python 失败时，通常是系统代理、校园网证书或企业
+    HTTPS 检查没有被 Python/OpenSSL 正确继承。Windows PowerShell 使用系统
+    网络与证书设置；macOS curl 使用系统网络栈，可作为可靠兜底。
+    """
+    headers = dict(headers or {})
+    ua = str(headers.get("User-Agent") or _CROSSREF_UA)
+    accept = str(headers.get("Accept") or "application/json")
+    seconds = max(3, int(timeout or 12))
+    if IS_WINDOWS:
+        script = (
+            "$ProgressPreference='SilentlyContinue';"
+            "[Console]::OutputEncoding=[Text.Encoding]::UTF8;"
+            "$r=Invoke-WebRequest -UseBasicParsing -Uri $env:RB_REQUEST_URL "
+            "-TimeoutSec ([int]$env:RB_REQUEST_TIMEOUT) "
+            "-Headers @{'User-Agent'=$env:RB_REQUEST_UA;Accept=$env:RB_REQUEST_ACCEPT};"
+            "[Console]::Out.Write($r.Content)"
+        )
+        cmd = ["powershell", "-NoProfile", "-NonInteractive", "-Command", script]
+        run_env = os.environ.copy()
+        run_env.update({"RB_REQUEST_URL": url, "RB_REQUEST_TIMEOUT": str(seconds),
+                        "RB_REQUEST_UA": ua, "RB_REQUEST_ACCEPT": accept})
+    elif IS_MAC:
+        cmd = ["/usr/bin/curl", "--fail", "--silent", "--show-error", "--location",
+               "--max-time", str(seconds), "--header", "User-Agent: " + ua,
+               "--header", "Accept: " + accept, url]
+    else:
+        cmd = ["curl", "--fail", "--silent", "--show-error", "--location",
+               "--max-time", str(seconds), "--header", "User-Agent: " + ua,
+               "--header", "Accept: " + accept, url]
+    if not IS_WINDOWS:
+        run_env = None
+    done = subprocess.run(cmd, capture_output=True, timeout=seconds + 5, env=run_env)
+    if done.returncode != 0:
+        err = (done.stderr or b"").decode("utf-8", "replace").strip()
+        raise OSError(err or ("系统网络请求失败，退出码 %s" % done.returncode))
+    raw = done.stdout or b""
+    return json.loads(raw.decode("utf-8", "replace"))
+
+
+def fetch_json(url, headers=None, timeout=12):
+    """读取远程 JSON；Python 网络失败时自动改走操作系统网络通道。"""
+    headers = dict(headers or {})
+    first_error = None
+    try:
+        req = Request(url, headers=headers)
+        with urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read().decode("utf-8", "replace"))
+    except HTTPError:
+        raise
+    except Exception as e:
+        first_error = e
+        logging.warning("Python network request failed, retrying with system stack: %s", e)
+    try:
+        return _native_json_request(url, headers, timeout)
+    except Exception as e:
+        logging.warning("System network request failed: %s", e)
+        raise URLError("Python 通道：%s；系统通道：%s" % (first_error, e))
 
 # LaTeX 重音与转义 → 普通字符
 _TEX_ACCENT = {
@@ -2369,17 +2431,16 @@ def crossref_pub(doi, timeout=12):
         return {"ok": False, "msg": "没认出这是 DOI。长这样：10.1234/example.2025.001"}
     d = quote(m.group(1).rstrip('.,;'), safe='')
     try:
-        req = Request("https://api.crossref.org/works/" + d,
-                      headers={"User-Agent": _CROSSREF_UA,
-                               "Accept": "application/json"})
-        with urlopen(req, timeout=timeout) as r:
-            data = json.loads(r.read().decode("utf-8", "replace"))
+        data = fetch_json("https://api.crossref.org/works/" + d,
+                          {"User-Agent": _CROSSREF_UA, "Accept": "application/json"},
+                          timeout)
     except HTTPError as e:
         if getattr(e, "code", 0) == 404:
             return {"ok": False, "msg": "Crossref 里查不到这个 DOI，检查一下有没有输错。"}
         return {"ok": False, "msg": "Crossref 返回错误 %s" % getattr(e, "code", "?")}
-    except (URLError, socket.timeout, TimeoutError):
-        return {"ok": False, "msg": "连不上 Crossref。没联网或被挡了？可以改用「粘贴 BibTeX」，那个不用联网。"}
+    except (URLError, socket.timeout, TimeoutError) as e:
+        logging.warning("Crossref unavailable: %s", e)
+        return {"ok": False, "msg": "连不上 Crossref。程序已尝试 Python 和系统网络通道；请检查代理、防火墙或证书设置。"}
     except Exception as e:
         return {"ok": False, "msg": "查询失败：%s" % e}
 
@@ -2440,10 +2501,8 @@ def openalex_citation(doi, timeout=12):
     work_id = quote("https://doi.org/" + clean, safe=':/')
     url = "https://api.openalex.org/works/" + work_id + "?select=id,doi,cited_by_count"
     try:
-        req = Request(url, headers={"User-Agent": _OPENALEX_UA,
-                                    "Accept": "application/json"})
-        with urlopen(req, timeout=timeout) as r:
-            data = json.loads(r.read().decode("utf-8", "replace"))
+        data = fetch_json(url, {"User-Agent": _OPENALEX_UA,
+                                "Accept": "application/json"}, timeout)
     except HTTPError as e:
         code = getattr(e, "code", 0)
         if code == 404:
