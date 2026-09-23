@@ -22,6 +22,11 @@ class MacOSSourceTests(unittest.TestCase):
     def test_workflow_targets_macos(self):
         text = (ROOT / ".github" / "workflows" / "build-macos.yml").read_text(encoding="utf-8")
         self.assertIn("runs-on: macos-14", text)
+        self.assertIn("actions/checkout@v5", text)
+        self.assertIn("actions/setup-python@v6", text)
+        self.assertIn("actions/upload-artifact@v5", text)
+        self.assertNotIn("actions/checkout@v4", text)
+        self.assertNotIn("actions/setup-python@v5", text)
         self.assertIn("macos/build_macos.sh", text)
         self.assertIn("ResearchBench-v2.4.5-macOS.dmg", text)
 
