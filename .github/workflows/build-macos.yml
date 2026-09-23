@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'v2.4.4-macos*'
+      - 'v2.4.5-macos*'
 
 jobs:
   build:
@@ -12,17 +12,18 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      # v5 / v6 使用 Node.js 24，避免 GitHub Actions 的 Node.js 20 弃用警告。
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - name: Build app and DMG
         run: bash macos/build_macos.sh
       - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: ResearchBench-v2.4.4-macOS
+          name: ResearchBench-v2.4.5-macOS
           path: |
-            dist/ResearchBench-v2.4.4.app
-            dist/ResearchBench-v2.4.4-macOS.dmg
+            dist/ResearchBench-v2.4.5.app
+            dist/ResearchBench-v2.4.5-macOS.dmg
           if-no-files-found: error
