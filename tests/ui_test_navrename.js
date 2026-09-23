@@ -42,7 +42,7 @@ function seedDb() {
       window.fetch = function (url, opt) {
         if (String(url).indexOf('/api/state') >= 0) {
           return Promise.resolve({ json: () => Promise.resolve(
-            { ok: true, db: seedDb(), version: '2.4.4', dataDir: 'X:\\tmp' }) });
+            { ok: true, db: seedDb(), version: '2.4.5', dataDir: 'X:\\tmp' }) });
         }
         if (String(url).indexOf('/api/patch') >= 0) {
           const body = JSON.parse(opt.body);

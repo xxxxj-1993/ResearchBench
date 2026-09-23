@@ -50,14 +50,14 @@ coll = COLLECT(
 
 app = BUNDLE(
     coll,
-    name='ResearchBench-v2.4.4.app',
+    name='ResearchBench-v2.4.5.app',
     icon='assets/ResearchBench.icns' if os.path.exists('assets/ResearchBench.icns') else None,
     bundle_identifier='io.researchbench.desktop',
-    version='2.4.4',
+    version='2.4.5',
     info_plist={
         'CFBundleDisplayName': '科研工作台',
-        'CFBundleShortVersionString': '2.4.4',
-        'CFBundleVersion': '2.4.4',
+        'CFBundleShortVersionString': '2.4.5',
+        'CFBundleVersion': '2.4.5',
         'LSMinimumSystemVersion': '11.0',
         'NSHighResolutionCapable': True,
         'NSHumanReadableCopyright': 'ResearchBench contributors',

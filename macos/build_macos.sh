@@ -30,19 +30,19 @@ python3 -m PyInstaller --noconfirm --clean ResearchBench-macOS.spec
 
 # 无开发者证书时做临时签名，确保应用包内部签名一致；公开分发仍建议正式签名和公证。
 codesign --force --deep --sign - --entitlements "macos/entitlements.plist" \
-  "dist/ResearchBench-v2.4.4.app"
+  "dist/ResearchBench-v2.4.5.app"
 
-rm -f "dist/ResearchBench-v2.4.4-macOS.dmg"
+rm -f "dist/ResearchBench-v2.4.5-macOS.dmg"
 DMG_ROOT="build/dmg-root"
 rm -rf "$DMG_ROOT"
 mkdir -p "$DMG_ROOT"
-cp -R "dist/ResearchBench-v2.4.4.app" "$DMG_ROOT/"
+cp -R "dist/ResearchBench-v2.4.5.app" "$DMG_ROOT/"
 ln -s /Applications "$DMG_ROOT/Applications"
 hdiutil create \
-  -volname "ResearchBench 2.4.4" \
+  -volname "ResearchBench 2.4.5" \
   -srcfolder "$DMG_ROOT" \
   -ov -format UDZO \
-  "dist/ResearchBench-v2.4.4-macOS.dmg"
+  "dist/ResearchBench-v2.4.5-macOS.dmg"
 
-echo "Built dist/ResearchBench-v2.4.4.app"
-echo "Built dist/ResearchBench-v2.4.4-macOS.dmg"
+echo "Built dist/ResearchBench-v2.4.5.app"
+echo "Built dist/ResearchBench-v2.4.5-macOS.dmg"

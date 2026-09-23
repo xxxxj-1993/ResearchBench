@@ -23,7 +23,7 @@ class MacOSSourceTests(unittest.TestCase):
         text = (ROOT / ".github" / "workflows" / "build-macos.yml").read_text(encoding="utf-8")
         self.assertIn("runs-on: macos-14", text)
         self.assertIn("macos/build_macos.sh", text)
-        self.assertIn("ResearchBench-v2.4.4-macOS.dmg", text)
+        self.assertIn("ResearchBench-v2.4.5-macOS.dmg", text)
 
 
 if __name__ == "__main__":

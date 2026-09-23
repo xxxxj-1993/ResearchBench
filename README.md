@@ -2,7 +2,7 @@
 
 **一个运行在 Windows 和 macOS 本地的科研工作台。论文、课题、基金、专利、教学成果、课表、灵感、日记收在一处，数据只存在你自己的电脑上，不主动上传、不同步。**
 
-当前版本 v2.4.4 · 支持 Windows 10/11 与 macOS 11+ · 提供 `.exe` / `.dmg` · 双击即用，不需要安装 Python
+当前版本 v2.4.5 · 支持 Windows 10/11 与 macOS 11+ · 提供 `.exe` / `.dmg` · 双击即用，不需要安装 Python
 
 ## 为什么做这个
 
@@ -59,8 +59,8 @@
 
 | 系统 | 下载文件 | 使用方法 |
 |---|---|---|
-| Windows 10/11 | `ResearchBench-v2.4.4.exe` | 下载后双击运行，无需安装 |
-| macOS 11+ | `ResearchBench-v2.4.4-macOS.dmg` | 打开 DMG，将应用拖入“应用程序”后运行 |
+| Windows 10/11 | `ResearchBench-v2.4.5.exe` | 下载后双击运行，无需安装 |
+| macOS 11+ | `ResearchBench-v2.4.5-macOS.dmg` | 打开 DMG，将应用拖入“应用程序”后运行 |
 
 ### Windows 首次运行
 
@@ -123,7 +123,7 @@ C:\Users\<你的用户名>\AppData\Roaming\ResearchWorkbench\
 
 ```shell
 # 将源码压缩包解压后进入项目目录
-cd ResearchBench-v2.4.4
+cd ResearchBench-v2.4.5
 
 # Windows
 python app.py

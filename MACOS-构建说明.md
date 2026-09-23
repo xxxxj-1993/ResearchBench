@@ -1,4 +1,4 @@
-# ResearchBench v2.4.4 macOS 版
+# ResearchBench v2.4.5 macOS 版
 
 ## 已适配功能
 
@@ -26,8 +26,8 @@ chmod +x macos/build_macos.sh
 
 构建结果：
 
-- `dist/ResearchBench-v2.4.4.app`
-- `dist/ResearchBench-v2.4.4-macOS.dmg`
+- `dist/ResearchBench-v2.4.5.app`
+- `dist/ResearchBench-v2.4.5-macOS.dmg`
 
 ## 使用 GitHub Actions 构建
 

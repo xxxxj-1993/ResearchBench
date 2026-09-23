@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-科研工作台 Desktop  v2.4.4
+科研工作台 Desktop  v2.4.5
 - 纯 Python 标准库，本机回环服务 + 系统浏览器应用窗口
 - 文件夹 / 软件 / 链接 点击直达
 - 只读联动 Zotero 与 Obsidian（多 vault）
@@ -43,7 +43,7 @@ except Exception:  # 打包后同目录，正常情况下一定能导入
     seeddata = None
 
 APP_NAME = "ResearchWorkbench"
-VERSION = "2.4.4"
+VERSION = "2.4.5"
 CURATED_V = 3  # 内容种子版本：升级时用于给老数据补新栏目
 IS_WINDOWS = sys.platform == "win32"
 IS_MAC = sys.platform == "darwin"
@@ -1924,7 +1924,11 @@ _CLS_PATS = [
     re.compile(r"[^\s]*?班(?![级])"),                            # 临床1-4班
     re.compile(r"\d{2}级[^\s]*"),                                # 25级智工3
 ]
-_WEEK_RE = re.compile(r"(\d{1,2})\s*[-–~]\s*(\d{1,2})\s*周")
+_WEEK_TOKEN = r"\d{1,2}(?:\s*[-–—~～至]\s*\d{1,2})?"
+_WEEK_RE = re.compile(
+    r"(?:第\s*)?(" + _WEEK_TOKEN
+    + r"(?:\s*[,，、;；]\s*" + _WEEK_TOKEN + r")*)\s*周(?:次)?"
+)
 _TEA_STOP = ("实验", "实习", "上机", "理论", "小周", "大周", "单周", "双周",
              "全周", "教室", "老师", "教授", "合班", "分班")
 
@@ -1937,16 +1941,34 @@ def _cut(pat_list, s):
     return "", s
 
 
+def normalize_week_expression(value):
+    """把 ``10，12-14`` 一类混合周次规范成 ``10,12-14``。"""
+    text = re.sub(r"\s+", "", str(value or ""))
+    text = re.sub(r"[–—~～至]", "-", text)
+    text = re.sub(r"[，、;；]", ",", text)
+    out = []
+    for part in text.split(","):
+        if re.fullmatch(r"\d{1,2}(?:-\d{1,2})?", part or "") and part not in out:
+            out.append(part)
+    return ",".join(out)
+
+
 def parse_class_cell(raw):
     """把一个单元格的文字拆成 课程 / 班级 / 教室 / 教师 / 周次 / 单双周 / 备注。"""
     s = re.sub(r"\s+", " ", (raw or "")).strip()
     out = {"name": "", "cls": "", "room": "", "teacher": "",
            "weeks": "", "odd": "all", "note": ""}
 
-    m = _WEEK_RE.search(s)
-    if m:
-        out["weeks"] = m.group(1) + "-" + m.group(2)
-        s = s[:m.start()] + " " + s[m.end():]
+    week_parts = []
+    week_matches = list(_WEEK_RE.finditer(s))
+    for m in week_matches:
+        for part in normalize_week_expression(m.group(1)).split(","):
+            if part and part not in week_parts:
+                week_parts.append(part)
+    if week_parts:
+        out["weeks"] = ",".join(week_parts)
+        for m in reversed(week_matches):
+            s = s[:m.start()] + " " + s[m.end():]
 
     if "单周" in s:
         out["odd"] = "odd"
@@ -1954,12 +1976,6 @@ def parse_class_cell(raw):
     elif "双周" in s:
         out["odd"] = "even"
         s = s.replace("双周", " ")
-    m = re.search(r"实验\s*\d{1,2}\s*[-–~]\s*\d{1,2}\s*周", s)
-    if m:                                   # 「实验8-10周」里的周次也算行课周次
-        if not out["weeks"]:
-            out["weeks"] = re.search(r"(\d{1,2})\s*[-–~]\s*(\d{1,2})", m.group(0)).group(1) \
-                + "-" + re.search(r"(\d{1,2})\s*[-–~]\s*(\d{1,2})", m.group(0)).group(2)
-        s = s[:m.start()] + " " + s[m.end():]
     if "实验" in s:
         out["note"] = "实验"
         s = s.replace("实验", " ")
@@ -2748,7 +2764,7 @@ def import_backup_file(path):
             shutil.copy2(DATA_FILE, before_path)
         STATE["db"] = incoming
         save_db()
-        # 复用启动时的兼容迁移，给旧备份补齐 v2.4.4 所需字段。
+        # 复用启动时的兼容迁移，给旧备份补齐当前版本所需字段。
         normalized = load_db()
         save_db()
         return {"ok": True, "msg": "导入成功", "db": normalized,

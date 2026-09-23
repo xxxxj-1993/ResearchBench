@@ -1321,16 +1321,27 @@ function periodTime(n){
   var arr=String(t).split(',');
   return arr[n-1]? String(arr[n-1]).trim() : '';
 }
+// 判断混合周次是否包含指定周：10，12-14 / 10,12~14 / 10、12至14 均可。
+function weekExpressionIncludes(value,wkN){
+  var w=String(value||'').trim();
+  if(!w||!wkN||wkN<1) return true;
+  w=w.replace(/第/g,'').replace(/周次?/g,'')
+    .replace(/[，、;；]/g,',').replace(/[–—~～至]/g,'-');
+  var parts=w.split(','), recognized=false;
+  for(var i=0;i<parts.length;i++){
+    var p=parts[i].trim(), m=p.match(/^(\d{1,2})(?:\s*-\s*(\d{1,2}))?$/);
+    if(!m) continue;
+    recognized=true;
+    var a=parseInt(m[1],10), b=m[2]?parseInt(m[2],10):a;
+    if(a>b){ var t=a; a=b; b=t; }
+    if(wkN>=a&&wkN<=b) return true;
+  }
+  return !recognized;
+}
 // 某节课在「第 wkN 周」是否要显示（行课周次 + 单双周）
 function classVisible(c,wkN){
   var w=String(c.weeks||'').trim();
-  if(w && wkN>0){                       // 行课周期，如 1-16 / 5-10
-    var m=w.match(/(\d{1,2})\s*[-–~]\s*(\d{1,2})/);
-    if(m){
-      var a=parseInt(m[1],10), b=parseInt(m[2],10);
-      if(wkN<a || wkN>b) return false;
-    }
-  }
+  if(w && wkN>0 && !weekExpressionIncludes(w,wkN)) return false;
   var odd=c.odd||'all';
   if(odd!=='odd'&&odd!=='even') return true;
   if(!wkN||wkN<1) return true;
@@ -1389,8 +1400,8 @@ function formSchedule(id,presetDay,presetStart){
         +'<option value="even"'+(d.odd==='even'?' selected':'')+'>'+(LANG==='zh'?'双周':'Even weeks')+'</option>'
         +'</select></div>'
       +'</div></div>'
-    +'<div class="fld"><label>'+(LANG==='zh'?'周次范围（可选，如 1-16）':'Weeks (optional, e.g. 1-16)')+'</label>'
-      +'<input id="cWeeks" value="'+esc(d.weeks||'')+'" placeholder="1-16"></div>';
+    +'<div class="fld"><label>'+(LANG==='zh'?'行课周次（可选，如 1-16 或 10，12-14）':'Weeks (e.g. 1-16 or 10,12-14)')+'</label>'
+      +'<input id="cWeeks" value="'+esc(d.weeks||'')+'" placeholder="1-16 / 10，12-14"></div>';
   modal(c?(LANG==='zh'?'编辑课程':'Edit class'):(LANG==='zh'?'新增课程':'New class'), body, footBtns('cSave'));
   $('cSave').onclick=function(){
     var nm=v('cName'); if(!nm){ alert(LANG==='zh'?'请填写课程名称':'Course name required'); return; }
@@ -1509,7 +1520,7 @@ function viewScheduleList(){
   if(arr.length){
     h+='<div class="card"><div class="lst-bar">'
       +'<span class="lb">'+(Z?'行课周次批量设为':'Weeks for all')+'</span>'
-      +'<input id="bulkWeeks" placeholder="1-16" style="width:78px">'
+      +'<input id="bulkWeeks" placeholder="1-16 / 10，12-14" style="width:132px">'
       +'<button class="btn sm" data-act="bulkWeeks">'+(Z?'应用到全部':'Apply')+'</button>'
       +'<span class="hint">'+(Z?'表里没写周次的话在这里一次填好，单独改就点每行的周次格'
                               :'Fill once here, or edit each row')+'</span>'
@@ -1537,7 +1548,7 @@ function viewScheduleList(){
         +'<td>'+esc(c.cls||'')+'</td>'
         +'<td>'+esc(dowName(parseInt(c.day,10)||1))+'</td>'
         +'<td>'+st+(sec>1?('-'+ (st+sec-1)):'')+'</td>'
-        +'<td><input class="wk-in" data-wk="'+esc(c.id)+'" value="'+esc(c.weeks||'')+'" placeholder="1-16"></td>'
+        +'<td><input class="wk-in" data-wk="'+esc(c.id)+'" value="'+esc(c.weeks||'')+'" placeholder="1-16 / 10，12-14"></td>'
         +'<td>'+oddTxt+'</td>'
         +'<td>'+esc(c.location||'')+'</td>'
         +'<td>'+esc(c.teacher||'')+'</td>'
@@ -1629,14 +1640,14 @@ function schedImportRender(){
       +'<td><select class="impf" data-i="'+i+'" data-k="day">'+dayOpts(it.day||1)+'</select></td>'
       +'<td class="nowrap"><input class="impf pdn" data-i="'+i+'" data-k="start" type="number" min="1" max="14" value="'+esc(it.start||1)+'">'
       +'<span class="dash">-</span><input class="impf pdn" data-i="'+i+'" data-k="end" type="number" min="1" max="14" value="'+esc(it.end||it.start||1)+'"></td>'
-      +'<td><input class="impf" data-i="'+i+'" data-k="weeks" value="'+esc(it.weeks||'')+'" placeholder="1-16"></td>'
+      +'<td><input class="impf" data-i="'+i+'" data-k="weeks" value="'+esc(it.weeks||'')+'" placeholder="1-16 / 10，12-14"></td>'
       +'<td><input class="impf" data-i="'+i+'" data-k="room" value="'+esc(it.room||'')+'"></td>'
       +'<td><input class="impf" data-i="'+i+'" data-k="teacher" value="'+esc(it.teacher||'')+'"></td>'
       +'</tr>';
   }
   h+='</tbody></table></div>'
     +'<div class="hint" style="margin-top:6px">'
-    +(Z?'「行课周次」表里写了就自动带上，没写的在这里补（比如 1-16）。导入后还能在总表里随时改。'
+    +(Z?'「行课周次」表里写了就自动带上，支持 1-16、10，12-14 等写法；没写的可在这里补。导入后还能在总表里随时改。'
         :'Fill in weeks if the table did not have them.')+'</div>'
     +'<div style="margin-top:12px"><button class="btn primary" data-act="impDo">'
     +(Z?'导入勾选的课程':'Import selected')+'</button></div></div>';
