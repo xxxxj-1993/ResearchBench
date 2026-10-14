@@ -9,8 +9,7 @@
 
   PUBS            已发表论文    id / year / role / journal / myRole / title /
                                authors / volume / pages / doi / if_ / zone /
-                               cites / citesSource / citesUpdatedAt / openalexId /
-                               notes
+                               cites / notes
   GRANTS          已立项项目    id / org / kind / code / name / period /
                                amount / status / role / notes
   TEACHING        教学成果      id / year / kind / name / level / role / notes
@@ -20,7 +19,7 @@
   IDEAS           灵感          id / title / content / tags / status / source
   MATERIALS       我的材料      id / name / kind / path / note
 
-改完重新打包：./macos/build_macos.sh
+改完重新打包：pyinstaller --noconfirm 科研工作台.spec
 """
 
 PUBS = []

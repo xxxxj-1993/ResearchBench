@@ -24,13 +24,18 @@ class ScheduleWeekParsingTests(unittest.TestCase):
         self.assertEqual(parsed["weeks"], "1-8,10,12-14")
         self.assertEqual(parsed["note"], "实验")
 
+    def test_existing_simple_range_still_works(self):
+        self.assertEqual(app.parse_class_cell("课程A 实验8-10周")["weeks"], "8-10")
+
     def test_schedule_import_keeps_complete_mixed_weeks(self):
         html = (
             "<table><tr><td></td><td>1 2</td></tr>"
             "<tr><td>星期一</td><td>大学物理 10，12-14周 学海101 张</td></tr></table>"
         )
         items, layout, msg = app.parse_schedule_payload(html_text=html)
-        self.assertEqual((msg, layout, len(items)), ("", "A", 1))
+        self.assertEqual(msg, "")
+        self.assertEqual(layout, "A")
+        self.assertEqual(len(items), 1)
         self.assertEqual(items[0]["weeks"], "10,12-14")
 
 

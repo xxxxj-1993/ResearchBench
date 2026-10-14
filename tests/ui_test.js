@@ -3,7 +3,7 @@ const { spawn } = require('child_process');
 const { JSDOM, VirtualConsole } = require('jsdom');
 const path = require('path');
 
-const PY = 'C:/Users/Lenovo/.workbuddy/binaries/python/versions/3.13.12/python.exe';
+const PY = process.env.PYTHON || 'python';
 const APP = path.join(__dirname, '..', 'app.py');
 
 const results = [];
@@ -14,8 +14,8 @@ function chk(name, cond, extra) {
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 // 隔离数据目录，避免测试读写用户真实数据。
-// 但仍然复制一份真实 data.json 的副本进去：有些用例（Obsidian 仓库、常用页条目数）
-// 依赖真实数据规模，用空库会失真；只读副本、改动不落回用户侧。
+// 默认使用空库。仅当显式设置 RB_TEST_SOURCE_DATA 时才复制指定的数据副本，
+// 避免测试默认读取开发者的个人 data.json。
 const ISOLATED = process.env.RB_TEST_HOME
   || require('path').join(require('os').tmpdir(), 'rbtest-' + Date.now());
 require('fs').mkdirSync(ISOLATED, { recursive: true });
@@ -26,16 +26,15 @@ require('fs').mkdirSync(ISOLATED, { recursive: true });
     fs.mkdirSync(dstDir, { recursive: true });
     fs.copyFileSync(src, pathmod.join(ISOLATED, sub));
   };
-  const srcDir = pathmod.join(process.env.APPDATA || '', 'ResearchWorkbench');
-  const real = pathmod.join(srcDir, 'data.json');
-  if (fs.existsSync(real)) {
-    copyInto(real, 'data.json');
-    console.log('测试数据：复制 data.json 副本（只读，改动不落回用户侧）');
+  const sourceData = process.env.RB_TEST_SOURCE_DATA || '';
+  if (sourceData && fs.existsSync(sourceData)) {
+    copyInto(sourceData, 'data.json');
+    console.log('测试数据：复制显式指定的数据副本（改动不落回原文件）');
   } else {
-    console.log('测试数据：未找到真实 data.json，用空库');
+    console.log('测试数据：使用空库');
   }
-  // Obsidian 的仓库清单在 %APPDATA%\obsidian\obsidian.json，隔离后要带上
-  const obs = pathmod.join(process.env.APPDATA || '', 'obsidian', 'obsidian.json');
+  // 如需联调 Obsidian，可显式提供隔离用配置路径。
+  const obs = process.env.RB_TEST_OBSIDIAN_CONFIG || '';
   if (fs.existsSync(obs)) copyInto(obs, pathmod.join('obsidian', 'obsidian.json'));
 }
 
@@ -302,10 +301,10 @@ function waitFor(cond, ms = 30000) {
   }
 
   console.log('\n=== 新增栏目（9 点需求） ===');
-  // 已发表：示例数据 + 身份筛选
+  // 已发表：31 篇 + 身份筛选
   doc.querySelector('.nav a[data-nav="pubs"]').click();
   await wait(80);
-  chk('已发表 示例', doc.querySelectorAll('.wall .wcard').length === 3, doc.querySelectorAll('.wall .wcard').length);
+  chk('已发表 31 篇', doc.querySelectorAll('.wall .wcard').length === 31, doc.querySelectorAll('.wall .wcard').length);
   chk('已发表含身份筛选按钮', !!doc.querySelector('[data-act="pubFilter"][data-f="first"]') && !!doc.querySelector('[data-act="pubFilter"][data-f="co"]'));
   doc.querySelector('[data-act="pubFilter"][data-f="first"]').click();
   await wait(80);

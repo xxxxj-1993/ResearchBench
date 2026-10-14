@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>科研工作台</title>
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="shortcut icon" href="/favicon.ico">
+<link rel="icon" type="image/x-icon" sizes="16x16 20x20 24x24 28x28 32x32 40x40 48x48 64x64 96x96 128x128 256x256" href="/favicon.ico?v=2.4.8-icon2">
+<link rel="icon" type="image/png" sizes="256x256" href="/favicon.png?v=2.4.8-icon2">
+<link rel="shortcut icon" href="/favicon.ico?v=2.4.8-icon2">
 <style>
 :root{
   --bg:#f7f8f5; --card:#ffffff; --card2:#fcfdfb;
@@ -39,7 +40,7 @@ svg{display:block;flex:0 0 auto}
 .side{width:206px;flex:0 0 206px;background:var(--card);border-right:1px solid var(--line);
   display:flex;flex-direction:column;padding:16px 12px 12px}
 .brand{display:flex;align-items:center;gap:9px;padding:0 6px 14px;font-weight:700;font-size:15px}
-.brand .lg{width:30px;height:30px;border-radius:9px;background:var(--green);display:flex;
+.brand .lg{width:30px;height:30px;border-radius:9px;background:transparent;display:flex;
   align-items:center;justify-content:center;flex:0 0 auto}
 .brand small{display:block;font-weight:500;font-size:10.5px;color:var(--ink3)}
 .nav{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;overflow:auto}
@@ -159,12 +160,14 @@ svg{display:block;flex:0 0 auto}
 .rem .ic{width:24px;height:24px;flex:0 0 24px;border-radius:7px;display:flex;align-items:center;justify-content:center}
 .cal-bar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line2)}
 .cal-title{font-size:14.5px;font-weight:700;min-width:126px;text-align:center}
-.cal-dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid var(--line2)}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--line2)}
 .cal-dow div{text-align:center;font-size:11.5px;font-weight:700;color:var(--ink3);padding:8px 0}
-.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
-.cal-cell{min-height:104px;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);
-  min-width:0;padding:6px 6px 8px;position:relative;transition:.14s}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(90px,auto);align-items:stretch}
+.cal-cell{min-height:90px;height:100%;box-sizing:border-box;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);
+  padding:6px 6px 8px;position:relative;transition:.14s;display:flex;flex-direction:column;cursor:pointer}
 .cal-cell:nth-child(7n){border-right:0}
+.cal-cell:hover{background:#f8faf7;box-shadow:inset 0 0 0 1.5px var(--green-line)}
+.cal-cell .sub{cursor:pointer}
 .cal-cell.out{background:#fbfcfa}
 .cal-cell.out .dn{color:#c3cbc2}
 .cal-cell.today{background:#f4f9f4}
@@ -175,23 +178,25 @@ svg{display:block;flex:0 0 auto}
 .cal-cell.today .dn .n{background:var(--green);color:#fff}
 .dn .hol{margin-left:auto;font-size:10px;color:var(--ink3);font-weight:500}
 .ev{margin-top:3px;font-size:11px;border-radius:6px;padding:2px 6px;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;cursor:grab;border:1px solid transparent;font-weight:600}
+  text-overflow:ellipsis;cursor:grab;border:1px solid transparent;font-weight:600;flex-shrink:0}
 .ev.t-h1{background:var(--blue-soft);color:#4d6f92;border-color:#dde8f1}
 .ev.t-h2{background:var(--purple-soft);color:#6b5c92;border-color:#e7e1f2}
 .ev.t-h3{background:var(--orange-soft);color:#9c6c33;border-color:#f2e5ce}
 .ev.t-h4{background:var(--sage-soft);color:#5d7a57;border-color:#dde8d8}
 .ev.t-h5{background:var(--line2);color:var(--ink2);border-color:var(--line)}
+.ev.done{text-decoration:line-through;opacity:.62}
 .dl{font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 5px;margin-top:3px;cursor:pointer;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
 .dl.paper{background:var(--green-soft);color:var(--green-d);border-left:2px solid var(--sage)}
 .dl.proj{background:var(--blue-soft);color:#4d6f92;border-left:2px solid var(--blue)}
 .dl.over{background:var(--red-soft);color:var(--red);border-left:2px solid var(--red)}
-.cal-week{display:grid;grid-template-columns:58px repeat(7,minmax(0,1fr));border-top:1px solid var(--line2)}
+.dl.done{text-decoration:line-through;opacity:.62}
+.cal-week{display:grid;grid-template-columns:58px repeat(7,1fr);border-top:1px solid var(--line2)}
 .cal-week .hh{font-size:10.5px;color:var(--ink3);text-align:right;padding-right:6px;
   border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);height:46px;
   display:flex;align-items:flex-start;justify-content:flex-end;font-variant-numeric:tabular-nums}
-.cal-week .wc{min-width:0;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);height:46px;position:relative;padding:2px}
-.whead{display:grid;grid-template-columns:58px repeat(7,minmax(0,1fr));border-bottom:1px solid var(--line2)}
+.cal-week .wc{border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);height:46px;position:relative;padding:2px}
+.whead{display:grid;grid-template-columns:58px repeat(7,1fr);border-bottom:1px solid var(--line2)}
 .whead div{text-align:center;font-size:11.5px;font-weight:700;color:var(--ink3);padding:8px 0}
 .md{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:16px;align-items:start}
 .mlist{display:flex;flex-direction:column;gap:8px;padding:10px;max-height:calc(100vh - 250px);overflow:auto}
@@ -423,8 +428,12 @@ table.lst span.dash{margin:0 2px;color:var(--ink3)}
   <aside class="side">
     <div class="brand">
       <span class="lg">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 3h6"/><path d="M10 3v5.2L4.7 17.4A2 2 0 0 0 6.4 20.5h11.2a2 2 0 0 0 1.7-3.1L14 8.2V3"/><path d="M8 14h8"/>
+        <svg width="30" height="30" viewBox="0 0 917.51 871.94" style="display:block">
+          <defs><clipPath id="clippath"><rect x="164.27" y="124.09" width="588.96" height="623.76"/></clipPath></defs>
+          <rect width="917.51" height="871.94" rx="76" fill="#578665"/>
+          <g clip-path="url(#clippath)">
+            <path fill="#fff" d="M361.32,157.36h-17.37c-9.05,0-16.38-7.34-16.38-16.39s7.34-16.38,16.38-16.38h229.39c9.05,0,16.38,7.34,16.38,16.38s-7.34,16.39-16.38,16.39h-15.46v194.98l182.89,289.48c.33.42.06-.04.33.42,15.07,26.15,15.43,52.87,3.87,72.92-11.68,20.23-35.71,31.72-66.33,31.72H236.9c-30.68,0-54.02-11.47-65.68-31.69-11.54-20-8.32-43.29,6.75-69.44.25-.46,2.2-3.28,2.5-3.74l180.89-295.47v-189.18h-.04ZM480.83,498.23c70.75,42.28,104.33,33.43,132.06,21.96l-89.09-157.7c-2.14-2.97-1.71-6.58-1.71-10.28v-194.85h-125.02v194.85c0,3.7-4.03,7.27-6.12,10.28l-63.74,131.73c41.98-14.28,103.76-25.79,153.63,4.01h0ZM393.34,590.26c17.51-.6,31.4-14.97,31.4-32.49s-13.88-31.89-31.4-32.49c-17.44.69-31.22,15.03-31.22,32.48s13.78,31.79,31.22,32.49h0ZM540.57,681.67c27.13-.03,49.12-22.02,49.15-49.15-.04-27.13-22.02-49.12-49.15-49.15-27.13.04-49.12,22.02-49.15,49.15.04,27.13,22.02,49.12,49.15,49.15h0ZM458.65,451.53c-17.48-.85-31.22-15.27-31.22-32.77s13.74-31.92,31.22-32.76c17.48.85,31.22,15.26,31.22,32.76s-13.74,31.92-31.22,32.77h0ZM458.65,451.53"/>
+          </g>
         </svg>
       </span>
       <span>科研工作台<small id="verTxt">本地版</small></span>
@@ -500,6 +509,7 @@ var I = {
   filter:'<path d="M3 5h18"/><path d="M6 12h12"/><path d="M10 19h4"/>',
   user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/>',
   pin:'<path d="M12 17v5"/><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3z"/>',
+  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   flag:'<path d="M4 22V4"/><path d="M4 4h13l-2 4 2 4H4"/>',
   bulb:'<path d="M9 18h6"/><path d="M12 2a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6V16h5.4v-1.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 2z"/>',
   spark:'<path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m6 6 2.5 2.5"/><path d="m15.5 15.5 2.5 2.5"/>',
@@ -645,11 +655,20 @@ function toast(msg,kind,undoFn){
 /* ================= 数据层 ================= */
 function saveKey(key){
   var v = (key==='settings')? S.db.settings : ((key==='focus')? S.db.focus : S.db[key]);
-  // keepalive：页面关闭/导航时该请求也会发完，避免“改完直接关程序导致没保存”
-  return fetch('/api/patch',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({key:key,value:v}),keepalive:true})
-    .then(function(r){ return r.json(); })
-    .catch(function(e){ console.error('saveKey failed:',key,e); return {ok:false}; });
+  // Keep one promise per key.  Rapid edits must be sent in order; otherwise
+  // two HTTP worker threads can persist an older snapshot after a newer one.
+  window.__rbSaveQueue=window.__rbSaveQueue||{};
+  var previous=window.__rbSaveQueue[key]||Promise.resolve();
+  var request=previous.catch(function(){}).then(function(){
+    return fetch('/api/patch',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({key:key,value:v}),keepalive:true})
+      .then(function(r){
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        return r.json();
+      });
+  }).catch(function(e){ console.error('saveKey failed:',key,e); toast(LANG==='zh'?'本地保存失败，请稍后重试':'Local save failed','err'); return {ok:false}; });
+  window.__rbSaveQueue[key]=request;
+  return request;
 }
 function byId(arr,id){ if(!arr) return null; for(var i=0;i<arr.length;i++) if(arr[i].id===id) return arr[i]; return null; }
 function findPaper(id){ return byId(S.db.papers,id); }
@@ -1056,10 +1075,12 @@ function viewToday(){
       var e=evs[i], rel='';
       if(e.relatedType==='paper'&&e.relatedId) rel=paperTitle(e.relatedId);
       if(e.relatedType==='project'&&e.relatedId) rel=projName(e.relatedId);
-      h+='<div class="tl-row"><div class="tl-time">'+esc(e.start||'--:--')+'</div><div class="tl-dot"></div>'
-        +'<div class="tl-body"><div class="t">'+esc(e.title)+' <span class="chip n">'+esc(e.type||'其他')+'</span></div>'
+      h+='<div class="tl-row'+(e.done?' done':'')+'"><div class="tl-time">'+esc(e.start||'--:--')+'</div><div class="tl-dot"></div>'
+        +'<div class="tl-body"><div class="t"'+(e.done?' style="text-decoration:line-through;color:var(--ink3)"':'')+'>'+esc(e.title)+' <span class="chip n">'+esc(e.type||'其他')+'</span></div>'
         +'<div class="m">'+esc(e.end?(e.start+'-'+e.end):'')+(rel?' <span class="dotsep">·</span> '+esc(rel):'')+'</div></div>'
-        +'<div style="display:flex;gap:5px">'
+        +'<div style="display:flex;gap:5px;align-items:flex-start">'
+        +'<button class="ck'+(e.done?' on':'')+'" data-act="toggleEvent" data-id="'+esc(e.id)+'" '
+        +'title="'+(e.done?(LANG==='zh'?'标为未完成':'Undo'):(LANG==='zh'?'标为完成':'Done'))+'">'+ic('check',11,'','3')+'</button>'
         +'<button class="btn sm ghost" data-act="editEvent" data-id="'+esc(e.id)+'">'+ic('edit',12)+'</button>'
         +'<button class="btn sm ghost" data-act="delEvent" data-id="'+esc(e.id)+'">'+ic('trash',12)+'</button>'
         +'</div></div>';
@@ -1214,16 +1235,21 @@ function viewCalendar(){
       var dls=deadlinesOn(ds), overDl=false;
       for(k=0;k<dls.length;k++) if(dls[k].over&&!dls[k].done) overDl=true;
       h+='<div class="cal-cell'+(outCell?' out':'')+(isToday?' today':'')+(overDl?' over':'')
-        +'" data-daycell="'+ds+'"><div class="dn"><span class="n">'+d.getDate()+'</span>'
+        +'" data-daycell="'+ds+'" title="'+(LANG==='zh'?'点击查看当天活动':'Click to view activities')+'">'
+        +'<div class="dn"><span class="n">'+d.getDate()+'</span>'
         +(isToday?'<span class="hol">'+(LANG==='zh'?'今天':'today')+'</span>':'')+'</div>';
       var evs=eventsOn(ds);
-      for(k=0;k<Math.min(evs.length,3);k++){
-        var e=evs[k];
-        h+='<div class="ev '+evCls(e.type)+'" draggable="true" data-act="editEvent" data-id="'+esc(e.id)
+      var visibleEvs=evs.slice(0,4);
+      for(k=0;k<visibleEvs.length;k++){
+        var e=visibleEvs[k];
+        h+='<div class="ev '+evCls(e.type)+(e.done?' done':'')+'" draggable="true" data-act="editEvent" data-id="'+esc(e.id)
           +'" title="'+esc(e.title)+'">'+(e.start?esc(String(e.start).slice(0,5))+' ':'')+esc(e.title)+'</div>';
       }
-      if(evs.length>3) h+='<div class="sub" style="font-size:10.5px;margin-top:2px">+'+(evs.length-3)+'</div>';
-      for(k=0;k<Math.min(dls.length,3);k++){
+      if(evs.length>4) h+='<div class="sub" style="font-size:10.5px;margin-top:2px;flex-shrink:0" '
+        +'title="'+(LANG==='zh'?'点击查看当天全部活动':'Click to view all activities')+'">+'+(evs.length-4)
+        +(LANG==='zh'?' 更多':' more')+'</div>';
+      var dlLimit=Math.max(1,5-visibleEvs.length-(evs.length>4?1:0));
+      for(k=0;k<Math.min(dls.length,dlLimit);k++){
         var x=dls[k];
         h+='<div class="dl '+x.kind+(x.over&&!x.done?' over':'')+'" data-act="jump" data-kind="'+x.kind
           +'" data-id="'+esc(x.id)+'" title="'+esc(x.title)+'">'
@@ -1254,7 +1280,7 @@ function viewCalendar(){
         var ev2=eventsOn(ds2), cell='';
         for(k=0;k<ev2.length;k++){
           if(parseInt(String(ev2[k].start||'00:00').slice(0,2),10)===hh)
-            cell+='<div class="ev '+evCls(ev2[k].type)+'" draggable="true" data-act="editEvent" data-id="'
+            cell+='<div class="ev '+evCls(ev2[k].type)+(ev2[k].done?' done':'')+'" draggable="true" data-act="editEvent" data-id="'
               +esc(ev2[k].id)+'" style="margin-top:1px">'+esc(ev2[k].title)+'</div>';
         }
         h+='<div class="wc" data-daycell="'+ds2+'">'+cell+'</div>';
@@ -1276,8 +1302,9 @@ function viewCalendar(){
       var e3=list[i], rel='';
       if(e3.relatedType==='paper'&&e3.relatedId) rel=paperTitle(e3.relatedId);
       if(e3.relatedType==='project'&&e3.relatedId) rel=projName(e3.relatedId);
-      h+='<div class="rem" style="padding:9px 6px"><div class="ic" style="background:var(--sage-soft);color:var(--green-d)">'+ic('cal',13)+'</div>'
-        +'<div style="flex:1 1 auto;min-width:0"><div style="font-size:12.8px;font-weight:650">'+esc(e3.title)+'</div>'
+      h+='<div class="rem" style="padding:9px 6px"><button class="ck'+(e3.done?' on':'')+'" data-act="toggleEvent" data-id="'+esc(e3.id)+'" '
+        +'title="'+(e3.done?(LANG==='zh'?'标为未完成':'Undo'):(LANG==='zh'?'标为完成':'Done'))+'">'+ic('check',11,'','3')+'</button>'
+        +'<div style="flex:1 1 auto;min-width:0"><div style="font-size:12.8px;font-weight:650'+(e3.done?';text-decoration:line-through;color:var(--ink3)':'')+'">'+esc(e3.title)+'</div>'
         +'<div class="sub" style="font-size:11px">'+esc(e3.date)+' '+esc(e3.start||'')
         +(e3.end?'-'+esc(e3.end):'')+' · '+esc(e3.type||'其他')+(rel?' · '+esc(rel):'')+'</div></div>'
         +'<button class="btn sm ghost" data-act="editEvent" data-id="'+esc(e3.id)+'">'+ic('edit',12)+'</button>'
@@ -1336,6 +1363,7 @@ function weekExpressionIncludes(value,wkN){
     if(a>b){ var t=a; a=b; b=t; }
     if(wkN>=a&&wkN<=b) return true;
   }
+  // 无法识别的旧数据继续显示；能识别但不包含当前周时才过滤掉。
   return !recognized;
 }
 // 某节课在「第 wkN 周」是否要显示（行课周次 + 单双周）
@@ -1573,12 +1601,12 @@ function formImportSchedule(){
     +'<div class="fld"><label>'+(Z?'第 1 步：把课表复制进来':'Step 1: paste the timetable')+'</label>'
     +'<div id="impPaste" class="pastebox" contenteditable="true"></div>'
     +'<div class="hint" style="margin-top:6px">'
-    +(Z?'在 Word / WPS / Excel / 网页里框选整个课表复制，回到这里按 Command+V（Windows 为 Ctrl+V）。'
+    +(Z?'在 Word / WPS / Excel / 网页里框选整个课表复制，回到这里按 Ctrl+V。'
         +'程序读的是剪贴板里的表格结构，所以「星期」和「节次」能对得上；'
         +'从记事本复制的纯文本也能用，但准确率低一些。'
-        :'Select the whole table in Word/Excel and paste here with Command+V (Ctrl+V on Windows).')+'</div></div>'
+        :'Select the whole table in Word/Excel and paste here with Ctrl+V.')+'</div></div>'
     +'<div class="fld"><label>'+(Z?'第 2 步（可选）：只保留某个老师的课':'Step 2 (optional): only keep one teacher')+'</label>'
-    +'<input id="impTeacher" placeholder="'+(Z?'如：李':'e.g. Lee')+'">'
+    +'<input id="impTeacher" placeholder="'+(Z?'如：徐':'e.g. Xu')+'">'
     +'<div class="hint" style="margin-top:6px">'
     +(Z?'填了之后，只有原始单元格里含这个字的课会被自动勾选，方便从教研室合排的表里挑出自己的。'
         :'Only rows containing this text get checked.')+'</div></div>'
@@ -1893,7 +1921,7 @@ function citeAuthors(s){
   if(arr.length>=2) return arr.slice(0,-1).join(', ')+', and '+arr[arr.length-1];
   return s;
 }
-// A. Author*, ..., and B. Researcher*, "Title," Example Journal 13, 100–110 (2025).
+// J. Xu*, ..., and Q. Shen*, "Title," Adv. Opt. Mater. 13, e01115 (2025).
 function citeText(w){
   var seg=[];
   var au=citeAuthors(w.authors);
@@ -1979,11 +2007,11 @@ function formImportPub(){
   var body=''
     +'<div class="fld"><label>'+(LANG==='zh'?'粘贴 BibTeX（不用联网，推荐）':'Paste BibTeX (offline, recommended)')+'</label>'
       +'<textarea id="imBib" rows="8" style="font-family:Consolas,Monaco,monospace;font-size:12px" '
-      +'placeholder="@article{author2025example,&#10;  title  = {...},&#10;  author = {Author, Alice and Researcher, Bob},&#10;  journal= {Example Journal},&#10;  year   = {2025},&#10;  volume = {13},&#10;  pages  = {100--110},&#10;  doi    = {10.1234/example.2025.001}&#10;}"></textarea>'
+      +'placeholder="@article{xu2025realization,&#10;  title  = {...},&#10;  author = {Xu, Jie and Luo, Yang},&#10;  journal= {Advanced Optical Materials},&#10;  year   = {2025},&#10;  volume = {13},&#10;  pages  = {e01115},&#10;  doi    = {10.1002/adom.202501115}&#10;}"></textarea>'
       +'<div class="hint" style="margin-top:6px">'+(LANG==='zh'?'Zotero / Google Scholar / 期刊官网都能导出 BibTeX，一次可以粘多条。'
         :'Export BibTeX from Zotero, Google Scholar or the journal page. Several entries at once is fine.')+'</div></div>'
     +'<div class="fld"><label>DOI'+(LANG==='zh'?'（联网查询 Crossref）':' (Crossref lookup)')+'</label>'
-      +'<div style="display:flex;gap:6px"><input id="imDoi" style="flex:1" placeholder="10.1234/example.2025.001">'
+      +'<div style="display:flex;gap:6px"><input id="imDoi" style="flex:1" placeholder="10.1002/adom.202501115">'
       +'<button class="btn sm primary" data-act="fetchDoi">'+ic('search',12)+(LANG==='zh'?'查询':'Fetch')+'</button></div></div>'
     +'<div id="imPreview"></div>';
   modal(LANG==='zh'?'导入论文':'Import publication', body,
@@ -2370,6 +2398,9 @@ function viewDiary(){
   var h='', i;
   h+='<div class="page"><div class="pg-h"><h1>'+ic('diary',18,'var(--sage)')+esc(tt('diary'))+'</h1>'
     +'<span class="sub">'+esc(tt('diarySub'))+'</span><div class="right">'
+    +((S.db.settings&&S.db.settings.pin&&S.diaryUnlocked)
+        ? '<button class="btn" data-act="diaryLock" title="'+(LANG==='zh'?'上锁日记':'Lock journal')+'">'+ic('lock',13)
+          +(LANG==='zh'?'上锁':'Lock')+'</button>' : '')
     +'<button class="btn" data-act="diaryPin">'+ic('pin',13)
     +((S.db.settings&&S.db.settings.pin)?(LANG==='zh'?'修改 PIN':'Change PIN'):(LANG==='zh'?'设置 PIN':'Set PIN'))+'</button>'
     +'<button class="btn primary" data-act="addDiary">'+ic('plus',13)+esc(tt('add'))+'</button></div></div>';
@@ -2425,7 +2456,6 @@ function viewCommon(){
     +'<span class="n">'+mats.length+(LANG==='zh'?' 项':'')+'</span><div class="spacer"></div>'
     +'<button class="btn sm" data-act="addMatFromZot" title="'+esc(tt('addFromZotero'))+'">'
     +ic('db',12)+esc(tt('addFromZotero'))+'</button>'
-    +'<button class="btn sm primary" data-act="addMaterial">'+ic('plus',12)+esc(tt('add'))+'</button>'
     +'</div>';
   h+='<div class="lg">';
   for(i=0;i<mats.length;i++){
@@ -2632,9 +2662,9 @@ function formPub(id, pre){
     +'<div><label>'+(LANG==='zh'?'分区 / 等级':'Zone')+'</label><input id="wZone" value="'+esc(d.zone||'')+'" placeholder="中科院2区TOP"></div>'
     +'<div><label>'+(LANG==='zh'?'引用':'Citations')+'</label><input id="wCites" type="number" value="'+esc(d.cites||'0')+'"></div>'
     +'</div></div>'
-    +'<div class="fld"><label>'+(LANG==='zh'?'作者列表':'Authors')+'</label><input id="wAuthors" value="'+esc(d.authors||'')+'" placeholder="A. Author*, B. Researcher, ..."></div>'
+    +'<div class="fld"><label>'+(LANG==='zh'?'作者列表':'Authors')+'</label><input id="wAuthors" value="'+esc(d.authors||'')+'" placeholder="J. Xu*, Y. Luo, ..."></div>'
     +'<div class="fld"><div class="row">'
-    +'<div><label>DOI</label><input id="wDoi" value="'+esc(d.doi||'')+'" placeholder="10.1234/example.xxxxx"></div>'
+    +'<div><label>DOI</label><input id="wDoi" value="'+esc(d.doi||'')+'" placeholder="10.1364/OE.xxxxx"></div>'
     +'<div><label>'+(LANG==='zh'?'卷':'Volume')+'</label><input id="wVol" value="'+esc(d.volume||'')+'"></div>'
     +'<div><label>'+(LANG==='zh'?'页码':'Pages')+'</label><input id="wPages" value="'+esc(d.pages||'')+'"></div>'
     +'</div></div>'
@@ -2724,7 +2754,9 @@ function formEvent(id, presetDate){
     +'<div><label>'+(LANG==='zh'?'关联课题':'Topic')+'</label>'
     +'<select id="eProj">'+recOptions(S.db.projects,(e&&e.relatedType==='project')?e.relatedId:'','— 不关联 —')+'</select></div>'
     +'</div></div>'
-    +'<div class="fld"><label>'+(LANG==='zh'?'备注':'Notes')+'</label><textarea id="eNotes">'+esc(e?e.notes:'')+'</textarea></div>';
+    +'<div class="fld"><label>'+(LANG==='zh'?'备注':'Notes')+'</label><textarea id="eNotes">'+esc(e?e.notes:'')+'</textarea></div>'
+    +'<div class="fld" style="display:flex;align-items:center;gap:10px;padding-top:4px"><button type="button" class="ck'+(e&&e.done?' on':'')+'" id="eDoneCk" style="position:relative;top:0" onclick="this.classList.toggle(\'on\')">'+ic('check',12,'','3')+'</button>'
+    +'<span style="font-size:13px;color:var(--ink2);cursor:pointer" onclick="$(\'eDoneCk\').click()">'+(LANG==='zh'?'已完成（划掉但不删除）':'Done (strikethrough, keep)')+'</span></div>';
   modal(e?(LANG==='zh'?'编辑日程':'Edit event'):(LANG==='zh'?'新增日程':'New event'), body,
     (id?'<button class="btn danger" data-act="delEvent" data-id="'+esc(id)+'">'+ic('trash',12)+esc(tt('del'))+'</button>':'')
     +'<div class="spacer"></div>'+footBtns('eSave'));
@@ -2733,6 +2765,7 @@ function formEvent(id, presetDate){
     var rec=e||{id:uid('e')};
     rec.title=t; rec.date=v('eDate'); rec.start=v('eStart'); rec.end=v('eEnd');
     rec.type=v('eType'); rec.notes=v('eNotes');
+    rec.done=!!($('eDoneCk')&&$('eDoneCk').classList.contains('on'));
     var pid=v('ePaper'), jid=v('eProj');
     if(pid){ rec.relatedType='paper'; rec.relatedId=pid; }
     else if(jid){ rec.relatedType='project'; rec.relatedId=jid; }
@@ -2740,6 +2773,69 @@ function formEvent(id, presetDate){
     if(!e) S.db.events.push(rec);
     saveKey('events'); closeModal(); refreshAll(); toast(LANG==='zh'?'已保存':'Saved','ok');
   };
+}
+
+function dayDetailToggle(id){
+  var ev=byId(S.db.events,id); if(!ev) return;
+  ev.done=!ev.done; saveKey('events'); refreshAll();
+  toast(ev.done?(LANG==='zh'?'已标记完成':'Done'):(LANG==='zh'?'已标记未完成':'Undone'),'ok');
+  dayDetailModal(ev.date);
+}
+
+function dayDetailModal(ds){
+  var darr=ds.split('-');
+  var d=new Date(parseInt(darr[0],10),parseInt(darr[1],10)-1,parseInt(darr[2],10));
+  var wDay=WD[(d.getDay()+6)%7];
+  var title=(LANG==='zh'?parseInt(darr[1],10)+'月'+parseInt(darr[2],10)+'日 周'+wDay+' · 当天活动'
+    :['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][(d.getDay()+6)%7]+', '+parseInt(darr[2],10)+' '
+      +['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+' · Activities');
+  var evs=eventsOn(ds), dls=deadlinesOn(ds), i;
+  var body='<div style="max-height:min(60vh,520px);overflow:auto;padding:0 4px">';
+  if(evs.length){
+    body+='<div class="sect-h" style="margin-top:0">'+(LANG==='zh'?'日程':'Events')+'</div>';
+    for(i=0;i<evs.length;i++){
+      var e=evs[i], rel='';
+      if(e.relatedType==='paper'&&e.relatedId) rel=paperTitle(e.relatedId);
+      if(e.relatedType==='project'&&e.relatedId) rel=projName(e.relatedId);
+      var meta=(e.start||'--:--')+(e.end?'-'+e.end:'')+' · '+esc(e.type||'其他')+(rel?' · '+esc(rel):'');
+      body+='<div class="act" style="align-items:center">'
+        +'<button type="button" class="ck'+(e.done?' on':'')+'" data-act="toggleEvent" data-id="'+esc(e.id)+'" data-keepmodal="1" '
+        +'title="'+(e.done?(LANG==='zh'?'标为未完成':'Undo'):(LANG==='zh'?'标为完成':'Done'))+'">'
+        +ic('check',11,'','3')+'</button>'
+        +'<div class="b" style="flex:1 1 auto;min-width:0">'
+        +'<div class="t"'+(e.done?' style="text-decoration:line-through;color:var(--ink3)"':'')+'>'+esc(e.title)+'</div>'
+        +'<div class="m">'+esc(meta)+'</div></div>'
+        +'<div style="display:flex;gap:5px;flex-shrink:0">'
+        +'<button class="btn sm ghost" data-act="editEvent" data-id="'+esc(e.id)+'">'+ic('edit',12)+'</button>'
+        +'<button class="btn sm danger" data-act="delEvent" data-id="'+esc(e.id)+'">'+ic('trash',12)+'</button>'
+        +'</div></div>';
+    }
+  }
+  if(dls.length){
+    body+='<div class="sect-h" style="margin-top:14px">'+(LANG==='zh'?'当天截止':'Deadlines')+'</div>';
+    for(i=0;i<dls.length;i++){
+      var x=dls[i];
+      body+='<div class="act" style="align-items:center;cursor:pointer" data-act="jump" data-kind="'+x.kind
+        +'" data-id="'+esc(x.id)+'">'
+        +'<div class="ic" style="width:22px;height:22px;flex:0 0 22px;border-radius:6px;display:flex;align-items:center;justify-content:center;'
+        +'background:'+(x.kind==='paper'?'var(--green-soft);color:var(--green-d)':'var(--blue-soft);color:#4d6f92')+'">'
+        +ic(x.kind==='paper'?'paper':'folder',13)+'</div>'
+        +'<div class="b" style="flex:1 1 auto;min-width:0">'
+        +'<div class="t"'+(x.done?' style="text-decoration:line-through;color:var(--ink3)"':'')+'>'+esc(x.title)+'</div>'
+        +'<div class="m">'+(x.kind==='paper'?(LANG==='zh'?'论文截止':'Paper due'):(LANG==='zh'?'课题截止':'Topic due'))
+        +(x.over&&!x.done?' · '+(LANG==='zh'?'已逾期':'Overdue'):'')+'</div></div></div>';
+    }
+  }
+  if(!evs.length&&!dls.length){
+    body+='<div class="empty" style="padding:28px 0">'+ic('sprout',28,'var(--sage)')
+      +(LANG==='zh'?'当天没有安排':'Nothing scheduled')+'</div>';
+  }
+  body+='</div>';
+  var foot='<button class="btn" data-act="closeModal">'+esc(tt('close'))+'</button>'
+    +'<div class="spacer"></div>'
+    +'<button class="btn primary" data-act="addEvent" data-date="'+esc(ds)+'">'
+    +ic('plus',12)+' '+(LANG==='zh'?'新增日程':'Add event')+'</button>';
+  modal(title,body,foot,true);
 }
 
 /* ================= 已立项（科研项目）表单 ================= */
@@ -2867,25 +2963,25 @@ function formMaterial(id, preset){
 }
 /* 从 Zotero 挑条目加入「我的材料」 */
 function pickZoteroMaterial(){
-  if(!S.zotProfile||!S.zotProfile.length){
-    toast(LANG==='zh'?'Zotero 暂无个人条目（简历等）':'No Zotero items found','info'); return;
-  }
-  var h='', i, j;
-  var have={};
-  for(i=0;i<(S.db.materials||[]).length;i++) have[S.db.materials[i].path]=1;
-  for(i=0;i<S.zotProfile.length;i++){
-    var z=S.zotProfile[i], hit=null;
-    for(j=0;j<(z.attachments||[]).length;j++) if(z.attachments[j].exists) hit=z.attachments[j];
-    if(!hit) continue;
-    h+='<div class="zrow"><span style="flex:1 1 auto;min-width:0">'
-      +'<div class="t">'+esc(z.title)+'</div><div class="m">'+esc(hit.path)+'</div></span>'
-      +(have[hit.path]
-        ? '<span class="chip g">'+(LANG==='zh'?'已添加':'Added')+'</span>'
-        : '<button class="btn sm" data-act="matAddZot" data-name="'+esc(z.title)+'" data-path="'+esc(hit.path)+'">'
-          +ic('plus',11)+(LANG==='zh'?'添加':'Add')+'</button>')
-      +'</div>';
-  }
-  modal(LANG==='zh'?'从 Zotero 添加材料':'Add from Zotero', h, '');
+  var h='<div class="fld"><label>'+(LANG==='zh'?'关键词（文件名或路径，可用空格/逗号分隔）':'Keywords (filename/path)')+'</label>'
+    +'<div class="row"><input id="zMatQ" placeholder="'+(LANG==='zh'?'例如：张三 简历':'e.g. name CV')+'" style="flex:1">'
+    +'<button class="btn primary" id="zMatSearch">'+(LANG==='zh'?'扫描 storage':'Scan storage')+'</button></div>'
+    +'<div class="hint">'+(LANG==='zh'?'只扫描 Zotero storage 附件，不修改 Zotero；结果由你逐项确认。':'Only Zotero storage attachments are scanned; nothing is changed automatically.')+'</div></div>'
+    +'<div id="zMatResults"><div class="sub">'+(LANG==='zh'?'请输入关键词后扫描':'Enter keywords and scan')+'</div></div>';
+  modal(LANG==='zh'?'从 Zotero 添加材料':'Add from Zotero', h, '<button class="btn" data-act="closeModal">'+esc(tt('close'))+'</button>', true);
+  $('zMatSearch').onclick=function(){
+    var q=v('zMatQ'); if(!q){ toast(LANG==='zh'?'请先输入关键词':'Enter a keyword first','err'); return; }
+    $('zMatResults').innerHTML='<div class="sub">'+(LANG==='zh'?'扫描中…':'Scanning…')+'</div>';
+    api('/api/zotero/storage-search?q='+encodeURIComponent(q)+'&limit=200').then(function(r){
+      var rows=(r&&r.items)||[], have={}, out='', i, x;
+      for(i=0;i<(S.db.materials||[]).length;i++) have[S.db.materials[i].path]=1;
+      for(i=0;i<rows.length;i++){
+        x=rows[i]; out+='<div class="zrow"><span style="flex:1 1 auto;min-width:0"><div class="t">'+esc(x.name)+'</div><div class="m">'+esc(x.path)+'</div></span>'
+          +(have[x.path]?'<span class="chip g">'+(LANG==='zh'?'已添加':'Added')+'</span>':'<button class="btn sm" data-act="matAddZot" data-name="'+esc(x.name)+'" data-path="'+esc(x.path)+'">'+ic('plus',11)+(LANG==='zh'?'添加':'Add')+'</button>')+'</div>';
+      }
+      $('zMatResults').innerHTML=out||'<div class="sub">'+(LANG==='zh'?'没有匹配文件':'No matching files')+'</div>';
+    });
+  };
 }
 
 /* ================= 工作计划表单 ================= */
@@ -2947,12 +3043,12 @@ function formShortcut(id, presetCat){
     +'<input id="sTarget" value="'+esc(s?s.target:'')+'"><button class="btn" id="sPick" type="button">'
     +(LANG==='zh'?'浏览':'Browse')+'</button></div>'
     +'<div class="hint">'+(LANG==='zh'
-      ? '类型 folder/app/file 填本地路径；app 可选择 macOS 的 .app 应用；类型 url 填网址。'
+      ? '类型 folder/app/file 填本地路径；类型 url 填网址。folder 卡片支持点击展开最近文件。'
       : 'folder/app/file need a local path; url needs a link.')+'</div></div>';
   modal(s?(LANG==='zh'?'编辑入口':'Edit shortcut'):(LANG==='zh'?'新增入口':'New shortcut'), body, footBtns('sSave'));
   $('sPick').onclick=function(){
     var k=v('sKind');
-    api('/api/pick',{kind:(k==='folder')?'folder':(k==='app'?'app':'file')}).then(function(r){ if(r&&r.ok&&r.path) $('sTarget').value=r.path; });
+    api('/api/pick',{kind:(k==='folder')?'folder':'file'}).then(function(r){ if(r&&r.ok&&r.path) $('sTarget').value=r.path; });
   };
   $('sSave').onclick=function(){
     var nm=v('sName'), tg=v('sTarget');
@@ -3011,27 +3107,20 @@ function formSettings(){
     toast(LANG==='zh'?'已导出备份':'Exported','ok');
   };
   $('cImport').onclick=function(){
-    if(!confirm(LANG==='zh'?'导入将覆盖当前数据，并自动保留一份导入前备份。继续？'
-                              :'Import will replace current data and keep a safety copy. Continue?')) return;
-    var btn=$('cImport'); if(btn) btn.disabled=true;
-    api('/api/backup/import',{}).then(function(r){
-      if(btn) btn.disabled=false;
-      if(!r||!r.ok){
-        if(!(r&&r.cancelled)) alert((LANG==='zh'?'导入失败：':'Import failed: ')+((r&&r.msg)||'未知错误'));
-        return;
-      }
-      S.db=r.db;
-      var c=r.counts||{};
-      closeModal(); refreshAll();
-      alert(LANG==='zh'
-        ?('导入成功。论文 '+(c.papers||0)+' 篇，已发表 '+(c.pubs||0)+' 篇，课题 '+(c.projects||0)
-          +' 个，已立项 '+(c.grants||0)+' 个，课程 '+(c.classes||0)+' 门。')
-        :'Import succeeded. Papers '+(c.papers||0)+', publications '+(c.pubs||0)
-          +', topics '+(c.projects||0)+', grants '+(c.grants||0)+', classes '+(c.classes||0)+'.');
-    }).catch(function(e){
-      if(btn) btn.disabled=false;
-      alert((LANG==='zh'?'导入失败：':'Import failed: ')+(e&&e.message?e.message:e));
-    });
+    var inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+    inp.onchange=function(){
+      var f=inp.files&&inp.files[0]; if(!f) return;
+      var fr=new FileReader();
+      fr.onload=function(){
+        try{
+          var o=JSON.parse(fr.result);
+          if(!confirm(LANG==='zh'?'导入将覆盖当前数据，继续？':'Import will overwrite current data. Continue?')) return;
+          api('/api/state',{db:o}).then(function(){ location.reload(); });
+        }catch(err){ alert('解析失败：'+err.message); }
+      };
+      fr.readAsText(f,'utf-8');
+    };
+    inp.click();
   };
 }
 function zoteroStatusText(){
@@ -3416,7 +3505,7 @@ document.addEventListener('click',function(e){
   if(!el){
     var cell=e.target;
     while(cell && cell!==document.body){
-      if(cell.hasAttribute && cell.hasAttribute('data-daycell')){ formEvent(null,cell.getAttribute('data-daycell')); return; }
+      if(cell.hasAttribute && cell.hasAttribute('data-daycell')){ dayDetailModal(cell.getAttribute('data-daycell')); return; }
       cell=cell.parentNode;
     }
     return;
@@ -3446,6 +3535,12 @@ document.addEventListener('click',function(e){
 
   if(a==='addEvent'){ formEvent(null,el.getAttribute('data-date')||todayStr()); return; }
   if(a==='editEvent'){ if(S.dragMoved){ S.dragMoved=false; return; } formEvent(id); return; }
+  if(a==='toggleEvent'){
+    var ev=byId(S.db.events,id); if(ev){ ev.done=!ev.done; saveKey('events'); refreshAll();
+      toast(ev.done?(LANG==='zh'?'已标记完成':'Done'):(LANG==='zh'?'已标记未完成':'Undone'),'ok'); }
+    if(el.getAttribute('data-keepmodal')==='1' && ev) dayDetailModal(ev.date);
+    return;
+  }
   if(a==='delEvent'){ custom_remove('events',id,eventTitle(id)); return; }
   if(a==='calMode'){ S.calMode=el.getAttribute('data-v'); refreshAll(); return; }
   if(a==='calPrev'){ S.calMonth--; if(S.calMonth<0){S.calMonth=11;S.calYear--;} refreshAll(); return; }
@@ -3694,6 +3789,7 @@ document.addEventListener('click',function(e){
   if(a==='editDiary'){ formDiary(id); return; }
   if(a==='delDiary'){ removeWithUndo('diary',id,(byId(S.db.diary,id)||{}).date||''); return; }
   if(a==='diaryPin'){ formSettings(); return; }
+  if(a==='diaryLock'){ S.diaryUnlocked=false; refreshAll(); toast(LANG==='zh'?'已上锁':'Locked','ok'); return; }
   if(a==='pinGo'){
     var inp=$('pinInput');
     if(inp&&inp.value===((S.db.settings||{}).pin||'')){ S.diaryUnlocked=true; refreshAll(); }
@@ -3716,21 +3812,13 @@ document.addEventListener('click',function(e){
   if(a==='rescan'){
     toast(LANG==='zh'?'正在探测已安装软件…':'Scanning…');
     api('/api/rescan',{}).then(function(r){
-      if(!r||!r.ok){ throw new Error((r&&r.msg)||'scan failed'); }
       var n=(r&&r.added)?r.added.length:0;
-      var found=Number(r&&r.foundApps!=null?r.foundApps:(r&&r.total))||0;
       return api('/api/state').then(function(s2){
         if(s2&&s2.db) S.db=s2.db;
         refreshAll();
-        if(n){
-          toast((LANG==='zh'?'扫描完成，新增 ':'Scan complete: added ')+n+(LANG==='zh'?' 个入口':' item(s)'),'ok');
-        }else if(found){
-          toast(LANG==='zh'?('已识别 '+found+' 个软件，均已在列表中'):('Found '+found+' app(s); all are already listed'),'ok');
-        }else{
-          toast(LANG==='zh'?'未识别到支持的软件，可用“新增入口”手动添加':'No supported app found; add one manually','err');
-        }
+        toast(n?(LANG==='zh'?'新增 ':'Added ')+n+(LANG==='zh'?' 个入口':'') : (LANG==='zh'?'没有新软件':'Nothing new'),'ok');
       });
-    }).catch(function(){ toast(LANG==='zh'?'扫描失败，请稍后重试':'Scan failed; please retry','err'); });
+    });
     return;
   }
 
@@ -3904,7 +3992,7 @@ function loadObsidian(){
 function boot(){
   api('/api/state').then(function(r){
     if(!r||!r.ok){ toast(LANG==='zh'?'连接本地服务失败':'Cannot reach local service','err'); return; }
-    S.db=r.db; S.dataDir=r.dataDir; S.version=r.version; S.platform=r.platform||'';
+    S.db=r.db; S.dataDir=r.dataDir; S.version=r.version;
     LANG=(S.db.settings&&S.db.settings.lang)||'zh';
     FOCUS_MIN=(S.db.settings&&S.db.settings.focusMin)||25;
     focusLeft=FOCUS_MIN*60;
@@ -3930,7 +4018,40 @@ $('searchBtn').onclick=function(){ palette(''); };
 // 注意：不要在这里发 /api/quit。窗口关闭由后端监控 Edge 进程来决定是否退出；
 // 整页刷新（F5、数据导入后的 location.reload）也会触发 beforeunload，若在此
 // 直接 quit 会误杀后端，导致界面还在却点不开任何链接。
-setInterval(function(){ fetch('/api/ping').catch(function(){}); },10000);
+var rbLastHealth=0;
+setInterval(function(){
+  fetch('/api/health').then(function(r){
+    if(!r.ok) throw new Error('health '+r.status);
+    return r.json();
+  }).then(function(h){ rbLastHealth=Date.now(); })
+  .catch(function(){
+    // The window can survive a browser sleep while its local server is being
+    // restarted.  Reload only after a sustained failure, not on one timeout.
+    if(Date.now()-rbLastHealth>30000 && !document.hidden){
+      toast(LANG==='zh'?'本地服务暂时无响应，正在重新连接…':'Reconnecting to local service…','err');
+      rbLastHealth=Date.now();
+    }
+  });
+},10000);
+
+// Safety net for any future UI action that forgets to call saveKey(). Normal
+// edits still save immediately; this writes a complete snapshot once a minute.
+setInterval(function(){
+  if(!S.db) return;
+  fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({db:S.db})}).catch(function(e){ console.error('autosave failed',e); });
+},60000);
+
+// Flush the latest full snapshot when the user closes/reloads the app.  The
+// backend also keeps data.json.bak, so an interrupted final request remains
+// recoverable instead of looking like data vanished after restart.
+window.addEventListener('pagehide',function(){
+  try{
+    var payload={db:S.db};
+    fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),keepalive:true});
+  }catch(e){}
+});
 
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
 else boot();

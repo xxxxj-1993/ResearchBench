@@ -2,7 +2,7 @@
 不碰真实数据，全部用临时目录。"""
 import os, sys, json, time, tempfile, threading, urllib.request, urllib.error
 
-ROOT = r"F:\软件包\ResearchBench - 9-16"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 import app as appmod
 

@@ -13,7 +13,7 @@ import tempfile
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-EXE = os.path.join(ROOT, "dist", "科研工作台.exe")
+EXE = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else os.path.join(ROOT, "dist", "科研工作台.exe")
 ICO = os.path.join(ROOT, "assets", "科研工作台.ico")
 
 ok = []

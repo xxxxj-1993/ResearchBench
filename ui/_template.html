@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>科研工作台</title>
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="shortcut icon" href="/favicon.ico">
+<link rel="icon" type="image/x-icon" sizes="16x16 20x20 24x24 28x28 32x32 40x40 48x48 64x64 96x96 128x128 256x256" href="/favicon.ico?v=2.4.8-icon2">
+<link rel="icon" type="image/png" sizes="256x256" href="/favicon.png?v=2.4.8-icon2">
+<link rel="shortcut icon" href="/favicon.ico?v=2.4.8-icon2">
 <style>
 :root{
   --bg:#f7f8f5; --card:#ffffff; --card2:#fcfdfb;
@@ -39,7 +40,7 @@ svg{display:block;flex:0 0 auto}
 .side{width:206px;flex:0 0 206px;background:var(--card);border-right:1px solid var(--line);
   display:flex;flex-direction:column;padding:16px 12px 12px}
 .brand{display:flex;align-items:center;gap:9px;padding:0 6px 14px;font-weight:700;font-size:15px}
-.brand .lg{width:30px;height:30px;border-radius:9px;background:var(--green);display:flex;
+.brand .lg{width:30px;height:30px;border-radius:9px;background:transparent;display:flex;
   align-items:center;justify-content:center;flex:0 0 auto}
 .brand small{display:block;font-weight:500;font-size:10.5px;color:var(--ink3)}
 .nav{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;overflow:auto}
@@ -159,12 +160,14 @@ svg{display:block;flex:0 0 auto}
 .rem .ic{width:24px;height:24px;flex:0 0 24px;border-radius:7px;display:flex;align-items:center;justify-content:center}
 .cal-bar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line2)}
 .cal-title{font-size:14.5px;font-weight:700;min-width:126px;text-align:center}
-.cal-dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid var(--line2)}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--line2)}
 .cal-dow div{text-align:center;font-size:11.5px;font-weight:700;color:var(--ink3);padding:8px 0}
-.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
-.cal-cell{min-height:104px;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);
-  min-width:0;padding:6px 6px 8px;position:relative;transition:.14s}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(90px,auto);align-items:stretch}
+.cal-cell{min-height:90px;height:100%;box-sizing:border-box;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);
+  padding:6px 6px 8px;position:relative;transition:.14s;display:flex;flex-direction:column;cursor:pointer}
 .cal-cell:nth-child(7n){border-right:0}
+.cal-cell:hover{background:#f8faf7;box-shadow:inset 0 0 0 1.5px var(--green-line)}
+.cal-cell .sub{cursor:pointer}
 .cal-cell.out{background:#fbfcfa}
 .cal-cell.out .dn{color:#c3cbc2}
 .cal-cell.today{background:#f4f9f4}
@@ -175,23 +178,25 @@ svg{display:block;flex:0 0 auto}
 .cal-cell.today .dn .n{background:var(--green);color:#fff}
 .dn .hol{margin-left:auto;font-size:10px;color:var(--ink3);font-weight:500}
 .ev{margin-top:3px;font-size:11px;border-radius:6px;padding:2px 6px;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;cursor:grab;border:1px solid transparent;font-weight:600}
+  text-overflow:ellipsis;cursor:grab;border:1px solid transparent;font-weight:600;flex-shrink:0}
 .ev.t-h1{background:var(--blue-soft);color:#4d6f92;border-color:#dde8f1}
 .ev.t-h2{background:var(--purple-soft);color:#6b5c92;border-color:#e7e1f2}
 .ev.t-h3{background:var(--orange-soft);color:#9c6c33;border-color:#f2e5ce}
 .ev.t-h4{background:var(--sage-soft);color:#5d7a57;border-color:#dde8d8}
 .ev.t-h5{background:var(--line2);color:var(--ink2);border-color:var(--line)}
+.ev.done{text-decoration:line-through;opacity:.62}
 .dl{font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 5px;margin-top:3px;cursor:pointer;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
 .dl.paper{background:var(--green-soft);color:var(--green-d);border-left:2px solid var(--sage)}
 .dl.proj{background:var(--blue-soft);color:#4d6f92;border-left:2px solid var(--blue)}
 .dl.over{background:var(--red-soft);color:var(--red);border-left:2px solid var(--red)}
-.cal-week{display:grid;grid-template-columns:58px repeat(7,minmax(0,1fr));border-top:1px solid var(--line2)}
+.dl.done{text-decoration:line-through;opacity:.62}
+.cal-week{display:grid;grid-template-columns:58px repeat(7,1fr);border-top:1px solid var(--line2)}
 .cal-week .hh{font-size:10.5px;color:var(--ink3);text-align:right;padding-right:6px;
   border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);height:46px;
   display:flex;align-items:flex-start;justify-content:flex-end;font-variant-numeric:tabular-nums}
-.cal-week .wc{min-width:0;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);height:46px;position:relative;padding:2px}
-.whead{display:grid;grid-template-columns:58px repeat(7,minmax(0,1fr));border-bottom:1px solid var(--line2)}
+.cal-week .wc{border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);height:46px;position:relative;padding:2px}
+.whead{display:grid;grid-template-columns:58px repeat(7,1fr);border-bottom:1px solid var(--line2)}
 .whead div{text-align:center;font-size:11.5px;font-weight:700;color:var(--ink3);padding:8px 0}
 .md{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:16px;align-items:start}
 .mlist{display:flex;flex-direction:column;gap:8px;padding:10px;max-height:calc(100vh - 250px);overflow:auto}
@@ -423,8 +428,12 @@ table.lst span.dash{margin:0 2px;color:var(--ink3)}
   <aside class="side">
     <div class="brand">
       <span class="lg">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 3h6"/><path d="M10 3v5.2L4.7 17.4A2 2 0 0 0 6.4 20.5h11.2a2 2 0 0 0 1.7-3.1L14 8.2V3"/><path d="M8 14h8"/>
+        <svg width="30" height="30" viewBox="0 0 917.51 871.94" style="display:block">
+          <defs><clipPath id="clippath"><rect x="164.27" y="124.09" width="588.96" height="623.76"/></clipPath></defs>
+          <rect width="917.51" height="871.94" rx="76" fill="#578665"/>
+          <g clip-path="url(#clippath)">
+            <path fill="#fff" d="M361.32,157.36h-17.37c-9.05,0-16.38-7.34-16.38-16.39s7.34-16.38,16.38-16.38h229.39c9.05,0,16.38,7.34,16.38,16.38s-7.34,16.39-16.38,16.39h-15.46v194.98l182.89,289.48c.33.42.06-.04.33.42,15.07,26.15,15.43,52.87,3.87,72.92-11.68,20.23-35.71,31.72-66.33,31.72H236.9c-30.68,0-54.02-11.47-65.68-31.69-11.54-20-8.32-43.29,6.75-69.44.25-.46,2.2-3.28,2.5-3.74l180.89-295.47v-189.18h-.04ZM480.83,498.23c70.75,42.28,104.33,33.43,132.06,21.96l-89.09-157.7c-2.14-2.97-1.71-6.58-1.71-10.28v-194.85h-125.02v194.85c0,3.7-4.03,7.27-6.12,10.28l-63.74,131.73c41.98-14.28,103.76-25.79,153.63,4.01h0ZM393.34,590.26c17.51-.6,31.4-14.97,31.4-32.49s-13.88-31.89-31.4-32.49c-17.44.69-31.22,15.03-31.22,32.48s13.78,31.79,31.22,32.49h0ZM540.57,681.67c27.13-.03,49.12-22.02,49.15-49.15-.04-27.13-22.02-49.12-49.15-49.15-27.13.04-49.12,22.02-49.15,49.15.04,27.13,22.02,49.12,49.15,49.15h0ZM458.65,451.53c-17.48-.85-31.22-15.27-31.22-32.77s13.74-31.92,31.22-32.76c17.48.85,31.22,15.26,31.22,32.76s-13.74,31.92-31.22,32.77h0ZM458.65,451.53"/>
+          </g>
         </svg>
       </span>
       <span>科研工作台<small id="verTxt">本地版</small></span>

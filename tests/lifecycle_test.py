@@ -40,11 +40,11 @@ fp.alive = False
 time.sleep(4)
 chk("窗口关闭后后端退出", not t.is_alive(), "线程状态=%s" % t.is_alive())
 
-# 3) 启动失败兜底：proc=None 且非 no_window -> 8 秒后退出（避免空跑占端口）
+# 3) 启动失败兜底：proc=None 且非 no_window -> 12 秒后退出（避免空跑占端口）
 t2 = threading.Thread(target=app.run_guard, args=(None, False), daemon=True)
 t2.start()
-time.sleep(11)
-chk("窗口启动失败 8 秒后兜底退出", not t2.is_alive())
+time.sleep(15)
+chk("窗口启动失败 12 秒后兜底退出", not t2.is_alive())
 
 # 4) RB_NO_WINDOW 模式：proc=None 但 no_window=True -> 持续运行不自杀
 t3 = threading.Thread(target=app.run_guard, args=(None, True), daemon=True)

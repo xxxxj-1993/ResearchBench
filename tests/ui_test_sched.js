@@ -7,7 +7,7 @@ const fs = require('fs');
 const pathmod = require('path');
 const os = require('os');
 
-const PY = 'C:/Users/Lenovo/.workbuddy/binaries/python/versions/3.13.12/python.exe';
+const PY = process.env.PYTHON || 'python';
 const APP = pathmod.join(__dirname, '..', 'app.py');
 const FIXTURE = fs.readFileSync(pathmod.join(__dirname, 'fixture_schedule.html'), 'utf-8');
 
@@ -107,7 +107,7 @@ const goto = async k => { click('[data-act="nav"][data-nav="' + k + '"]'); await
   chk('有解析按钮', !!doc.getElementById('impGo'));
 
   doc.getElementById('impPaste').setAttribute('data-html', FIXTURE);
-  doc.getElementById('impTeacher').value = '张';
+  doc.getElementById('impTeacher').value = '徐';
   doc.getElementById('impGo').click();
 
   await waitFor(() => doc.querySelectorAll('.impck').length > 0, 40000);
@@ -119,7 +119,7 @@ const goto = async k => { click('[data-act="nav"][data-nav="' + k + '"]'); await
   chk('教室 13/13 抽到', rooms.length === 13 && rooms.every(r => !!r.value),
     rooms.filter(r => !r.value).length + ' 个空');
   const cks = [...doc.querySelectorAll('.impck')];
-  chk('按教师「张」全部勾选', cks.filter(c => c.checked).length === 13,
+  chk('按教师「徐」全部勾选', cks.filter(c => c.checked).length === 13,
     cks.filter(c => c.checked).length + ' 条');
 
   console.log('\n=== 改周次后导入 ===');
@@ -158,6 +158,21 @@ const goto = async k => { click('[data-act="nav"][data-nav="' + k + '"]'); await
   await wait(400);
   const cards2 = doc.querySelectorAll('.clscard').length;
   chk('改成 1-20 周后第 10 周有课了', cards2 > 0, cards2 + ' 个卡片');
+
+  console.log('\n=== 混合行课周次（单周 + 周段）===');
+  click('[data-act="schView"][data-v="list"]');
+  await wait(300);
+  doc.getElementById('bulkWeeks').value = '10，12-14';
+  click('[data-act="bulkWeeks"]');
+  await wait(600);
+  st = await j(baseUrl + '/api/state');
+  chk('中英文混合周次完整保存', (st.db.classes || []).every(c => c.weeks === '10，12-14'),
+    st.db.classes[0] && st.db.classes[0].weeks);
+
+  click('[data-act="schView"][data-v="week"]');
+  await wait(400);
+  const cardsMixed10 = doc.querySelectorAll('.clscard').length;
+  chk('第 10 周：10，12-14 周的课程会显示', cardsMixed10 > 0, cardsMixed10 + ' 个卡片');
 
   console.log('\n=== 总表行内改周次 ===');
   click('[data-act="schView"][data-v="list"]');

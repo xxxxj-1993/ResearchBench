@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-科研工作台 Desktop  v2.4.5
-- 纯 Python 标准库，本机回环服务 + 系统浏览器应用窗口
+科研工作台 Desktop  v2.0
+- 纯 Python 标准库，本机回环服务 + Edge 应用模式窗口
 - 文件夹 / 软件 / 链接 点击直达
 - 只读联动 Zotero 与 Obsidian（多 vault）
-- Windows 数据保存在 %APPDATA%\\ResearchWorkbench\\
-- macOS 数据保存在 ~/Library/Application Support/ResearchWorkbench/
+- 数据保存在 %APPDATA%\\ResearchWorkbench\\
 """
 import os
 import re
@@ -24,7 +23,6 @@ import threading
 import subprocess
 import webbrowser
 import ctypes
-import posixpath
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -43,19 +41,13 @@ except Exception:  # 打包后同目录，正常情况下一定能导入
     seeddata = None
 
 APP_NAME = "ResearchWorkbench"
-VERSION = "2.4.5"
+VERSION = "2.4.9"
 CURATED_V = 3  # 内容种子版本：升级时用于给老数据补新栏目
-IS_WINDOWS = sys.platform == "win32"
-IS_MAC = sys.platform == "darwin"
 
 # ================================================================ 基础路径
 def appdata_dir():
-    if IS_MAC:
-        base = os.path.expanduser("~/Library/Application Support")
-        d = posixpath.join(base, APP_NAME)
-    else:
-        base = os.environ.get("APPDATA") or os.path.expanduser("~")
-        d = os.path.join(base, APP_NAME)
+    base = os.environ.get("APPDATA") or os.path.expanduser("~")
+    d = os.path.join(base, APP_NAME)
     os.makedirs(d, exist_ok=True)
     return d
 
@@ -76,6 +68,7 @@ logging.basicConfig(filename=LOG_FILE, level=logging.INFO,
 
 INDEX = os.path.join(resource_dir(), "ui", "index.html")
 FAVICON = os.path.join(resource_dir(), "ui", "favicon.ico")
+FAVICON_PNG = os.path.join(resource_dir(), "ui", "favicon.png")
 
 
 def iso(days=0):
@@ -402,10 +395,7 @@ def open_path(path):
     except Exception:
         before = None
     try:
-        if IS_MAC:
-            proc = subprocess.Popen(["open", path], stdout=subprocess.DEVNULL,
-                                    stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
-        elif os.path.isdir(path):
+        if os.path.isdir(path):
             # 用 explorer 打开文件夹
             proc = subprocess.Popen(["explorer", os.path.normpath(path)],
                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -429,19 +419,14 @@ def launch_app(exe, args=None):
     if not exe:
         return False, "未配置程序路径"
     exe = os.path.expandvars(os.path.expanduser(exe))
-    if not (os.path.isfile(exe) or (IS_MAC and exe.lower().endswith(".app") and os.path.isdir(exe))):
+    if not os.path.isfile(exe):
         return False, "程序不存在：" + exe
     try:
-        before = _snapshot_windows() if IS_WINDOWS else None
+        before = _snapshot_windows()  # 打开前的窗口快照，用于识别新窗口
     except Exception:
         before = None
     try:
-        if IS_MAC:
-            cmd = ["open", exe]
-            if args:
-                cmd += ["--args"] + list(args)
-        else:
-            cmd = [exe] + list(args or [])
+        cmd = [exe] + list(args or [])
         proc = subprocess.Popen(cmd, cwd=os.path.dirname(exe) or None,
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                 stdin=subprocess.DEVNULL, close_fds=True)
@@ -449,8 +434,7 @@ def launch_app(exe, args=None):
         logging.exception("launch_app")
         return False, str(e)
     try:
-        if IS_WINDOWS:
-            _after_open(proc, before=before)
+        _after_open(proc, before=before)
     except Exception:
         pass
     return True, "已启动"
@@ -462,13 +446,6 @@ def open_url(url):
     if not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", url):
         url = "https://" + url
     # 自定义协议（obsidian:// 等）交给 shell 处理，cmd start 会把 & 当分隔符
-    if IS_MAC:
-        try:
-            subprocess.Popen(["open", url], stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
-            return True, "已交给系统打开"
-        except Exception as e:
-            return False, str(e)
     if not re.match(r"^https?:", url, re.I):
         try:
             os.startfile(url)  # noqa: S606
@@ -508,13 +485,8 @@ def reveal_in_explorer(path):
     except Exception:
         before = None
     try:
-        if IS_MAC:
-            args = ["open", "-R", path] if os.path.isfile(path) else ["open", path]
-            proc = subprocess.Popen(args, stdout=subprocess.DEVNULL,
-                                    stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
-        else:
-            proc = subprocess.Popen(["explorer", "/select,", os.path.normpath(path)],
-                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        proc = subprocess.Popen(["explorer", "/select,", os.path.normpath(path)],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception as e:
         return False, str(e)
     try:
@@ -527,34 +499,23 @@ def reveal_in_explorer(path):
 
 
 def native_pick(kind):
-    if IS_MAC:
-        if kind == "folder":
-            script = 'POSIX path of (choose folder with prompt "选择文件夹")'
-        elif kind == "app":
-            script = 'POSIX path of (choose application with prompt "选择应用")'
-        else:
-            script = 'POSIX path of (choose file with prompt "选择文件")'
-        try:
-            r = subprocess.run(["osascript", "-e", script], capture_output=True,
-                               text=True, timeout=300)
-            out = (r.stdout or "").strip()
-            return (True, out) if r.returncode == 0 and out else (False, "已取消")
-        except Exception as e:
-            return False, str(e)
+    # 强制 PowerShell 用 UTF-8 输出，避免中文 Windows 默认 GBK 导致中文路径丢失/乱码
+    enc = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8;"
     if kind == "folder":
-        ps = ("Add-Type -AssemblyName System.Windows.Forms;"
+        ps = (enc + "Add-Type -AssemblyName System.Windows.Forms;"
               "$d=New-Object System.Windows.Forms.FolderBrowserDialog;"
               "$d.Description='选择文件夹';$d.ShowNewFolderButton=$true;"
               "if($d.ShowDialog() -eq 'OK'){Write-Output $d.SelectedPath}")
     else:
-        ps = ("Add-Type -AssemblyName System.Windows.Forms;"
+        ps = (enc + "Add-Type -AssemblyName System.Windows.Forms;"
               "$d=New-Object System.Windows.Forms.OpenFileDialog;"
               "$d.Title='选择文件';$d.Filter='所有文件|*.*';"
               "if($d.ShowDialog() -eq 'OK'){Write-Output $d.FileName}")
     try:
         r = subprocess.run(["powershell", "-NoProfile", "-STA", "-Command", ps],
-                           capture_output=True, timeout=300)
-        out = (r.stdout or b"").decode("utf-8", "ignore").strip()
+                           capture_output=True, timeout=300,
+                           encoding="utf-8", errors="ignore")
+        out = (r.stdout or "").strip()
         out = out.splitlines()[0].strip() if out else ""
         return (True, out) if out else (False, "已取消")
     except Exception as e:
@@ -593,7 +554,6 @@ ZOT_SNAP_META = os.path.join(DATA_DIR, "zot_snapshot.json")
 ZOT_SNAP_TTL = 300.0                # 快照最长复用 5 分钟
 
 ZOT_FALLBACK_DIRS = [
-    os.path.expanduser("~/Zotero"),
     r"D:\Zotero", r"E:\Zotero", r"C:\Zotero",
 ]
 
@@ -602,12 +562,8 @@ def zotero_data_dir():
     if ZOT["dir"]:
         return ZOT["dir"]
     # 1) 读 Zotero 配置
-    if IS_MAC:
-        pats = [os.path.expanduser("~/Library/Application Support/Zotero/Profiles/*/prefs.js"),
-                os.path.expanduser("~/Library/Application Support/Zotero/Zotero/Profiles/*/prefs.js")]
-    else:
-        pats = [os.path.join(os.environ.get("APPDATA", ""), "Zotero", "Zotero", "Profiles", "*", "prefs.js"),
-                os.path.join(os.environ.get("APPDATA", ""), "Zotero", "Profiles", "*", "prefs.js")]
+    pats = [os.path.join(os.environ.get("APPDATA", ""), "Zotero", "Zotero", "Profiles", "*", "prefs.js"),
+            os.path.join(os.environ.get("APPDATA", ""), "Zotero", "Profiles", "*", "prefs.js")]
     for pat in pats:
         for p in glob.glob(pat):
             try:
@@ -971,6 +927,39 @@ def zotero_profile():
 
 
 @_zlocked
+def zotero_storage_search(query="", limit=200):
+    """Search Zotero storage attachment files by one or more keywords."""
+    d = zotero_data_dir()
+    storage = os.path.join(d, "storage") if d else ""
+    if not storage or not os.path.isdir(storage):
+        return []
+    terms = [x.casefold() for x in re.split(r"[\s,，、;；]+", str(query or "").strip()) if x]
+    out = []
+    try:
+        for root, dirs, files in os.walk(storage):
+            dirs[:] = [x for x in dirs if x not in {".zotero", "cache"}]
+            for name in files:
+                path = os.path.join(root, name)
+                rel = os.path.relpath(path, storage)
+                if terms and not all(t in (name + " " + rel).casefold() for t in terms):
+                    continue
+                try:
+                    st = os.stat(path)
+                except OSError:
+                    continue
+                out.append({"name": name, "path": os.path.normpath(path),
+                            "relative": rel, "size": st.st_size,
+                            "mtime": st.st_mtime,
+                            "ext": os.path.splitext(name)[1].lower()})
+                if len(out) >= max(1, min(int(limit or 200), 1000)):
+                    return out
+    except OSError:
+        pass
+    out.sort(key=lambda x: (-x["mtime"], x["name"].casefold()))
+    return out
+
+
+@_zlocked
 def zotero_recent_notes(limit=30):
     con = zotero_conn()
     if con is None:
@@ -995,10 +984,7 @@ def obsidian_vaults():
     if OBS["vaults"] and time.time() - OBS["scan"] < 60:
         return OBS["vaults"]
     out = []
-    if IS_MAC:
-        cfg = os.path.expanduser("~/Library/Application Support/obsidian/obsidian.json")
-    else:
-        cfg = os.path.join(os.environ.get("APPDATA", ""), "obsidian", "obsidian.json")
+    cfg = os.path.join(os.environ.get("APPDATA", ""), "obsidian", "obsidian.json")
     if os.path.isfile(cfg):
         try:
             d = json.load(open(cfg, encoding="utf-8"))
@@ -1394,63 +1380,6 @@ APP_HINTS = [
 ]
 
 
-# macOS 应用包识别规则。目标保存为 .app，由 launch_app 使用 `open -a` 启动。
-MAC_APP_HINTS = [
-    ("仿真计算", "COMSOL", ["/Applications/COMSOL*.app", "/Applications/COMSOL*/**/*.app",
-                              "~/Applications/COMSOL*.app"]),
-    ("仿真计算", "MATLAB", ["/Applications/MATLAB_R*.app", "~/Applications/MATLAB_R*.app"]),
-    ("仿真计算", "Lumerical FDTD", ["/Applications/Lumerical*.app", "/Applications/Lumerical*/**/FDTD*.app",
-                                     "/Applications/Ansys Lumerical*.app", "/Applications/Ansys*/**/FDTD*.app"]),
-    ("仿真计算", "Python", ["/Applications/Python 3*.app"]),
-    ("三维建模", "AutoCAD", ["/Applications/Autodesk/AutoCAD *.app",
-                               "/Applications/Autodesk/AutoCAD */AutoCAD*.app", "/Applications/AutoCAD *.app"]),
-    ("三维建模", "Maya", ["/Applications/Autodesk/maya*.app", "/Applications/Autodesk/Maya*.app",
-                            "/Applications/Autodesk/maya*/Maya.app", "/Applications/Autodesk/Maya*/Maya.app"]),
-    ("三维建模", "Rhino", ["/Applications/Rhinoceros*.app", "/Applications/Rhino*.app"]),
-    ("三维建模", "Blender", ["/Applications/Blender.app", "~/Applications/Blender.app"]),
-    ("三维建模", "SketchUp", ["/Applications/SketchUp *.app", "/Applications/SketchUp*.app"]),
-    ("三维建模", "Cinema 4D", ["/Applications/Maxon Cinema 4D *.app", "/Applications/Cinema 4D*.app"]),
-    ("三维建模", "FreeCAD", ["/Applications/FreeCAD.app", "~/Applications/FreeCAD.app"]),
-    ("三维建模", "KeyShot", ["/Applications/KeyShot*.app"]),
-    ("绘图图像", "Photoshop", ["/Applications/Adobe Photoshop */Adobe Photoshop *.app", "/Applications/Adobe Photoshop*.app"]),
-    ("绘图图像", "Illustrator", ["/Applications/Adobe Illustrator */Adobe Illustrator.app", "/Applications/Adobe Illustrator*.app"]),
-    ("绘图图像", "Inkscape", ["/Applications/Inkscape.app", "~/Applications/Inkscape.app"]),
-    ("绘图图像", "GIMP", ["/Applications/GIMP*.app", "~/Applications/GIMP*.app"]),
-    ("绘图图像", "ImageJ", ["/Applications/ImageJ*.app"]),
-    ("绘图图像", "Fiji", ["/Applications/Fiji.app", "~/Applications/Fiji.app"]),
-    ("绘图图像", "GraphPad Prism", ["/Applications/Prism*.app", "/Applications/GraphPad Prism*.app"]),
-    ("绘图图像", "Premiere Pro", ["/Applications/Adobe Premiere Pro */Adobe Premiere Pro *.app"]),
-    ("绘图图像", "After Effects", ["/Applications/Adobe After Effects */Adobe After Effects *.app"]),
-    ("文献写作", "Zotero", ["/Applications/Zotero.app", "~/Applications/Zotero.app"]),
-    ("文献写作", "EndNote", ["/Applications/EndNote*.app"]),
-    ("文献写作", "Mendeley", ["/Applications/Mendeley Reference Manager.app", "/Applications/Mendeley Desktop.app"]),
-    ("文献写作", "TeXstudio", ["/Applications/texstudio.app", "~/Applications/texstudio.app"]),
-    ("文献写作", "Typora", ["/Applications/Typora.app", "~/Applications/Typora.app"]),
-    ("文献写作", "VS Code", ["/Applications/Visual Studio Code.app", "~/Applications/Visual Studio Code.app"]),
-    ("文献写作", "Obsidian", ["/Applications/Obsidian.app", "~/Applications/Obsidian.app"]),
-    ("数据分析", "SPSS", ["/Applications/IBM SPSS Statistics*/SPSS Statistics.app", "/Applications/SPSS Statistics.app"]),
-    ("数据分析", "RStudio", ["/Applications/RStudio.app", "~/Applications/RStudio.app"]),
-]
-
-
-def mac_default_apps():
-    out = []
-    for cat, name, pats in MAC_APP_HINTS:
-        hits = []
-        for pat in pats:
-            try:
-                hits.extend(p for p in glob.glob(os.path.expanduser(pat), recursive=True)
-                            if os.path.isdir(p))
-            except Exception:
-                pass
-        if hits:
-            best = sorted({posixpath.normpath(p) for p in hits},
-                          key=lambda p: (not p.startswith("/Applications/"), p.lower()))[0]
-            out.append({"id": "ap" + str(len(out)), "category": cat, "name": name,
-                        "kind": "app", "target": best, "note": ""})
-    return out
-
-
 # ---------------- 盘符枚举、注册表兜底、多版本取舍 ----------------
 _DRIVE_CACHE = None
 
@@ -1506,120 +1435,43 @@ def _path_score(p):
 
 
 _UNINSTALL_CACHE = None
-_APP_PATH_CACHE = None
 _SKIP_DIR = ("$recycle.bin", "system volume information", "windows", "winsxs",
              "installer", "$patchcache$", "driverstore", "temp", "tmp",
              "node_modules", "__pycache__", "package cache")
 
 
-def _registry_views():
-    """当前系统可用的注册表视图，兼容 32/64 位软件登记位置。"""
-    if winreg is None:
-        return [0]
-    out = [0]
-    for attr in ("KEY_WOW64_64KEY", "KEY_WOW64_32KEY"):
-        flag = getattr(winreg, attr, 0)
-        if flag and flag not in out:
-            out.append(flag)
-    return out
-
-
-def _registry_path(value):
-    """从注册表值中提取可用于有限深度搜索的目录。"""
-    value = str(value or "").strip()
-    if not value:
-        return ""
-    if value.startswith('"'):
-        m = re.match(r'^"([^"]+)"', value)
-        path = m.group(1) if m else value.strip('"')
-    else:
-        path = value.split(",", 1)[0].strip()
-        if ".exe" in path.lower():
-            path = path[:path.lower().find(".exe") + 4]
-    path = os.path.expandvars(path).strip().strip('"')
-    if os.path.isfile(path):
-        return os.path.dirname(os.path.normpath(path))
-    if os.path.isdir(path):
-        return os.path.normpath(path)
-    return ""
-
-
 def uninstall_entries():
-    """注册表里的 (显示名, 安装目录)，用于兜底查找自定义安装路径。"""
+    """注册表里的 (显示名, 安装目录)，用于兜底查找装在自定义路径的软件。"""
     global _UNINSTALL_CACHE
     if _UNINSTALL_CACHE is None:
         items = []
         if winreg is not None:
-            subs = (r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",)
+            subs = (r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+                    r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall")
             for hive in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
                 for sub in subs:
-                    for view in _registry_views():
-                        try:
-                            h = winreg.OpenKey(hive, sub, 0, winreg.KEY_READ | view)
-                        except OSError:
-                            continue
-                        i = 0
-                        while True:
-                            try:
-                                k = winreg.EnumKey(h, i)
-                            except OSError:
-                                break
-                            i += 1
-                            try:
-                                it = winreg.OpenKey(h, k, 0, winreg.KEY_READ | view)
-                                dn = str(winreg.QueryValueEx(it, "DisplayName")[0] or "")
-                            except OSError:
-                                continue
-                            loc = ""
-                            for field in ("InstallLocation", "DisplayIcon", "UninstallString"):
-                                try:
-                                    loc = _registry_path(winreg.QueryValueEx(it, field)[0])
-                                except OSError:
-                                    loc = ""
-                                if loc:
-                                    break
-                            if dn and loc:
-                                items.append((dn, loc))
-        _UNINSTALL_CACHE = items
-    return _UNINSTALL_CACHE
-
-
-def app_path_entries():
-    """读取 Windows App Paths，补足没有卸载项安装目录的软件。"""
-    global _APP_PATH_CACHE
-    if _APP_PATH_CACHE is None:
-        items = []
-        if winreg is not None:
-            sub = r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"
-            for hive in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
-                for view in _registry_views():
                     try:
-                        h = winreg.OpenKey(hive, sub, 0, winreg.KEY_READ | view)
+                        h = winreg.OpenKey(hive, sub)
                     except OSError:
                         continue
                     i = 0
                     while True:
                         try:
-                            exe_name = winreg.EnumKey(h, i)
+                            k = winreg.EnumKey(h, i)
                         except OSError:
                             break
                         i += 1
                         try:
-                            it = winreg.OpenKey(h, exe_name, 0, winreg.KEY_READ | view)
-                            exe_path = str(winreg.QueryValueEx(it, "")[0] or "")
+                            it = winreg.OpenKey(h, k)
+                            dn = str(winreg.QueryValueEx(it, "DisplayName")[0] or "")
+                            loc = str(winreg.QueryValueEx(it, "InstallLocation")[0] or "")
                         except OSError:
                             continue
-                        exe_path = os.path.expandvars(exe_path).strip().strip('"')
-                        if os.path.isfile(exe_path):
-                            items.append((exe_name.lower(), os.path.normpath(exe_path)))
-        _APP_PATH_CACHE = items
-    return _APP_PATH_CACHE
-
-
-def _app_path_hits(patterns):
-    wanted = [_exe_regex(p) for p in patterns]
-    return [path for exe_name, path in app_path_entries()
-            if any(rx.match(exe_name) for rx in wanted)]
+                        loc = loc.strip().strip('"')
+                        if dn and loc and os.path.isdir(loc):
+                            items.append((dn, os.path.normpath(loc)))
+        _UNINSTALL_CACHE = items
+    return _UNINSTALL_CACHE
 
 
 def _kw(s):
@@ -1683,28 +1535,6 @@ def default_apps():
       ① 路径模板 × 本机所有盘符（覆盖主流安装位置，不再写死 C:/D:）
       ② 注册表卸载信息里的安装目录（覆盖装在自定义路径的软件）
     同一软件有多个安装时取打分最高者，Program Files 正规版优先。"""
-    # macOS 直接扫描 /Applications 与 ~/Applications 中的应用包。
-    if IS_MAC:
-        out = mac_default_apps()
-        for i, v in enumerate(obsidian_vaults()):
-            out.append({"id": "apv" + str(i), "category": "知识库",
-                        "name": "Obsidian · " + v["name"], "kind": "folder",
-                        "target": v["path"], "note": "笔记仓库"})
-        zd = zotero_data_dir()
-        if zd:
-            out.append({"id": "apz0", "category": "知识库", "name": "Zotero 数据目录",
-                        "kind": "folder", "target": zd, "note": "含 zotero.sqlite"})
-            st = os.path.join(zd, "storage")
-            if os.path.isdir(st):
-                out.append({"id": "apz1", "category": "知识库", "name": "Zotero PDF 附件",
-                            "kind": "folder", "target": st, "note": "所有文献附件"})
-        return out
-
-    # Windows 手工重新探测时读取本次调用的磁盘与注册表状态，避免沿用启动时缓存。
-    global _UNINSTALL_CACHE, _APP_PATH_CACHE, _DRIVE_CACHE
-    _UNINSTALL_CACHE = None
-    _APP_PATH_CACHE = None
-    _DRIVE_CACHE = None
     out = []
     for cat, name, pats in APP_HINTS:
         cands, seen = [], set()
@@ -1720,7 +1550,6 @@ def default_apps():
                 hits += [h for h in glob.glob(c) if os.path.isfile(h)]
             except Exception:
                 pass
-        hits += _app_path_hits(pats)
         if not hits:                      # 模板没找到 → 查注册表里的安装目录
             hits = _search_exe(_reg_dirs_for(name), _exe_regex(pats[0]))
         if not hits:
@@ -1959,6 +1788,8 @@ def parse_class_cell(raw):
     out = {"name": "", "cls": "", "room": "", "teacher": "",
            "weeks": "", "odd": "all", "note": ""}
 
+    # 一格里可能同时出现单周与周段，例如“第10，12-14周”，也可能写成
+    # “理论1-8周，实验10、12-14周”。逐段提取并合并，不能只拿第一个范围。
     week_parts = []
     week_matches = list(_WEEK_RE.finditer(s))
     for m in week_matches:
@@ -2129,75 +1960,13 @@ def parse_schedule_payload(html_text="", plain_text="", teacher_key=""):
 #   bibtype  article / inproceedings / book ...
 #   bibkey   条目 key
 #   title    已清理 LaTeX
-#   authors  "A. Author, B. Researcher"（名缩写在前，符合理工科投稿习惯）
+#   authors  "J. Xu, Y. Luo, K. L. Tsakmakidis"（名缩写在前，符合理工科投稿习惯）
 #   journal 期刊 / 会议 / 出版社，按优先级取一个
 #   year     int
 #   volume / pages / doi / publisher / abstract / url
 
-_CROSSREF_UA = ("ResearchBench/%s" % VERSION)
+_CROSSREF_UA = ("ResearchBench/%s (Windows; local desktop app)" % VERSION)
 _OPENALEX_UA = _CROSSREF_UA
-
-
-def _native_json_request(url, headers=None, timeout=12):
-    """通过系统网络工具读取 JSON。
-
-    浏览器可联网而打包后的 Python 失败时，通常是系统代理、校园网证书或企业
-    HTTPS 检查没有被 Python/OpenSSL 正确继承。Windows PowerShell 使用系统
-    网络与证书设置；macOS curl 使用系统网络栈，可作为可靠兜底。
-    """
-    headers = dict(headers or {})
-    ua = str(headers.get("User-Agent") or _CROSSREF_UA)
-    accept = str(headers.get("Accept") or "application/json")
-    seconds = max(3, int(timeout or 12))
-    if IS_WINDOWS:
-        script = (
-            "$ProgressPreference='SilentlyContinue';"
-            "[Console]::OutputEncoding=[Text.Encoding]::UTF8;"
-            "$r=Invoke-WebRequest -UseBasicParsing -Uri $env:RB_REQUEST_URL "
-            "-TimeoutSec ([int]$env:RB_REQUEST_TIMEOUT) "
-            "-Headers @{'User-Agent'=$env:RB_REQUEST_UA;Accept=$env:RB_REQUEST_ACCEPT};"
-            "[Console]::Out.Write($r.Content)"
-        )
-        cmd = ["powershell", "-NoProfile", "-NonInteractive", "-Command", script]
-        run_env = os.environ.copy()
-        run_env.update({"RB_REQUEST_URL": url, "RB_REQUEST_TIMEOUT": str(seconds),
-                        "RB_REQUEST_UA": ua, "RB_REQUEST_ACCEPT": accept})
-    elif IS_MAC:
-        cmd = ["/usr/bin/curl", "--fail", "--silent", "--show-error", "--location",
-               "--max-time", str(seconds), "--header", "User-Agent: " + ua,
-               "--header", "Accept: " + accept, url]
-    else:
-        cmd = ["curl", "--fail", "--silent", "--show-error", "--location",
-               "--max-time", str(seconds), "--header", "User-Agent: " + ua,
-               "--header", "Accept: " + accept, url]
-    if not IS_WINDOWS:
-        run_env = None
-    done = subprocess.run(cmd, capture_output=True, timeout=seconds + 5, env=run_env)
-    if done.returncode != 0:
-        err = (done.stderr or b"").decode("utf-8", "replace").strip()
-        raise OSError(err or ("系统网络请求失败，退出码 %s" % done.returncode))
-    raw = done.stdout or b""
-    return json.loads(raw.decode("utf-8", "replace"))
-
-
-def fetch_json(url, headers=None, timeout=12):
-    """读取远程 JSON；Python 网络失败时自动改走操作系统网络通道。"""
-    headers = dict(headers or {})
-    first_error = None
-    try:
-        req = Request(url, headers=headers)
-        with urlopen(req, timeout=timeout) as r:
-            return json.loads(r.read().decode("utf-8", "replace"))
-    except HTTPError:
-        raise
-    except Exception as e:
-        first_error = e
-        logging.warning("Python network request failed, retrying with system stack: %s", e)
-    try:
-        return _native_json_request(url, headers, timeout)
-    except Exception as e:
-        logging.warning("System network request failed: %s", e)
-        raise URLError("Python 通道：%s；系统通道：%s" % (first_error, e))
 
 # LaTeX 重音与转义 → 普通字符
 _TEX_ACCENT = {
@@ -2290,7 +2059,7 @@ def _initials_of(given):
 
 
 def _bib_authors(raw):
-    """Author, Alice and Researcher, Bob  →  A. Author, B. Researcher"""
+    """Xu, Jie and Luo, Yang  →  J. Xu, Y. Luo"""
     raw = re.sub(r'\s+', ' ', (raw or '').strip())
     if not raw:
         return ''
@@ -2444,19 +2213,20 @@ def crossref_pub(doi, timeout=12):
     raw = (doi or '').strip()
     m = re.search(r'(10\.\d{4,9}/[^\s"\'<>]+)', raw)
     if not m:
-        return {"ok": False, "msg": "没认出这是 DOI。长这样：10.1234/example.2025.001"}
+        return {"ok": False, "msg": "没认出这是 DOI。长这样：10.1002/adom.202501115"}
     d = quote(m.group(1).rstrip('.,;'), safe='')
     try:
-        data = fetch_json("https://api.crossref.org/works/" + d,
-                          {"User-Agent": _CROSSREF_UA, "Accept": "application/json"},
-                          timeout)
+        req = Request("https://api.crossref.org/works/" + d,
+                      headers={"User-Agent": _CROSSREF_UA,
+                               "Accept": "application/json"})
+        with urlopen(req, timeout=timeout) as r:
+            data = json.loads(r.read().decode("utf-8", "replace"))
     except HTTPError as e:
         if getattr(e, "code", 0) == 404:
             return {"ok": False, "msg": "Crossref 里查不到这个 DOI，检查一下有没有输错。"}
         return {"ok": False, "msg": "Crossref 返回错误 %s" % getattr(e, "code", "?")}
-    except (URLError, socket.timeout, TimeoutError) as e:
-        logging.warning("Crossref unavailable: %s", e)
-        return {"ok": False, "msg": "连不上 Crossref。程序已尝试 Python 和系统网络通道；请检查代理、防火墙或证书设置。"}
+    except (URLError, socket.timeout, TimeoutError):
+        return {"ok": False, "msg": "连不上 Crossref。没联网或被挡了？可以改用「粘贴 BibTeX」，那个不用联网。"}
     except Exception as e:
         return {"ok": False, "msg": "查询失败：%s" % e}
 
@@ -2517,8 +2287,10 @@ def openalex_citation(doi, timeout=12):
     work_id = quote("https://doi.org/" + clean, safe=':/')
     url = "https://api.openalex.org/works/" + work_id + "?select=id,doi,cited_by_count"
     try:
-        data = fetch_json(url, {"User-Agent": _OPENALEX_UA,
-                                "Accept": "application/json"}, timeout)
+        req = Request(url, headers={"User-Agent": _OPENALEX_UA,
+                                    "Accept": "application/json"})
+        with urlopen(req, timeout=timeout) as r:
+            data = json.loads(r.read().decode("utf-8", "replace"))
     except HTTPError as e:
         code = getattr(e, "code", 0)
         if code == 404:
@@ -2602,6 +2374,8 @@ LINK_PRESETS = [
 
 # ================================================================ 存储
 STATE = {"db": None}
+SAVE_LOCK = threading.RLock()
+SAVE_COUNT = 0
 
 
 def _all_sample(lst):
@@ -2619,10 +2393,19 @@ def _all_sample(lst):
 def load_db():
     raw = None
     try:
-        with open(DATA_FILE, encoding="utf-8") as f:
-            raw = json.load(f)
+        with open(DATA_FILE, encoding="utf-8") as fh:
+            raw = json.load(fh)
     except Exception:
-        raw = None
+        # A power loss or an interrupted antivirus scan must not turn a valid
+        # previous session into an apparently empty workbench.  The backup is
+        # written before every successful replacement by save_db().
+        backup = DATA_FILE + ".bak"
+        try:
+            with open(backup, encoding="utf-8") as fh:
+                raw = json.load(fh)
+            logging.warning("loaded data backup after main file read failure")
+        except Exception:
+            raw = None
 
     db = raw if isinstance(raw, dict) else None
     v1_items = []
@@ -2713,90 +2496,54 @@ def load_db():
             db["plans"] = base2.get("plans", [])
         db["_seedV"] = CURATED_V
 
+    # ---- 软件快捷入口：仅在“一个软件入口都没有”时自动补齐一次 ----
+    # 用户手动删除过的软件入口不会被自动加回来（需要时用界面上的“重新扫描”）。
+    # 这样启动也不再做软件扫描，常用栏目完全以用户自己的编辑为准。
+    if not any(s.get("kind") == "app" for s in (db.get("shortcuts") or [])):
+        have = set((s.get("kind"), s.get("target")) for s in db.get("shortcuts", []))
+        for s in default_apps():
+            if (s["kind"], s["target"]) not in have:
+                s["id"] = "auto" + str(abs(hash(s["target"])) % (10 ** 9))
+                db.setdefault("shortcuts", []).append(s)
+                have.add((s["kind"], s["target"]))
+
     STATE["db"] = db
     return db
 
 
 def save_db():
+    """Atomically persist the current database and keep one recoverable copy.
+
+    HTTP requests are handled by different threads.  Serialising the complete
+    write (including replace) prevents two rapid edits from racing on the same
+    ``data.json.tmp`` file and accidentally restoring an older snapshot.
+    """
+    global SAVE_COUNT
     if not STATE["db"]:
         return
-    tmp = DATA_FILE + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(STATE["db"], f, ensure_ascii=False, indent=1)
-    os.replace(tmp, DATA_FILE)
-
-
-_BACKUP_LIST_KEYS = ("papers", "projects", "pubs", "grants", "teaching",
-                     "teachProjects", "patents", "ideas", "diary", "events",
-                     "classes", "plans", "materials", "shortcuts")
-
-
-def _backup_counts(db):
-    """返回导入结果摘要，供界面明确展示是否真的恢复了数据。"""
-    return {k: len(db.get(k) or []) if isinstance(db.get(k), list) else 0
-            for k in _BACKUP_LIST_KEYS}
-
-
-def import_backup_file(path):
-    """从本地 JSON 恢复整个工作台，并保留一份导入前数据。"""
-    path = os.path.abspath(os.path.expanduser(os.path.expandvars(path or "")))
-    if not path or not os.path.isfile(path):
-        return {"ok": False, "msg": "没有选择有效的 JSON 备份文件"}
-    try:
-        if os.path.getsize(path) > 50 * 1024 * 1024:
-            return {"ok": False, "msg": "备份文件超过 50 MB，已停止导入"}
-        with open(path, encoding="utf-8-sig") as f:
-            incoming = json.load(f)
-    except Exception as e:
-        return {"ok": False, "msg": "无法解析备份文件：%s" % e}
-    if not isinstance(incoming, dict):
-        return {"ok": False, "msg": "备份内容不是有效的工作台数据"}
-    recognized = set(_BACKUP_LIST_KEYS) | {"settings", "focus", "items"}
-    if not recognized.intersection(incoming):
-        return {"ok": False, "msg": "没有识别到论文、项目或设置等工作台字段"}
-
-    previous = STATE.get("db")
-    before_path = ""
-    try:
-        if os.path.isfile(DATA_FILE):
-            stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-            before_path = os.path.join(DATA_DIR, "data-before-import-%s.json" % stamp)
-            shutil.copy2(DATA_FILE, before_path)
-        STATE["db"] = incoming
-        save_db()
-        # 复用启动时的兼容迁移，给旧备份补齐当前版本所需字段。
-        normalized = load_db()
-        save_db()
-        return {"ok": True, "msg": "导入成功", "db": normalized,
-                "counts": _backup_counts(normalized), "dataFile": DATA_FILE,
-                "beforeImport": before_path}
-    except Exception as e:
-        STATE["db"] = previous
-        logging.exception("import backup failed")
-        return {"ok": False, "msg": "写入备份失败：%s" % e}
-
-
-def merge_scanned_shortcuts(db, fresh):
-    """把扫描结果合并进常用入口，并按规范化路径避免重复。"""
-    db.setdefault("shortcuts", [])
-    have = set((s.get("kind"), os.path.normcase(os.path.normpath(s.get("target") or "")))
-               for s in db["shortcuts"])
-    added = []
-    for s in fresh:
-        key = (s.get("kind"), os.path.normcase(os.path.normpath(s.get("target") or "")))
-        if key in have:
-            continue
-        s = dict(s)
-        s["id"] = "ap" + str(now_ms()) + str(len(added))
-        db["shortcuts"].append(s)
-        added.append(s)
-        have.add(key)
-    found_apps = sum(1 for s in fresh if s.get("kind") == "app")
-    added_apps = sum(1 for s in added if s.get("kind") == "app")
-    return {"ok": True, "added": added, "total": len(fresh),
-            "foundApps": found_apps, "addedApps": added_apps,
-            "foundResources": len(fresh) - found_apps,
-            "addedResources": len(added) - added_apps}
+    with SAVE_LOCK:
+        tmp = DATA_FILE + ".tmp"
+        backup = DATA_FILE + ".bak"
+        try:
+            payload = json.dumps(STATE["db"], ensure_ascii=False, indent=1)
+            with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+                f.write(payload)
+                f.flush()
+                os.fsync(f.fileno())
+            if os.path.isfile(DATA_FILE):
+                # Copy before replacing the live file: this is the last known
+                # good snapshot if the process or machine stops mid-write.
+                shutil.copy2(DATA_FILE, backup)
+            os.replace(tmp, DATA_FILE)
+            SAVE_COUNT += 1
+        except Exception:
+            logging.exception("save_db failed")
+            try:
+                if os.path.isfile(tmp):
+                    os.remove(tmp)
+            except Exception:
+                pass
+            raise
 
 
 # ================================================================ HTTP
@@ -2805,6 +2552,23 @@ LAST_SEEN = {"t": 0.0}
 
 def touch():
     LAST_SEEN["t"] = time.time()
+
+
+def workbench_window_exists():
+    """Return whether our Edge app window is still present.
+
+    Edge's launcher process can exit immediately after handing an ``--app``
+    window to an already-running browser process.  Looking only at Popen.poll()
+    therefore made the local API shut down while the visible window remained.
+    """
+    if not _win_user32():
+        return False
+    def pred(hwnd):
+        user32 = _win_user32()
+        return (bool(user32 and user32.IsWindowVisible(hwnd))
+                and _win_class(hwnd) == "Chrome_WidgetWin_1"
+                and "科研工作台" in _win_text(hwnd))
+    return bool(_enum_windows(pred))
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -2854,17 +2618,19 @@ class Handler(BaseHTTPRequestHandler):
 
         if path in ("/favicon.ico", "/favicon.png"):
             # 窗口标题栏 / 任务栏图标：Edge 的 --app 窗口取的是页面 favicon
+            icon_file = FAVICON_PNG if path == "/favicon.png" else FAVICON
+            icon_type = "image/png" if path == "/favicon.png" else "image/x-icon"
             try:
-                with open(FAVICON, "rb") as f:
-                    self._send(200, f.read(), "image/x-icon")
+                with open(icon_file, "rb") as f:
+                    self._send(200, f.read(), icon_type)
             except Exception:
-                self._send(404, b"", "image/x-icon")
+                self._send(404, b"", icon_type)
             return
 
         if path == "/api/state":
             db = STATE["db"]
             self._json({"ok": True, "db": db, "version": VERSION, "dataDir": DATA_DIR,
-                        "platform": sys.platform, "today": iso(0)})
+                        "today": iso(0)})
             return
 
         if path == "/api/dir":
@@ -2874,6 +2640,12 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/ping":
             self._json({"ok": True})
+            return
+
+        if path == "/api/health":
+            self._json({"ok": True, "saved": os.path.isfile(DATA_FILE),
+                        "backup": os.path.isfile(DATA_FILE + ".bak"),
+                        "saveCount": SAVE_COUNT})
             return
 
         # ---------- Zotero ----------
@@ -2891,6 +2663,12 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/zotero/profile":
             self._json({"ok": True, "items": zotero_profile()})
+            return
+        if path == "/api/zotero/storage-search":
+            kw = (q.get("q") or [""])[0]
+            lim = int((q.get("limit") or ["200"])[0])
+            self._json({"ok": True, "items": zotero_storage_search(kw, lim),
+                        "query": kw, "dir": os.path.join(zotero_data_dir() or "", "storage")})
             return
         if path == "/api/zotero/notes":
             self._json({"ok": True, "items": zotero_recent_notes(40)})
@@ -2958,36 +2736,37 @@ class Handler(BaseHTTPRequestHandler):
             db = STATE["db"]
             if isinstance(b.get("db"), dict):
                 STATE["db"] = b["db"]
-            save_db()
-            self._json({"ok": True, "saved": time.time()})
-            return
-
-        if path == "/api/backup/import":
-            source = b.get("path") or ""
-            if not source:
-                ok, picked = native_pick("file")
-                if not ok:
-                    self._json({"ok": False, "cancelled": picked == "已取消",
-                                "msg": picked})
-                    return
-                source = picked
-            self._json(import_backup_file(source))
+            try:
+                save_db()
+            except Exception as e:
+                self._json({"ok": False, "msg": "本地保存失败：%s" % e}, 500)
+                return
+            self._json({"ok": True, "saved": time.time(), "saveCount": SAVE_COUNT})
             return
 
         if path == "/api/patch":
             # 增量更新某一类，避免整库来回传
             db = STATE["db"]
             key = b.get("key")
+            changed = False
             if key in db and isinstance(b.get("value"), list):
                 db[key] = b["value"]
-                save_db()
+                changed = True
             elif key == "settings" and isinstance(b.get("value"), dict):
                 db["settings"].update(b["value"])
-                save_db()
+                changed = True
             elif key == "focus" and isinstance(b.get("value"), dict):
                 db["focus"] = b["value"]
+                changed = True
+            if not changed:
+                self._json({"ok": False, "msg": "未知的数据栏目"}, 400)
+                return
+            try:
                 save_db()
-            self._json({"ok": True})
+            except Exception as e:
+                self._json({"ok": False, "msg": "本地保存失败：%s" % e}, 500)
+                return
+            self._json({"ok": True, "saveCount": SAVE_COUNT})
             return
 
         if path == "/api/open":
@@ -3084,9 +2863,15 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/rescan":
             db = STATE["db"]
             fresh = default_apps()
-            result = merge_scanned_shortcuts(db, fresh)
+            have = set((s["kind"], s["target"]) for s in db["shortcuts"])
+            added = []
+            for s in fresh:
+                if (s["kind"], s["target"]) not in have:
+                    s["id"] = "ap" + str(now_ms()) + str(len(added))
+                    db["shortcuts"].append(s)
+                    added.append(s)
             save_db()
-            self._json(result)
+            self._json({"ok": True, "added": added, "total": len(fresh)})
             return
 
         self._json({"ok": False, "msg": "not found"}, 404)
@@ -3116,23 +2901,66 @@ def free_port(start=8756):
     return 0
 
 
+def _maintain_window_icons(proc):
+    """Edge may downscale favicon to 16px before enlarging it for the taskbar.
+
+    Set native small/large window icons directly from the matching ICO frame.
+    Only touch the window owned by the process we started, never other browsers.
+    Icon handles are retained for the application's lifetime (not freed while
+    Edge is using them). Check again after page load or a monitor/DPI change.
+    """
+    user32 = _win_user32()
+    if not user32:
+        return
+    try:
+        load = user32.LoadImageW
+        load.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_uint,
+                         ctypes.c_int, ctypes.c_int, ctypes.c_uint]
+        load.restype = ctypes.c_void_p
+        send = user32.SendMessageTimeoutW
+        send.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_size_t,
+                         ctypes.c_ssize_t, ctypes.c_uint, ctypes.c_uint,
+                         ctypes.POINTER(ctypes.c_size_t)]
+        send.restype = ctypes.c_ssize_t
+        dpi_for = user32.GetDpiForWindow
+        dpi_for.argtypes = [ctypes.c_void_p]
+        dpi_for.restype = ctypes.c_uint
+        metrics = user32.GetSystemMetricsForDpi
+        metrics.argtypes = [ctypes.c_int, ctypes.c_uint]
+        metrics.restype = ctypes.c_int
+        icons = {}
+        while proc.poll() is None:
+            for hwnd in _find_windows_by_pid(proc.pid):
+                if _win_class(hwnd) != 'Chrome_WidgetWin_1' or '科研工作台' not in _win_text(hwnd):
+                    continue
+                dpi = dpi_for(hwnd) or 96
+                for kind, metric in ((0, 49), (1, 11)):  # ICON_SMALL / ICON_BIG
+                    size = metrics(metric, dpi)
+                    if size <= 0:
+                        continue
+                    if size not in icons:
+                        icons[size] = load(None, FAVICON, 1, size, size, 0x10)  # LR_LOADFROMFILE
+                    icon = icons[size]
+                    if not icon:
+                        continue
+                    current = ctypes.c_size_t()
+                    if send(hwnd, 0x7F, kind, 0, 0x2, 500, ctypes.byref(current)) and current.value != icon:
+                        result = ctypes.c_size_t()
+                        send(hwnd, 0x80, kind, icon, 0x2, 500, ctypes.byref(result))  # WM_SETICON
+            time.sleep(2)
+    except Exception:
+        logging.exception('window icon update')
+
+
 def open_window(url):
-    profile = os.path.join(tempfile.gettempdir(), APP_NAME + "-webview")
-    if IS_MAC:
-        cands = [
-            "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
-            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-            os.path.expanduser("~/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"),
-            os.path.expanduser("~/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
-        ]
-    else:
-        cands = [
-            r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-            r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-            os.path.join(os.environ.get("LOCALAPPDATA", ""), r"Google\Chrome\Application\chrome.exe"),
-        ]
+    profile = os.path.join(os.environ.get("TEMP", DATA_DIR), APP_NAME + "-webview")
+    cands = [
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), r"Google\Chrome\Application\chrome.exe"),
+    ]
     for exe in cands:
         if exe and os.path.isfile(exe):
             args = [exe, "--app=" + url, "--window-size=1440,960",
@@ -3146,27 +2974,14 @@ def open_window(url):
                     "--disable-backgrounding-occluded-windows",
                     "--disable-renderer-backgrounding"]
             try:
-                return subprocess.Popen(args, stdout=subprocess.DEVNULL,
+                proc = subprocess.Popen(args, stdout=subprocess.DEVNULL,
                                         stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+                threading.Thread(target=_maintain_window_icons, args=(proc,), daemon=True).start()
+                return proc
             except Exception:
                 continue
     webbrowser.open(url)
     return None
-
-
-def run_macos_webview(url):
-    """在 macOS 使用系统 Cocoa WebView；依赖缺失时返回 False 走浏览器兜底。"""
-    if not IS_MAC:
-        return False
-    try:
-        import webview
-        webview.create_window("科研工作台", url, width=1440, height=960,
-                              min_size=(1024, 700))
-        webview.start(debug=False)
-        return True
-    except Exception:
-        logging.exception("macOS webview")
-        return False
 
 
 def warm_up():
@@ -3203,9 +3018,6 @@ def main():
         # 仅运行本地服务（测试/CI 用），不拉起浏览器窗口，纯服务常驻。
         print("SERVING " + url)
         run_guard(None, True)
-    elif IS_MAC and run_macos_webview(url):
-        # Cocoa 窗口关闭后 webview.start() 返回，随后正常关闭本地服务。
-        pass
     else:
         proc = open_window(url)
         # 生命周期以「Edge 窗口进程是否还活着」为准：窗口关了才退出；
@@ -3224,23 +3036,24 @@ def run_guard(proc, no_window):
     不再使用「无活动 N 秒自杀」——那种写法只能靠前端心跳续命，一旦 Edge 因
     闲置把标签页休眠（默认开启「睡眠标签页」）而停掉心跳，后端就会被误杀，
     导致界面还在却点不开任何链接。"""
-    grace = 0
+    missing_since = None
     try:
         while True:
             time.sleep(1)
-            if proc is not None and proc.poll() is not None and not IS_MAC:
-                return
-            # Mac 浏览器可能保留后台进程或把命令转交给已有进程，统一以页面心跳判断。
-            if IS_MAC and not no_window:
-                if LAST_SEEN["t"] and time.time() - LAST_SEEN["t"] > 45:
-                    return
+            if no_window:
                 continue
-            if proc is None and not no_window:
-                # 没能拉起任何浏览器窗口（只剩 webbrowser 兜底且无声），
-                # 给 8 秒缓冲后主动退出，避免空跑占端口。
-                grace += 1
-                if grace > 8:
-                    return
+            # Do not trust the launcher PID alone: Edge may have transferred
+            # the app window to another browser process.
+            alive = bool(proc is not None and proc.poll() is None) or workbench_window_exists()
+            if alive:
+                missing_since = None
+                continue
+            if missing_since is None:
+                missing_since = time.time()
+            # Allow Edge a short hand-off/restart window, but avoid leaving a
+            # headless local server behind after a failed launch.
+            if time.time() - missing_since > 12:
+                return
     except KeyboardInterrupt:
         pass
 
